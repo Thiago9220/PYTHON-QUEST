@@ -9,7 +9,7 @@ interface Props {
 
 export function MissionPanel({ challenge, activeTab, setActiveTab }: Props) {
   return (
-    <div className="flex flex-col h-full bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
       <div className="flex bg-sky-50 border-b border-sky-100">
         <button
           onClick={() => setActiveTab("mission")}
@@ -31,21 +31,21 @@ export function MissionPanel({ challenge, activeTab, setActiveTab }: Props) {
         </button>
       </div>
 
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="p-5 overflow-y-auto max-h-[34vh] lg:max-h-[300px]">
         {activeTab === "mission" ? (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <h3 className="text-sky-700 text-xs font-bold uppercase tracking-[0.2em] mb-2">Contexto</h3>
               <p className="text-slate-700 leading-relaxed text-base">{challenge.narrative}</p>
             </div>
 
-            <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
               <h3 className="text-emerald-700 text-xs font-bold uppercase tracking-[0.2em] mb-2">Objetivo</h3>
               <p className="text-slate-800 leading-relaxed">{challenge.description}</p>
             </div>
 
             {challenge.hints[0] && (
-              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-lg">
+              <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-100 rounded-lg">
                 <Lightbulb className="text-amber-500 shrink-0" size={18} />
                 <p className="text-sm text-slate-700">Dica inicial: {challenge.hints[0].text}</p>
               </div>

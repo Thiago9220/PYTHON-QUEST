@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { Play, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 interface Props {
   code: string;
@@ -9,10 +8,10 @@ interface Props {
   pythonReady: boolean;
 }
 
-export default function PythonEditor({ code, onChange, onRun, isRunning, pythonReady }: Props) {
+export default function PythonEditor({ code, onChange, isRunning, pythonReady }: Props) {
   return (
     <div className="flex flex-col h-full bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <Terminal size={16} className="text-sky-300" />
           <span className="text-xs font-mono text-sky-100 uppercase tracking-widest">Python</span>
@@ -24,30 +23,15 @@ export default function PythonEditor({ code, onChange, onRun, isRunning, pythonR
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-[280px]">
+      <div className="relative flex-1 min-h-[320px] lg:min-h-[360px]">
         <textarea
           value={code}
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
-          className="w-full h-full min-h-[280px] p-5 bg-slate-950 text-sky-50 font-mono text-sm resize-none focus:outline-none selection:bg-sky-500/30"
+          className="w-full h-full min-h-[320px] lg:min-h-[360px] p-5 bg-slate-950 text-sky-50 font-mono text-sm resize-none focus:outline-none selection:bg-sky-500/30"
           placeholder="# Escreva seu codigo Python aqui..."
           disabled={!pythonReady || isRunning}
         />
-
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onRun}
-          disabled={!pythonReady || isRunning || !code.trim()}
-          className="absolute bottom-4 right-4 flex items-center gap-2 px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-full shadow-lg shadow-sky-950/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isRunning ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Play size={16} fill="currentColor" />
-          )}
-          <span>{isRunning ? "Rodando" : "Executar"}</span>
-        </motion.button>
       </div>
     </div>
   );

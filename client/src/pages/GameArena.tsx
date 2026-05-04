@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, HelpCircle, Lightbulb, RotateCcw, Star, Trophy } from "lucide-react";
+import { ArrowLeft, BookOpen, HelpCircle, Lightbulb, Play, RotateCcw, Star, Trophy } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { Button } from "@/components/ui/button";
 import PythonEditor from "@/components/PythonEditor";
@@ -132,28 +132,42 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-4 gap-4">
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-3 gap-3">
         {!isExpanded && (
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
+          <div className="flex-1 flex flex-col gap-3 min-w-0">
             <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-            <div className="bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-sky-100 bg-white">
-                <div className="text-sm font-semibold text-slate-700">Editor</div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={engine.handleReset} className="text-slate-500 hover:text-sky-700 h-8 px-2">
+            <div className="bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm flex flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-sky-100 bg-white">
+                <div>
+                  <div className="text-sm font-semibold text-slate-700">Editor</div>
+                  <div className="text-xs text-slate-500">Ctrl+Enter tambem executa o codigo</div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={engine.handleReset} className="text-slate-600 h-9 px-3">
                     <RotateCcw className="w-4 h-4" />
+                    <span className="hidden sm:inline ml-1">Resetar</span>
                   </Button>
                   {challenge.hints.length > 0 && engine.currentHintIdx < challenge.hints.length && (
-                    <Button variant="ghost" size="sm" onClick={engine.handleHint} className="text-amber-700 hover:text-amber-800 h-8 px-2 text-xs gap-1">
-                      <Lightbulb className="w-4 h-4" /> Dica
+                    <Button variant="outline" size="sm" onClick={engine.handleHint} className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 h-9 px-3 text-xs gap-1.5">
+                      <Lightbulb className="w-4 h-4" />
+                      Dica {engine.currentHintIdx + 1}/{challenge.hints.length}
                     </Button>
                   )}
                   {engine.attempts >= 5 && (
-                    <Button variant="ghost" size="sm" onClick={() => setShowAnswerModal(true)} className="text-sky-700 h-8 px-2 text-xs gap-1">
+                    <Button variant="outline" size="sm" onClick={() => setShowAnswerModal(true)} className="text-sky-700 h-9 px-3 text-xs gap-1">
                       <HelpCircle className="w-4 h-4" /> Resposta
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    onClick={engine.handleRun}
+                    disabled={!engine.pythonReady || engine.isRunning || !engine.code.trim() || engine.isCorrect === true}
+                    className="bg-sky-600 hover:bg-sky-700 h-9 px-4 font-bold gap-1.5"
+                  >
+                    <Play className="w-4 h-4" />
+                    {engine.isRunning ? "Executando..." : engine.isCorrect ? "Correto" : "Executar"}
+                  </Button>
                 </div>
               </div>
 

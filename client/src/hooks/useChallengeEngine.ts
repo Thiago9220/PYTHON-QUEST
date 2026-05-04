@@ -130,12 +130,11 @@ export function useChallengeEngine(
     if (!challenge) return;
     setState((prev) => {
       const nextIdx = Math.min(prev.currentHintIdx + 1, challenge.hints.length);
-      const hintCost = challenge.hints[nextIdx - 1]?.cost ?? 0;
       return {
         ...prev,
         showHint: true,
         currentHintIdx: nextIdx,
-        hintsUsed: prev.currentHintIdx < nextIdx ? prev.hintsUsed + Math.ceil(hintCost / 10) : prev.hintsUsed,
+        hintsUsed: prev.currentHintIdx < nextIdx ? prev.hintsUsed + 1 : prev.hintsUsed,
       };
     });
   }, [challenge]);
@@ -151,6 +150,9 @@ export function useChallengeEngine(
         output: "",
         isCorrect: null,
         feedback: "",
+        showHint: false,
+        currentHintIdx: 0,
+        hintsUsed: 0,
       })),
     handleHint,
     setShowHint: (show: boolean) => setState((prev) => ({ ...prev, showHint: show })),
