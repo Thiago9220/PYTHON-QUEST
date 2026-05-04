@@ -1,77 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { initPython, runPythonCode, validatePythonChallenge } from '../lib/pythonEngine';
-import { Challenge } from '../lib/types';
+import React from "react";
+import { motion } from "framer-motion";
+import { Play, Terminal } from "lucide-react";
 
-interface PythonEditorProps {
-  challenge: Challenge;
-  onSuccess: (xp: number) => void;
+interface Props {
+  code: string;
+  onChange: (code: string) => void;
+  onRun: () => void;
+  isRunning: boolean;
+  pythonReady: boolean;
 }
 
-export const PythonEditor: React.FC<PythonEditorProps> = ({ challenge, onSuccess }) => {
-  const [code, setCode] = useState(challenge.starterCode);
-  const [output, setOutput] = useState('');
-  const [isReady, setIsReady] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-
-  useEffect(() => {
-    initPython().then(() => setIsReady(true));
-  }, []);
-
-  const handleRun = async () => {
-    setIsRunning(true);
-    const result = await runPythonCode(code, challenge.setupCode);
-    setOutput(result.success ? result.output : `Erro: ${result.error}`);
-    setIsRunning(false);
-  };
-
-  const handleSubmit = async () => {
-    setIsRunning(true);
-    const validation = await validatePythonChallenge(code, challenge);
-    setOutput(validation.output);
-    
-    if (validation.correct) {
-      onSuccess(challenge.xpReward);
-    } else {
-      alert(validation.feedback);
-    }
-    setIsRunning(false);
-  };
-
+export default function PythonEditor({ code, onChange, onRun, isRunning, pythonReady }: Props) {
   return (
-    <div className="flex flex-col gap-4 p-4 bg-slate-900 text-white rounded-lg">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bold">{challenge.title}</h3>
-        {!isReady && <span className="text-yellow-500">Carregando Python...</span>}
-      </div>
-      
-      <textarea
-        className="font-mono p-4 bg-slate-800 rounded border border-slate-700 h-48"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        disabled={!isReady || isRunning}
-      />
-
-      <div className="flex gap-2">
-        <button 
-          onClick={handleRun}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
-          disabled={!isReady || isRunning}
-        >
-          Rodar Código
-        </button>
-        <button 
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
-          disabled={!isReady || isRunning}
-        >
-          Enviar Solução
-        </button>
+    <div className="flex flex-col h-full bg-[#1a1612] border border-[#3d352a] rounded-xl overflow-hidden shadow-2xl">
+      {/* Header do Terminal */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#26201a] border-b border-[#3d352a]">
+        <div className="flex items-center gap-2">
+          <Terminal size={16} className="text-[#a68d6d]" />
+          <span className="text-xs font-mono text-[#a68d6d] uppercase tracking-widest">Python Interpreter</span>
+        </div>
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#3d352a]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#3d352a]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#3d352a]" />
+        </div>
       </div>
 
-      <div className="mt-4">
-        <h4 className="text-sm uppercase text-slate-400">Saída:</h4>
-        <pre className="p-2 bg-black rounded mt-1 min-h-[50px]">{output}</pre>
+      {/* Área de Edição */}
+      <div className="relative flex-1 group">
+        <textarea
+          value={code}
+          onChange={(e) => onChange(e.target.value)}
+          spellCheck={false}
+          className="w-full h-full p-6 bg-transparent text-[#e6d5bc] font-mono text-sm resize-none focus:outline-none selection:bg-[#a68d6d]/30"
+          placeholder="# Escreva seu feitiço Python aqui..."
+          disabled={!pythonReady || isRunning}
+        />
+        
+        {/* Botão de Execução Flutuante */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onRun}
+          disabled={!pythonReady || isRunning}
+          className="absolute bottom-6 right-6 flex items-center gap-2 px-6 py-3 bg-[#a68d6d] hover:bg-[#c4a484] text-[#1a1612] font-bold rounded-full shadow-[0_0_20px_rgba(166,141,109,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isRunning ? (
+            <div className="w-5 h-5 border-2 border-[#1a1612]/30 border-t-[#1a1612] rounded-full animate-spin" />
+          ) : (
+            <Play size={18} fill="currentColor" />
+          )}
+          <span>EXECUTAR</span>
+        </motion.button>
       </div>
     </div>
   );
-};
+}
