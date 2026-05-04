@@ -54,6 +54,28 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "Mestre Guido",
       successAvatar: "/avatars/guido.webp",
       successStory: "Excelente. Você aprendeu a rotular o conhecimento. Agora você pode carregar informações consigo.",
+    },
+    {
+      id: "py-03",
+      worldId: "vila-variaveis",
+      title: "Soma de Poderes",
+      description: "Crie duas variáveis, 'a' com valor 5 e 'b' com valor 10. Imprima a soma das duas.",
+      narrative: "'A magia não está apenas em guardar, mas em transformar', ensina Guido. 'Combine as energias de dois pergaminhos para criar uma força maior.'",
+      difficulty: "iniciante",
+      setupCode: "",
+      expectedOutput: "15",
+      testCode: "assert a == 5 and b == 10 and output.strip() == '15'",
+      starterCode: "# Some as variáveis a e b\na = 5\nb = 10\n",
+      hints: [
+        { text: "Use o operador + para somar números.", cost: 10 },
+        { text: "print(a + b)", cost: 20 },
+      ],
+      xpReward: 150,
+      concept: "Operadores Aritméticos",
+      conceptExplanation: "Python pode realizar cálculos matemáticos facilmente usando operadores como `+`, `-`, `*` e `/`.",
+      successNpc: "Mestre Guido",
+      successAvatar: "/avatars/guido.webp",
+      successStory: "A fusão foi perfeita! Você acaba de realizar sua primeira alquimia computacional.",
     }
   ]
 };
