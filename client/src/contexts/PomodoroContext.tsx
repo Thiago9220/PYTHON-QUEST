@@ -16,7 +16,7 @@ export const POMODORO_LABELS: Record<PomodoroMode, string> = {
   longBreak: "Pausa Longa",
 };
 
-const STORAGE_KEY = "sqlquest.pomodoro.sessions";
+const STORAGE_KEY = "pythonquest.pomodoro.sessions";
 
 type PomodoroContextValue = {
   mode: PomodoroMode;

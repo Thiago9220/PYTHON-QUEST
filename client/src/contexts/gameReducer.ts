@@ -29,7 +29,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "TOGGLE_DEV_MODE": {
       const newVal = !state.isDevMode;
-      localStorage.setItem("sql_quest_dev_mode", String(newVal));
+      localStorage.setItem("python_quest_dev_mode", String(newVal));
       return { ...state, isDevMode: newVal };
     }
 

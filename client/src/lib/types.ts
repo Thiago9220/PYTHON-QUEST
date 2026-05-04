@@ -1,4 +1,4 @@
-export type Difficulty = "iniciante" | "intermediário" | "avançado" | "épico" | "lendário";
+export type Difficulty = "iniciante" | "intermediario" | "avancado" | "epico" | "lendario";
 
 export type Hint = {
   text: string;

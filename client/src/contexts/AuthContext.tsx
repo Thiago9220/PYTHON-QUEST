@@ -1,5 +1,5 @@
 /**
- * SQL Quest — Contexto de Autenticação (SUPABASE)
+ * Python Quest — Contexto de Autenticação (SUPABASE)
  * Gerencia login/registro/logout usando Supabase Auth e tabela profiles
  */
 
@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { supabase } from "@/lib/supabase";
-import { type User } from "@supabase/supabase-js";
+import { type AuthChangeEvent, type Session, type User } from "@supabase/supabase-js";
 
 export type UserAccount = {
   id: string;
@@ -205,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (event === "PASSWORD_RECOVERY") {
         setAuthState(prev => ({ ...prev, isPasswordRecovery: true }));
       }
@@ -213,8 +213,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth.getSession()
-      .then(({ data: { session } }) => applySession(session?.user ?? null))
-      .catch(err => {
+      .then(({ data: { session } }: { data: { session: Session | null } }) => applySession(session?.user ?? null))
+      .catch((err: unknown) => {
         console.error("Erro ao restaurar sessao:", err);
         if (!mounted || initialAuthResolved) return;
         setAuthState(prev => ({ user: null, isLoading: false, isPasswordRecovery: prev.isPasswordRecovery }));

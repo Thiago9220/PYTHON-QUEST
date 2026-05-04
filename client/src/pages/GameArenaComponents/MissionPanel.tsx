@@ -1,5 +1,4 @@
-import React from "react";
-import { Book, Scroll, Lightbulb } from "lucide-react";
+import { BookOpen, ClipboardList, Lightbulb } from "lucide-react";
 import { Challenge } from "@/lib/types";
 
 interface Props {
@@ -10,68 +9,56 @@ interface Props {
 
 export function MissionPanel({ challenge, activeTab, setActiveTab }: Props) {
   return (
-    <div className="flex flex-col h-full bg-[#1a1612] border border-[#3d352a] rounded-xl overflow-hidden shadow-2xl">
-      {/* Tabs */}
-      <div className="flex bg-[#26201a] border-b border-[#3d352a]">
+    <div className="flex flex-col h-full bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
+      <div className="flex bg-sky-50 border-b border-sky-100">
         <button
           onClick={() => setActiveTab("mission")}
-          className={`flex items-center gap-2 px-6 py-3 text-xs font-mono uppercase tracking-widest transition-all ${
-            activeTab === "mission" 
-              ? "bg-[#1a1612] text-[#a68d6d] border-r border-[#3d352a]" 
-              : "text-[#3d352a] hover:text-[#a68d6d]"
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
+            activeTab === "mission" ? "bg-white text-sky-700" : "text-slate-500 hover:text-sky-700"
           }`}
         >
-          <Scroll size={14} />
-          Missão
+          <ClipboardList size={14} />
+          Missao
         </button>
         <button
           onClick={() => setActiveTab("concept")}
-          className={`flex items-center gap-2 px-6 py-3 text-xs font-mono uppercase tracking-widest transition-all ${
-            activeTab === "concept" 
-              ? "bg-[#1a1612] text-[#a68d6d] border-l border-r border-[#3d352a]" 
-              : "text-[#3d352a] hover:text-[#a68d6d]"
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
+            activeTab === "concept" ? "bg-white text-sky-700" : "text-slate-500 hover:text-sky-700"
           }`}
         >
-          <Book size={14} />
+          <BookOpen size={14} />
           Conceito
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-6 overflow-y-auto">
         {activeTab === "mission" ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <h3 className="text-[#a68d6d] text-xs font-mono uppercase tracking-[0.2em] mb-2">Narrativa</h3>
-              <p className="text-[#e6d5bc] italic leading-relaxed font-serif text-lg">
-                "{challenge.narrative}"
-              </p>
-            </div>
-            
-            <div className="p-6 bg-[#26201a] border border-[#3d352a] rounded-lg">
-              <h3 className="text-[#a68d6d] text-xs font-mono uppercase tracking-[0.2em] mb-3">Objetivo</h3>
-              <p className="text-[#e6d5bc] leading-relaxed">
-                {challenge.description}
-              </p>
+              <h3 className="text-sky-700 text-xs font-bold uppercase tracking-[0.2em] mb-2">Contexto</h3>
+              <p className="text-slate-700 leading-relaxed text-base">{challenge.narrative}</p>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-blue-900/10 border border-blue-800/20 rounded-lg">
-              <Lightbulb className="text-blue-400 shrink-0" size={18} />
-              <p className="text-sm text-blue-200/70 italic">
-                Dica: {challenge.hints[0].text}
-              </p>
+            <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-lg">
+              <h3 className="text-emerald-700 text-xs font-bold uppercase tracking-[0.2em] mb-2">Objetivo</h3>
+              <p className="text-slate-800 leading-relaxed">{challenge.description}</p>
             </div>
+
+            {challenge.hints[0] && (
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-lg">
+                <Lightbulb className="text-amber-500 shrink-0" size={18} />
+                <p className="text-sm text-slate-700">Dica inicial: {challenge.hints[0].text}</p>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="space-y-6">
-            <h3 className="text-[#a68d6d] text-xs font-mono uppercase tracking-[0.2em] mb-2">
+          <div className="space-y-4">
+            <h3 className="text-sky-700 text-xs font-bold uppercase tracking-[0.2em]">
               {challenge.concept}
             </h3>
-            <div className="prose prose-invert prose-sepia max-w-none">
-              <p className="text-[#e6d5bc] leading-relaxed whitespace-pre-line">
-                {challenge.conceptExplanation}
-              </p>
-            </div>
+            <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+              {challenge.conceptExplanation}
+            </p>
           </div>
         )}
       </div>

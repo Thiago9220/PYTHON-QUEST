@@ -44,6 +44,25 @@ type GameContextType = {
   resetWorldProgress: (worldId: string) => Promise<void>;
 };
 
+type ProgressRow = {
+  challenge_id: string;
+  completed: boolean;
+  attempts: number;
+  hints_used: number;
+  best_score: number;
+  best_chars?: number;
+  completed_at?: string | null;
+};
+
+type AchievementRow = {
+  achievement_id: string;
+  unlocked_at: string;
+};
+
+type PurchaseRow = {
+  world_id: string;
+};
+
 const GameContext = createContext<GameContextType | null>(null);
 
 type PersistedGameSnapshot = {
@@ -52,7 +71,7 @@ type PersistedGameSnapshot = {
 };
 
 const getSnapshotStorageKey = (userId: string) =>
-  `sql_quest_game_snapshot:${userId}`;
+  `python_quest_game_snapshot:${userId}`;
 
 const readPersistedSnapshot = (
   userId: string
@@ -197,7 +216,7 @@ export function GameProvider({
         const progressMap: Record<string, ChallengeProgress> = {};
         let totalProgressXP = 0;
 
-        progressRes.data?.forEach(p => {
+        progressRes.data?.forEach((p: ProgressRow) => {
           totalProgressXP += p.best_score || 0;
           progressMap[p.challenge_id] = {
             completed: p.completed,
@@ -213,7 +232,7 @@ export function GameProvider({
 
         const mergedAchievements = ACHIEVEMENTS_ROOT.map(a => {
           const unlocked = achievementsRes.data?.find(
-            ua => ua.achievement_id === a.id
+            (ua: AchievementRow) => ua.achievement_id === a.id
           );
           return unlocked
             ? {
@@ -224,7 +243,7 @@ export function GameProvider({
             : a;
         });
 
-        const nextPurchasedWorlds = purchasesRes.data?.map(p => p.world_id) ?? [];
+        const nextPurchasedWorlds = purchasesRes.data?.map((p: PurchaseRow) => p.world_id) ?? [];
         const nextState: GameState = {
           ...INITIAL_STATE,
           playerName: profile?.display_name || "",
@@ -240,7 +259,7 @@ export function GameProvider({
             : null,
           challengeProgress: progressMap,
           achievements: mergedAchievements,
-          isDevMode: localStorage.getItem("sql_quest_dev_mode") === "true",
+          isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
         };
 
         setPurchasedWorlds(nextPurchasedWorlds);
@@ -264,7 +283,7 @@ export function GameProvider({
           type: "LOAD_STATE",
           state: {
             ...cachedSnapshot.state,
-            isDevMode: localStorage.getItem("sql_quest_dev_mode") === "true",
+            isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
           },
         });
         setHasHydrated(true);
@@ -319,7 +338,7 @@ export function GameProvider({
           ? new Date(state.lastPlayedAt).toISOString()
           : new Date().toISOString(),
       })
-      .then(({ error }) => {
+      .then(({ error }: { error: unknown }) => {
         if (error) console.error("Erro ao sincronizar perfil:", error);
       });
   }, [
@@ -470,8 +489,8 @@ export function GameProvider({
       if (profileRes.error) throw profileRes.error;
 
       // Clear local storage notifications
-      const storageKeyUnlock = `sql_quest_notified_worlds_${userId}`;
-      const storageKeyNotif = `sql_quest_completed_worlds_notif_${userId}`;
+      const storageKeyUnlock = `python_quest_notified_worlds_${userId}`;
+      const storageKeyNotif = `python_quest_completed_worlds_notif_${userId}`;
       localStorage.removeItem(storageKeyUnlock);
       localStorage.removeItem(storageKeyNotif);
 
@@ -523,8 +542,8 @@ export function GameProvider({
       if (profileError) throw profileError;
 
       // Clear local storage notifications for this specific world
-      const storageKeyUnlock = `sql_quest_notified_worlds_${userId}`;
-      const storageKeyNotif = `sql_quest_completed_worlds_notif_${userId}`;
+      const storageKeyUnlock = `python_quest_notified_worlds_${userId}`;
+      const storageKeyNotif = `python_quest_completed_worlds_notif_${userId}`;
       
       const clearWorldFromStorage = (key: string) => {
         const raw = localStorage.getItem(key);

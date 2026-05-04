@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, X, Star, Check, Award, Lock } from "lucide-react";
+import { Trophy, X, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
 

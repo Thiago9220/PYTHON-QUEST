@@ -197,7 +197,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
                     className="text-2xl md:text-3xl font-bold text-amber-300 mb-1 drop-shadow-md"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    SQL Quest
+                    Python Quest
                   </h2>
                   <p className="text-[11px] uppercase tracking-[0.25em] text-amber-500/70 font-mono font-bold drop-shadow-sm">
                     O RPG de quem domina dados

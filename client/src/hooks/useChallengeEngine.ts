@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { initPython, runPythonCode, validatePythonChallenge, type PythonResult } from "@/lib/pythonEngine";
+import { initPython, validatePythonChallenge } from "@/lib/pythonEngine";
 import { soundManager } from "@/lib/sounds";
 import confetti from "canvas-confetti";
 import { Challenge } from "@/lib/types";
@@ -8,33 +8,33 @@ import { Challenge } from "@/lib/types";
 type EngineState = {
   pythonReady: boolean;
   code: string;
-  result: PythonResult | null;
+  output: string;
   isCorrect: boolean | null;
   feedback: string;
-  liveError: string | null;
   hintsUsed: number;
   attempts: number;
   showHint: boolean;
   currentHintIdx: number;
-  showSuccess: boolean;
   showCutscene: boolean;
   isRunning: boolean;
   wasAlreadyCompleted: boolean;
 };
 
-export function useChallengeEngine(challenge: Challenge | null, dispatch: any, isChallengeCompleted: (id: string) => boolean) {
+export function useChallengeEngine(
+  challenge: Challenge | null,
+  dispatch: any,
+  isChallengeCompleted: (id: string) => boolean
+) {
   const [state, setState] = useState<EngineState>({
     pythonReady: false,
     code: challenge?.starterCode ?? "",
-    result: null,
+    output: "",
     isCorrect: null,
     feedback: "",
-    liveError: null,
     hintsUsed: 0,
     attempts: 0,
     showHint: false,
     currentHintIdx: 0,
-    showSuccess: false,
     showCutscene: false,
     isRunning: false,
     wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
@@ -42,33 +42,29 @@ export function useChallengeEngine(challenge: Challenge | null, dispatch: any, i
 
   const confettiFiredRef = useRef<string | null>(null);
 
-  // Sync code with challenge change
   useEffect(() => {
     confettiFiredRef.current = null;
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       code: challenge?.starterCode ?? "",
-      result: null,
+      output: "",
       isCorrect: null,
       feedback: "",
-      liveError: null,
       hintsUsed: 0,
       attempts: 0,
       showHint: false,
       currentHintIdx: 0,
-      showSuccess: false,
       showCutscene: false,
       wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
     }));
-  }, [challenge?.id]);
+  }, [challenge?.id, isChallengeCompleted]);
 
-  // Init Engine
   useEffect(() => {
     async function init() {
       try {
         await initPython();
-        setState(prev => ({ ...prev, pythonReady: true }));
-      } catch (err) {
+        setState((prev) => ({ ...prev, pythonReady: true }));
+      } catch {
         toast.error("Erro ao inicializar o motor Python");
       }
     }
@@ -77,57 +73,87 @@ export function useChallengeEngine(challenge: Challenge | null, dispatch: any, i
 
   const handleRun = useCallback(async () => {
     if (!challenge || state.isRunning) return;
-    
-    setState(prev => ({ ...prev, isRunning: true, isCorrect: null }));
-    
+
+    setState((prev) => ({ ...prev, isRunning: true, isCorrect: null }));
+
     try {
       const validation = await validatePythonChallenge(state.code, challenge);
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         isRunning: false,
+        output: validation.output,
         isCorrect: validation.correct,
         feedback: validation.feedback,
-        attempts: prev.attempts + 1
+        attempts: prev.attempts + 1,
       }));
 
       if (validation.correct) {
-        soundManager.play("success");
+        soundManager.playSuccess();
         if (confettiFiredRef.current !== challenge.id) {
           confetti({
-            particleCount: 150,
+            particleCount: 120,
             spread: 70,
             origin: { y: 0.6 },
-            colors: ["#3b82f6", "#60a5fa", "#93c5fd"]
+            colors: ["#0ea5e9", "#22c55e", "#f97316", "#facc15"],
           });
           confettiFiredRef.current = challenge.id;
         }
-        
+
         if (!state.wasAlreadyCompleted) {
-          dispatch({ 
-            type: "COMPLETE_CHALLENGE", 
-            payload: { challengeId: challenge.id, xp: challenge.xpReward } 
+          dispatch({
+            type: "COMPLETE_CHALLENGE",
+            challengeId: challenge.id,
+            xp: challenge.xpReward,
+            hintsUsed: state.hintsUsed,
+            attempts: state.attempts + 1,
+            charCount: state.code.length,
           });
         }
-        
+
         setTimeout(() => {
-          setState(prev => ({ ...prev, showSuccess: true, showCutscene: true }));
-        }, 1000);
+          setState((prev) => ({ ...prev, showCutscene: true }));
+        }, 500);
       } else {
-        soundManager.play("error");
+        soundManager.playError();
       }
-    } catch (err) {
-      setState(prev => ({ ...prev, isRunning: false, feedback: "Erro ao executar o código." }));
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        isRunning: false,
+        feedback: "Erro ao executar o codigo.",
+      }));
     }
-  }, [challenge, state.code, state.isRunning, state.wasAlreadyCompleted, dispatch]);
+  }, [challenge, state.code, state.isRunning, state.wasAlreadyCompleted, state.hintsUsed, state.attempts, dispatch]);
+
+  const handleHint = useCallback(() => {
+    if (!challenge) return;
+    setState((prev) => {
+      const nextIdx = Math.min(prev.currentHintIdx + 1, challenge.hints.length);
+      const hintCost = challenge.hints[nextIdx - 1]?.cost ?? 0;
+      return {
+        ...prev,
+        showHint: true,
+        currentHintIdx: nextIdx,
+        hintsUsed: prev.currentHintIdx < nextIdx ? prev.hintsUsed + Math.ceil(hintCost / 10) : prev.hintsUsed,
+      };
+    });
+  }, [challenge]);
 
   return {
     ...state,
-    setCode: (code: string) => setState(prev => ({ ...prev, code })),
+    setCode: (code: string) => setState((prev) => ({ ...prev, code })),
     handleRun,
-    setShowHint: (show: boolean) => setState(prev => ({ ...prev, showHint: show })),
-    nextHint: () => setState(prev => ({ ...prev, currentHintIdx: Math.min(prev.currentHintIdx + 1, (challenge?.hints.length ?? 1) - 1) })),
-    closeSuccess: () => setState(prev => ({ ...prev, showSuccess: false })),
-    closeCutscene: () => setState(prev => ({ ...prev, showCutscene: false })),
+    handleReset: () =>
+      setState((prev) => ({
+        ...prev,
+        code: challenge?.starterCode ?? "",
+        output: "",
+        isCorrect: null,
+        feedback: "",
+      })),
+    handleHint,
+    setShowHint: (show: boolean) => setState((prev) => ({ ...prev, showHint: show })),
+    closeCutscene: () => setState((prev) => ({ ...prev, showCutscene: false })),
   };
 }

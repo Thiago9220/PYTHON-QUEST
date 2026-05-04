@@ -13,11 +13,9 @@ import {
   HelpCircle,
   Loader2,
   LogOut,
-  ScrollText,
   Search,
   Settings,
   Shield,
-  Sparkles,
   Star,
   Target,
   Terminal,
@@ -66,11 +64,8 @@ export default function Profile({ onBack }: Props) {
   const achievementsLeft = Math.max(state.achievements.length - unlockedAchievements.length, 0);
   const nextQuestLabel =
     challengesLeft > 0
-      ? `Restam ${challengesLeft} missões para ampliar seu domínio no reino dos dados.`
-      : "Todas as missões foram vencidas. Sua lenda está completa.";
-  const masteryNarrative = isEligible
-    ? "O reino já reconhece sua maestria. O diploma está pronto para ser reclamado."
-    : `Faltam ${Math.max(80 - Math.floor(completionPercent * 100), 0)}% para gravar seu nome no diploma final.`;
+      ? `Restam ${challengesLeft} missoes para ampliar sua pratica em Python.`
+      : "Todas as missoes foram vencidas. Sua jornada Python esta completa.";
   const journeyHighlights = [
     {
       label: "Missões",
@@ -145,7 +140,7 @@ export default function Profile({ onBack }: Props) {
     avatarEmoji: user?.avatarEmoji || "👤",
   });
 
-  const certNameStorageKey = user?.id ? `sql-quest:certificate-name:${user.id}` : null;
+  const certNameStorageKey = user?.id ? `python-quest:certificate-name:${user.id}` : null;
 
   useEffect(() => {
     if (!certNameStorageKey) return;
@@ -489,11 +484,11 @@ export default function Profile({ onBack }: Props) {
             <div className="flex-1 space-y-3">
               <div className="flex items-center gap-3">
                 <FileBadge className={`w-8 h-8 ${isEligible ? "text-amber-400" : "text-amber-900/50"}`} />
-                <h3 className="text-2xl font-bold font-serif text-amber-100">Certificado de Maestria SQL</h3>
+                <h3 className="text-2xl font-bold font-serif text-amber-100">Certificado de Jornada Python</h3>
               </div>
               <p className="text-amber-400/75 text-sm max-w-xl">
-                O diploma final é concedido apenas aos exploradores que provarem sua maestria em mais de 80% do
-                reino. Sua jornada está sendo registrada nos anais da história.
+                O diploma final e concedido aos exploradores que concluem mais de 80% dos desafios.
+                Sua jornada fica registrada no painel do Arquipelago Aurora.
               </p>
 
               <div className="mt-4">
@@ -964,7 +959,7 @@ export default function Profile({ onBack }: Props) {
                         dispatch({ type: "DEBUG_COMPLETE_WORLD", worldId: world.id });
                         
                         // Limpar notificações para que o modal apareça ao voltar ao mapa
-                        const storageKeyNotif = `sql_quest_completed_worlds_notif_${user?.id || 'guest'}`;
+                        const storageKeyNotif = `python_quest_completed_worlds_notif_${user?.id || 'guest'}`;
                         const raw = localStorage.getItem(storageKeyNotif);
                         if (raw) {
                           try {
@@ -996,8 +991,8 @@ export default function Profile({ onBack }: Props) {
                     dispatch({ type: "DEBUG_COMPLETE_ALL" });
                     
                     // Limpar todas as notificações para que os modals apareçam ao voltar ao mapa
-                    const storageKeyUnlock = `sql_quest_notified_worlds_${user?.id || 'guest'}`;
-                    const storageKeyNotif = `sql_quest_completed_worlds_notif_${user?.id || 'guest'}`;
+                    const storageKeyUnlock = `python_quest_notified_worlds_${user?.id || 'guest'}`;
+                    const storageKeyNotif = `python_quest_completed_worlds_notif_${user?.id || 'guest'}`;
                     localStorage.removeItem(storageKeyUnlock);
                     localStorage.removeItem(storageKeyNotif);
 
