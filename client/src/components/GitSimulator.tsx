@@ -872,23 +872,22 @@ export function GitSimulator({ onBack }: Props) {
     ];
     return (
       <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="/assets/images/infrastructure_bg.png" 
-            alt="Infrastructure" 
-            className="w-full h-full object-cover opacity-[0.08]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/95 via-slate-950/80 to-slate-950" />
-        </div>
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
+            <img 
+              src="/assets/images/infrastructure_bg.png" 
+              alt="Infrastructure" 
+              className="w-full h-full object-cover"
+            />
+          </div>
 
-        <div className="relative z-10 px-6 py-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10">
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <div className="px-6 py-4">
+            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10 flex-1">
 
           {/* Hero */}
           <div className="text-center pt-6">
@@ -1043,23 +1042,22 @@ export function GitSimulator({ onBack }: Props) {
             <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
           </div>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
         <img 
           src="/assets/images/infrastructure_bg.png" 
           alt="Infrastructure" 
-          className="w-full h-full object-cover opacity-[0.05]"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-slate-950/90" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-6 min-h-screen flex flex-col">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
