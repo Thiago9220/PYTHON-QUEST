@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -21,9 +21,10 @@ type Props = {
   onSelectWorld: (worldId: string) => void;
   onOpenProfile: () => void;
   onOpenGitSimulator: () => void;
+  onOpenDockerSimulator: () => void;
 };
 
-export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator }: Props) {
+export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator }: Props) {
   const {
     state,
     dispatch,
@@ -105,14 +106,24 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               <span className="text-xs font-black text-white">{unlockedAchievements.length}/{state.achievements.length}</span>
             </button>
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onOpenGitSimulator}
               className="h-9 w-9 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
               title="Aprender Git & GitHub"
             >
               <GitBranch className="w-4 h-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onOpenDockerSimulator}
+              className="h-9 w-9 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+              title="Aprender Docker"
+            >
+              <Container className="w-4 h-4" />
             </Button>
 
             <div className="h-8 w-px bg-white/10 mx-1 hidden md:block" />

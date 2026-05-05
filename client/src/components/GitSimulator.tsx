@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Terminal, FileCode, Github, CheckCircle2, Folder, GitCommit,
-  ChevronDown, ChevronUp, Sparkles, GitBranch, Save, X, Edit3, Lock, Trophy, AlertTriangle,
+  ChevronDown, GitBranch, Save, X, Edit3, Lock, Trophy, AlertTriangle,
+  Shield, Cloud, Users, Clock, BookOpen, Lightbulb, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -234,6 +235,41 @@ const LEVELS: LevelDef[] = [
       { id: "push", title: "Envie tudo para o GitHub: git push", hint: "git push origin main", check: (r) => r.remote.branches.main === r.branches.main },
     ],
   },
+  {
+    id: 5,
+    title: "Desfazendo Mudanças",
+    briefing: "Aprenda a voltar no tempo: descartar mudanças locais com restore, apagar commits com reset, e reverter sem reescrever histórico usando revert.",
+    starter: () => {
+      const r = baseRepo();
+      r.initialized = true;
+      r.files = { "app.js": "console.log('v1')\n" };
+      const c0 = randHash();
+      r.commits[c0] = { hash: c0, parents: [], message: "initial", files: { "app.js": "console.log('v1')\n" }, branch: "main", timestamp: Date.now() - 3000 };
+      r.branches.main = c0;
+      const c1 = randHash();
+      r.commits[c1] = { hash: c1, parents: [c0], message: "feature boa", files: { "app.js": "console.log('v1')\n", "feature.js": "// feature útil\n" }, branch: "main", timestamp: Date.now() - 2000 };
+      r.branches.main = c1;
+      const c2 = randHash();
+      r.commits[c2] = { hash: c2, parents: [c1], message: "BUG: quebrou tudo", files: { "app.js": "console.log('quebrado')\n", "feature.js": "// feature útil\n" }, branch: "main", timestamp: Date.now() - 1000 };
+      r.branches.main = c2;
+      r.HEAD = { type: "branch", name: "main" };
+      r.files = { "app.js": "console.log('quebrado')\n", "feature.js": "// feature útil\n" };
+      // simular alteração suja na working dir
+      r.files["app.js"] = "console.log('quebrado MAIS AINDA')\n";
+      return r;
+    },
+    missions: [
+      { id: "restore", title: "Descarte a mudança suja: git restore app.js", hint: "git restore app.js", check: (r) => {
+        const head = headCommit(r);
+        return !!head && r.files["app.js"] === head.files["app.js"];
+      }},
+      { id: "revert", title: "Reverta o commit ruim sem apagar do histórico: git revert HEAD", hint: 'git revert HEAD (cria um commit que desfaz)', check: (r) => {
+        const head = headCommit(r);
+        // procurar um commit cuja mensagem comece com "Revert"
+        return !!head && Object.values(r.commits).some((c) => c.message.startsWith("Revert"));
+      }},
+    ],
+  },
 ];
 
 // ---------- Component ----------
@@ -249,7 +285,7 @@ export function GitSimulator({ onBack }: Props) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
-  const [showIntro, setShowIntro] = useState(true);
+  const [phase, setPhase] = useState<"intro" | "playing">("intro");
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -303,7 +339,7 @@ export function GitSimulator({ onBack }: Props) {
     if (cmd === "help") {
       out("Comandos suportados:");
       out("  git init | git status | git add <arq>|. | git commit -m \"msg\"");
-      out("  git log [--oneline] | git diff | git restore <arq>");
+      out("  git log [--oneline] | git diff | git restore <arq> | git revert <ref>");
       out("  git branch [name] | git checkout [-b] <name> | git switch [-c] <name>");
       out("  git merge <branch> | git reset --hard");
       out("  git remote add origin <url> | git push [origin <branch>] | git pull [origin <branch>] | git fetch");
@@ -482,6 +518,35 @@ export function GitSimulator({ onBack }: Props) {
       next.files[file] = original;
       if (next.staged) delete next.staged[file];
       io.out(`'${file}' restaurado.`);
+      return next;
+    }
+
+    // revert <ref>  (ref = HEAD ou hash)
+    const revertMatch = args.match(/^revert\s+(\S+)$/);
+    if (revertMatch) {
+      const ref = revertMatch[1];
+      const branch = headBranchName(r);
+      if (!branch) { io.err("HEAD desanexado"); return null; }
+      const headHash = r.branches[branch];
+      const target = ref === "HEAD" ? headHash : ref;
+      const targetCommit = r.commits[target];
+      if (!targetCommit) { io.err(`commit '${ref}' não encontrado`); return null; }
+      if (!targetCommit.parents.length) { io.err("não dá pra reverter o commit inicial neste simulador"); return null; }
+      const parent = r.commits[targetCommit.parents[0]];
+      // o revert produz um commit cujo conteúdo aplica diff invertido — simplificamos: snapshot = pai do commit + arquivos não tocados pelo commit revertido
+      const newFiles: Record<string, string> = { ...r.commits[headHash].files };
+      // arquivos modificados/adicionados pelo commit revertido voltam ao estado do pai
+      const allTouched = new Set([...Object.keys(targetCommit.files), ...Object.keys(parent.files)]);
+      for (const f of allTouched) {
+        if (parent.files[f] === undefined) delete newFiles[f];
+        else newFiles[f] = parent.files[f];
+      }
+      const hash = randHash();
+      next.commits[hash] = { hash, parents: [headHash], message: `Revert "${targetCommit.message}"`, files: newFiles, branch, timestamp: Date.now() };
+      next.branches[branch] = hash;
+      next.files = { ...newFiles };
+      next.staged = null;
+      io.out(`[${branch} ${hash}] Revert "${targetCommit.message}"`);
       return next;
     }
 
@@ -741,7 +806,7 @@ export function GitSimulator({ onBack }: Props) {
       else { setHistoryIdx(i); setInput(history[i]); }
     } else if (e.key === "Tab") {
       e.preventDefault();
-      const completions = ["git init", "git status", "git add .", "git commit -m \"\"", "git log --oneline", "git diff", "git branch", "git checkout ", "git checkout -b ", "git switch ", "git merge ", "git restore ", "git remote add origin url", "git push origin main", "git pull origin main", "git fetch", "git stash", "git stash pop", "git reset --hard", "help", "clear", "reset"];
+      const completions = ["git init", "git status", "git add .", "git commit -m \"\"", "git log --oneline", "git diff", "git branch", "git checkout ", "git checkout -b ", "git switch ", "git merge ", "git restore ", "git revert HEAD", "git remote add origin url", "git push origin main", "git pull origin main", "git fetch", "git stash", "git stash pop", "git reset --hard", "help", "clear", "reset"];
       const matches = completions.filter((c) => c.startsWith(input));
       if (matches.length === 1) setInput(matches[0]);
       else if (matches.length > 1) info("Sugestões: " + matches.join(" | "));
@@ -796,6 +861,182 @@ export function GitSimulator({ onBack }: Props) {
   };
 
   // ---------- Render ----------
+  // ---------- Intro screen ----------
+  if (phase === "intro") {
+    const levelStyles = [
+      { border: "border-amber-500/20", bg: "bg-amber-500/10", borderInner: "border-amber-500/30", text: "text-amber-400" },
+      { border: "border-sky-500/20", bg: "bg-sky-500/10", borderInner: "border-sky-500/30", text: "text-sky-400" },
+      { border: "border-red-500/20", bg: "bg-red-500/10", borderInner: "border-red-500/30", text: "text-red-400" },
+      { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", borderInner: "border-fuchsia-500/30", text: "text-fuchsia-400" },
+      { border: "border-violet-500/20", bg: "bg-violet-500/10", borderInner: "border-violet-500/30", text: "text-violet-400" },
+    ];
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        <div className="px-6 py-4">
+          <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10">
+
+          {/* Hero */}
+          <div className="text-center pt-6">
+            <div className="inline-flex p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-5">
+              <Terminal className="w-10 h-10" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">Git Simulator</h1>
+            <p className="text-emerald-400 font-mono text-xs uppercase tracking-[0.3em] mb-6">Treine sem medo de quebrar nada</p>
+            <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
+              Um terminal simulado para você praticar Git e GitHub digitando comandos reais. Sem instalar nada, sem risco de perder código, com grafo de commits ao vivo e missões que ensinam do zero.
+            </p>
+          </div>
+
+          {/* Por que Git */}
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" /> Por que aprender Git?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-3">
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+                <Clock className="w-5 h-5 text-amber-400 mb-2" />
+                <p className="text-sm font-bold text-white mb-1">Máquina do tempo</p>
+                <p className="text-xs text-slate-400 leading-relaxed">Volte para qualquer versão anterior do seu código com um comando. Quebrou algo? Desfaça em segundos.</p>
+              </div>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+                <Users className="w-5 h-5 text-sky-400 mb-2" />
+                <p className="text-sm font-bold text-white mb-1">Trabalho em time</p>
+                <p className="text-xs text-slate-400 leading-relaxed">Várias pessoas mexendo no mesmo projeto sem pisar no pé umas das outras. O Git resolve quem mudou o quê.</p>
+              </div>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+                <Shield className="w-5 h-5 text-fuchsia-400 mb-2" />
+                <p className="text-sm font-bold text-white mb-1">Indispensável no mercado</p>
+                <p className="text-xs text-slate-400 leading-relaxed">99% das empresas de tecnologia usam Git. É o requisito mais básico — saber Git é como saber abrir um arquivo.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Git vs GitHub */}
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" /> Git vs GitHub
+            </h2>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5">
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
+                  <Terminal className="w-3.5 h-3.5" /> Git (programa)
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">Programa de linha de comando instalado no seu computador. Tira "fotografias" do projeto a cada commit, mantém histórico, gerencia branches.</p>
+                <p className="text-[11px] text-slate-500 font-mono">Local • Offline • Linha de comando</p>
+              </div>
+              <div className="bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5">
+                <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-widest mb-3">
+                  <Cloud className="w-3.5 h-3.5" /> GitHub (site)
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">Plataforma na nuvem que hospeda repositórios Git. Permite compartilhar código, colaborar via Pull Requests, e funciona como portfólio público.</p>
+                <p className="text-[11px] text-slate-500 font-mono">Nuvem • Online • Interface web</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-3 text-center italic">Analogia: Git é o Word; GitHub é o Google Drive. Você usa o programa local e sincroniza com a nuvem.</p>
+          </section>
+
+          {/* As 3 áreas do Git */}
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+              <Folder className="w-4 h-4" /> As 3 áreas do Git
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
+            <div className="grid md:grid-cols-3 gap-3">
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 relative">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-amber-400 mb-2">1. Working Directory</div>
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
+                <code className="text-[10px] text-amber-300 font-mono">edita arquivo.js</code>
+              </div>
+              <div className="bg-sky-500/5 border border-sky-500/20 rounded-2xl p-4">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-sky-400 mb-2">2. Staging (Índice)</div>
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">Sala de espera. Você marca aqui o que vai entrar no próximo commit (snapshot).</p>
+                <code className="text-[10px] text-sky-300 font-mono">git add arquivo.js</code>
+              </div>
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 mb-2">3. Repository</div>
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
+                <code className="text-[10px] text-emerald-300 font-mono">git commit -m "msg"</code>
+              </div>
+            </div>
+          </section>
+
+          {/* Conceitos-chave */}
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" /> Glossário rápido
+            </h2>
+            <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5">
+              {[
+                { t: "Repositório", d: "Pasta monitorada pelo Git (tem uma subpasta .git oculta com o histórico).", c: "text-emerald-300" },
+                { t: "Commit", d: "Uma fotografia do estado dos arquivos num momento, com mensagem e hash único (ex: a3f9c1b).", c: "text-sky-300" },
+                { t: "Branch", d: "Linha do tempo paralela. Permite trabalhar em features sem mexer na main.", c: "text-fuchsia-300" },
+                { t: "HEAD", d: "Ponteiro que indica onde você está. Geralmente aponta para o último commit da branch atual.", c: "text-amber-300" },
+                { t: "Merge", d: "Juntar duas branches em uma só. Pode ser fast-forward (limpinho) ou criar um commit de merge.", c: "text-violet-300" },
+                { t: "Conflito", d: "Quando duas branches modificam a mesma linha. Você precisa escolher manualmente o que fica.", c: "text-red-300" },
+                { t: "Remote", d: "Cópia do repositório em outro lugar (ex: GitHub). 'origin' é o nome padrão.", c: "text-cyan-300" },
+                { t: "Push / Pull", d: "Push envia commits locais para o remote. Pull baixa commits do remote para o local.", c: "text-pink-300" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3 p-3">
+                  <span className={`text-xs font-bold font-mono ${item.c} min-w-[100px] pt-0.5`}>{item.t}</span>
+                  <span className="text-xs text-slate-400 leading-relaxed flex-1">{item.d}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Preview dos níveis */}
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+              <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
+            </h2>
+            <div className="space-y-2">
+              {LEVELS.map((lv, i) => {
+                const s = levelStyles[i] ?? levelStyles[0];
+                return (
+                  <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
+                    <div className={`w-9 h-9 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-sm shrink-0`}>{lv.id}</div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-white mb-1">{lv.title}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed">{lv.briefing}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Atalhos do simulador */}
+          <section className="bg-gradient-to-br from-emerald-900/10 via-slate-900/40 to-sky-900/10 border border-emerald-500/20 rounded-2xl p-5">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-3 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" /> Dicas do simulador
+            </h2>
+            <ul className="text-xs text-slate-400 space-y-1.5">
+              <li>• Digite <code className="text-emerald-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
+              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↑</kbd> e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↓</kbd> para navegar no histórico de comandos</li>
+              <li>• Pressione <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">Tab</kbd> para autocompletar comandos</li>
+              <li>• Clique em qualquer arquivo do Working Directory para abrir o editor</li>
+              <li>• Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</li>
+              <li>• <code className="text-emerald-300 font-mono">reset</code> reinicia o nível atual; <code className="text-emerald-300 font-mono">clear</code> limpa o terminal</li>
+            </ul>
+          </section>
+
+          {/* CTA */}
+          <div className="flex flex-col items-center gap-3 pt-4">
+            <Button onClick={() => setPhase("playing")} size="lg" className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest px-10 py-6 text-base">
+              Iniciar Treinamento <ChevronDown className="w-4 h-4 ml-2 -rotate-90" />
+            </Button>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
@@ -816,45 +1057,6 @@ export function GitSimulator({ onBack }: Props) {
           </div>
           <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
         </div>
-
-        {/* Intro */}
-        <AnimatePresence initial={false}>
-          {showIntro && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-4">
-              <div className="bg-gradient-to-br from-emerald-900/20 via-slate-900/40 to-sky-900/20 border border-emerald-500/20 rounded-2xl p-6">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0"><Sparkles className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-black text-white mb-1">Bem-vindo ao Git Simulator</h3>
-                    <p className="text-sm text-slate-400 leading-relaxed">
-                      Treine os comandos reais do Git num ambiente seguro. Você verá o <strong>grafo de commits ao vivo</strong>, pode <strong>editar arquivos clicando</strong> neles, e tem <strong>4 níveis</strong> que cobrem desde o fluxo básico até resolução de conflitos e workflow remoto.
-                    </p>
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-3 mb-4">
-                  <div className="bg-slate-950/40 border border-white/5 rounded-xl p-3">
-                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-1"><Terminal className="w-3.5 h-3.5" /> Git</div>
-                    <p className="text-xs text-slate-400">Programa local que tira "fotografias" do código a cada commit. Sem internet.</p>
-                  </div>
-                  <div className="bg-slate-950/40 border border-white/5 rounded-xl p-3">
-                    <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-widest mb-1"><Github className="w-3.5 h-3.5" /> GitHub</div>
-                    <p className="text-xs text-slate-400">Site na nuvem que hospeda repositórios Git. Backup e portfólio.</p>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={() => setShowIntro(false)} size="sm" className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-bold uppercase tracking-widest text-xs">
-                    Começar <ChevronDown className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          {!showIntro && (
-            <button onClick={() => setShowIntro(true)} className="text-xs text-slate-500 hover:text-emerald-400 font-mono uppercase tracking-widest flex items-center gap-1 transition-colors mb-3">
-              <ChevronUp className="w-3.5 h-3.5 rotate-180" /> Reabrir explicação
-            </button>
-          )}
-        </AnimatePresence>
 
         {/* Level selector */}
         <div className="flex flex-wrap gap-2 mb-4">
@@ -879,6 +1081,17 @@ export function GitSimulator({ onBack }: Props) {
               </button>
             );
           })}
+        </div>
+
+        {/* Level briefing */}
+        <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 mb-4 flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+            <BookOpen className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-emerald-400 font-mono mb-1">Briefing do Nível {level.id}</p>
+            <p className="text-sm text-slate-300 leading-relaxed">{level.briefing}</p>
+          </div>
         </div>
 
         {/* Mission bar */}
