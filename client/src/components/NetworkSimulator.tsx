@@ -218,7 +218,7 @@ Content-Type: application/json
       setLines([{ type: "info", text: "Nível reiniciado." }]);
       return;
     } else {
-      output = \`Comando não encontrado: \${cmd}. Digite 'help' para ajuda.\`;
+      output = `Comando não encontrado: ${cmd}. Digite 'help' para ajuda.`;
       type = "err";
     }
 
@@ -226,11 +226,11 @@ Content-Type: application/json
 
     if (!levelDone && mission.check(netState, raw)) {
       setTimeout(() => {
-        pushLine("info", \`[SUCESSO] Missão concluída: \${mission.title}\`);
+        pushLine("info", `[SUCESSO] Missão concluída: ${mission.title}`);
         if (missionIdx + 1 < level.missions.length) {
           setMissionIdx((m) => m + 1);
         } else {
-          pushLine("ok", \`[NÍVEL CONCLUÍDO] Você dominou o nível: \${level.title}\`);
+          pushLine("ok", `[NÍVEL CONCLUÍDO] Você dominou o nível: ${level.title}`);
           setCompletedLevels((prev) => new Set(prev).add(levelIdx));
           if (levelIdx + 1 < LEVELS.length) {
             setUnlocked((prev) => new Set(prev).add(levelIdx + 1));
@@ -265,7 +265,7 @@ Content-Type: application/json
   const loadLevel = (idx: number) => {
     setLevelIdx(idx);
     setMissionIdx(0);
-    setLines([{ type: "info", text: \`Carregando Nível \${LEVELS[idx].id}: \${LEVELS[idx].title}...\` }]);
+    setLines([{ type: "info", text: `Carregando Nível ${LEVELS[idx].id}: ${LEVELS[idx].title}...` }]);
     setPhase("playing");
   };
 
@@ -277,8 +277,18 @@ Content-Type: application/json
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", text: "text-fuchsia-400" },
     ];
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
-        <div className="px-6 py-4">
+      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/assets/images/infrastructure_bg.png" 
+            alt="Infrastructure" 
+            className="w-full h-full object-cover opacity-[0.08]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/95 via-slate-950/80 to-slate-950" />
+        </div>
+
+        <div className="relative z-10 px-6 py-4">
           <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -327,8 +337,8 @@ Content-Type: application/json
               {LEVELS.map((lv, i) => {
                 const s = levelStyles[i % levelStyles.length];
                 return (
-                  <div key={lv.id} className={\`bg-slate-900/40 border \${s.border} rounded-xl p-4 flex items-start gap-4\`}>
-                    <div className={\`w-10 h-10 rounded-lg \${s.bg} border border-white/5 \${s.text} flex items-center justify-center font-black text-base shrink-0\`}>{lv.id}</div>
+                  <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
+                    <div className={`w-10 h-10 rounded-lg ${s.bg} border border-white/5 ${s.text} flex items-center justify-center font-black text-base shrink-0`}>{lv.id}</div>
                     <div className="flex-1">
                       <p className="text-base font-bold text-white mb-1">{lv.title}</p>
                       <p className="text-sm text-slate-400 leading-relaxed">{lv.briefing}</p>
@@ -351,8 +361,18 @@ Content-Type: application/json
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <img 
+          src="/assets/images/infrastructure_bg.png" 
+          alt="Infrastructure" 
+          className="w-full h-full object-cover opacity-[0.05]"
+        />
+        <div className="absolute inset-0 bg-slate-950/90" />
+      </div>
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
@@ -379,12 +399,12 @@ Content-Type: application/json
                 key={lv.id}
                 disabled={!isUnlocked}
                 onClick={() => isUnlocked && loadLevel(i)}
-                className={\`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all \${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${
                   isCurrent ? "bg-cyan-500/20 border-cyan-400 text-cyan-300" :
                   isDone ? "bg-cyan-500/5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" :
                   isUnlocked ? "bg-slate-900 border-white/10 text-slate-300 hover:border-white/30" :
                   "bg-slate-900/50 border-white/5 text-slate-600 cursor-not-allowed"
-                }\`}
+                }`}
               >
                 {!isUnlocked ? <Lock className="w-3 h-3" /> : isDone ? <Trophy className="w-3 h-3" /> : <span className="text-[10px]">{lv.id}</span>}
                 Nível {lv.id}: {lv.title}
@@ -403,13 +423,13 @@ Content-Type: application/json
           </div>
         </div>
 
-        <div className={\`rounded-2xl p-5 border mb-4 \${levelDone ? "bg-emerald-500/10 border-emerald-500/40" : "bg-sky-500/10 border-sky-500/30"}\`}>
+        <div className={`rounded-2xl p-5 border mb-4 ${levelDone ? "bg-emerald-500/10 border-emerald-500/40" : "bg-sky-500/10 border-sky-500/30"}`}>
           <div className="flex items-center gap-4">
             {levelDone ? <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0" /> :
               <div className="w-8 h-8 rounded-full bg-sky-500/30 text-sky-300 text-sm font-bold flex items-center justify-center shrink-0">{missionIdx + 1}</div>}
             <div className="flex-1 min-w-0">
               <p className="text-xs uppercase tracking-widest text-slate-400 font-mono mb-1">
-                {levelDone ? \`Nível \${level.id} concluído\` : \`Nível \${level.id} • Missão \${missionIdx + 1} de \${level.missions.length}\`}
+                {levelDone ? `Nível ${level.id} concluído` : `Nível ${level.id} • Missão ${missionIdx + 1} de ${level.missions.length}`}
               </p>
               <p className="text-base font-bold text-white">{levelDone ? "Avance para o próximo nível!" : mission.title}</p>
               {!levelDone && <p className="text-sm text-slate-400 font-mono mt-1">Dica: <span className="text-cyan-300">{mission.hint}</span></p>}
@@ -434,12 +454,12 @@ Content-Type: application/json
           </div>
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 font-mono text-sm space-y-1">
             {lines.map((l, i) => (
-              <pre key={i} className={\`whitespace-pre-wrap break-words \${
+              <pre key={i} className={`whitespace-pre-wrap break-words ${
                 l.type === "in" ? "text-white font-bold" :
                 l.type === "ok" ? "text-emerald-400" :
                 l.type === "err" ? "text-red-400" :
                 l.type === "info" ? "text-cyan-300" : "text-slate-400"
-              }\`}>{l.text}</pre>
+              }`}>{l.text}</pre>
             ))}
             <form onSubmit={onSubmit} className="flex items-center gap-2 pt-2">
               <span className="text-cyan-400 font-bold">$</span>
