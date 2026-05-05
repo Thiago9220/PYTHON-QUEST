@@ -10,7 +10,7 @@ interface Props {
 
 export default function PythonEditor({ code, onChange, isRunning, pythonReady }: Props) {
   return (
-    <div className="flex flex-col h-full bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-slate-950 border border-white/5 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <Terminal size={16} className="text-sky-300" />
