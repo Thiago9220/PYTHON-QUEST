@@ -167,14 +167,20 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
       <div className="flex-1 relative z-10 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-4 gap-4">
         {!isExpanded && (
           <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} themeColor={world?.color} hintsUsed={engine.hintsUsed} />
+            <MissionPanel 
+              challenge={challenge} 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab} 
+              themeColor={world?.color} 
+              hintsUsed={engine.hintsUsed}
+            />
 
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900/40 border border-white/10 rounded-[1.5rem] overflow-hidden shadow-2xl flex flex-col backdrop-blur-xl"
+              className="flex-1 bg-slate-900/60 border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(14,165,233,0.15)] flex flex-col backdrop-blur-xl"
             >
-              <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-white/5 bg-slate-900/40">
+              <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-white/5 bg-slate-900/80">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
                     <Terminal className="w-4 h-4 text-sky-400" />
@@ -235,6 +241,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
           onNext={() => onNext(world.challenges[challengeIndex + 1]?.id ?? null)}
           onBack={onBack}
           hasNextChallenge={challengeIndex >= 0 && challengeIndex < world.challenges.length - 1}
+          wasAlreadyCompleted={engine.wasAlreadyCompleted}
         />
       </div>
 

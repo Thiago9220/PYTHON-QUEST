@@ -17,23 +17,23 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
 
   const introDialogs = [
     {
-      npc: "Lina",
-      text: "Saudações, Tecedor de Scripts. O Arquipélago Aurora está perdendo seu brilho. A Grande Serpente de Python foi fragmentada e apenas você pode restaurá-la.",
+      npc: "AI-7",
+      text: "Conexão estabelecida, Operador. O Mainframe da cidade está instável e o Core central foi isolado pelo sistema de defesa.",
       avatar: "PY",
     },
     {
-      npc: "Lina",
-      text: "Para isso, você deve dominar os Arcanos do Código. Cada ilha guarda um segredo que, quando resolvido, fortalece o núcleo da nossa realidade.",
+      npc: "AI-7",
+      text: "Para contornar o firewall, você deve dominar a linguagem Python. Cada setor guarda um módulo corrompido que precisa ser reescrito.",
       avatar: "PY",
     },
     {
-      npc: "Lina",
-      text: "Seu primeiro destino é o Cais da Identidade. Lá, você aprenderá a dar nomes às coisas e a invocar as primeiras palavras de poder.",
+      npc: "AI-7",
+      text: "Seu primeiro destino é o Terminal Alpha. Lá, você aprenderá a alocar memória e a executar seus primeiros scripts de invasão.",
       avatar: "PY",
     },
     {
-      npc: "Lina",
-      text: "O console será seu espelho. O que você escrever lá se tornará real. Diga-me, como você deseja ser conhecido nos anais da história?",
+      npc: "AI-7",
+      text: "O console será sua principal interface. Diga-me, qual será o seu codinome nos registros da rede?",
       avatar: "PY",
     },
   ];
@@ -77,25 +77,39 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
               <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-2 backdrop-blur-md shadow-2xl">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
                 <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-sky-200/80">
-                  Sistema Iniciado: Scriptweaver Protocol
+                  Sistema Iniciado: Hacker Protocol
                 </span>
               </div>
 
-              <h1 className="text-6xl font-black leading-[0.85] tracking-tighter text-white md:text-8xl">
-                PYTHON
-                <span className="block mt-2 bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent filter drop-shadow-[0_0_30px_rgba(56,189,248,0.3)]">
-                  QUEST
-                </span>
-              </h1>
-
-              <p className="mt-10 max-w-xl text-xl leading-relaxed text-slate-400 font-medium">
-                O Arquipélago Aurora clama por sua presença. Restaure a <span className="text-white font-bold">Grande Serpente de Python</span> através da arte do código e torne-se um mestre dos Arcanos Digitais.
+              <h2 className="text-xl font-bold text-white mb-2">Conexão Estabelecida, Operador</h2>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                O Mainframe da cidade está instável. O Core central do sistema foi comprometido e apenas você, através da engenharia reversa do Python, pode restaurá-lo.
               </p>
+              
+              <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5 mb-6">
+                <div className="flex items-start gap-3">
+                  <Terminal className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    A Rede clama por sua presença. Quebre os firewalls, recupere o <span className="text-white font-bold">Core do Sistema</span> dominando a lógica da programação e torne-se um Operador Elite.
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => {
+                  setIntroIndex(0);
+                  setStep("intro");
+                }}
+                className="w-full h-12 bg-sky-600 hover:bg-sky-500 text-white font-black tracking-widest text-[10px] uppercase rounded-xl transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)]"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Iniciar Conexão
+              </Button>
 
               <div className="mt-12 grid max-w-xl grid-cols-3 gap-4">
                 {[
-                  { icon: Compass, label: `${getAllChallenges().length}`, sub: "Rituais" },
-                  { icon: Map, label: `${WORLDS.length}`, sub: "Ilhas" },
+                  { icon: Compass, label: `${getAllChallenges().length}`, sub: "Nodes" },
+                  { icon: Map, label: `${WORLDS.length}`, sub: "Setores" },
                   { icon: Zap, label: "Py", sub: "Engine" },
                 ].map(({ icon: Icon, label, sub }) => (
                   <div key={sub} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:bg-white/10 hover:border-white/20">
@@ -146,10 +160,10 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
               </svg>
 
               {[
-                { name: "Porto", top: "15%", left: "8%", color: "from-sky-300 to-cyan-100", active: true },
-                { name: "Escolhas", top: "36%", left: "45%", color: "from-emerald-300 to-lime-100" },
+                { name: "Terminal", top: "15%", left: "8%", color: "from-sky-300 to-cyan-100", active: true },
+                { name: "Nodes", top: "36%", left: "45%", color: "from-emerald-300 to-lime-100" },
                 { name: "Loops", top: "57%", left: "18%", color: "from-amber-300 to-orange-100" },
-                { name: "Funcoes", top: "18%", left: "68%", color: "from-violet-300 to-fuchsia-100" },
+                { name: "Modulos", top: "18%", left: "68%", color: "from-violet-300 to-fuchsia-100" },
               ].map((island, index) => (
                 <motion.div
                   key={island.name}
@@ -191,7 +205,7 @@ print(f"Ola, {nome}!")
               <div className="absolute bottom-28 left-2 rounded-3xl border border-sky-100 bg-white/90 p-5 shadow-xl shadow-sky-950/10 backdrop-blur">
                 <Trophy className="mb-3 h-6 w-6 text-emerald-600" />
                 <div className="text-sm font-black text-slate-950">Progresso salvo</div>
-                <div className="mt-1 text-xs text-slate-500">XP, ilhas e conquistas</div>
+                <div className="mt-1 text-xs text-slate-500">XP, setores e permissões</div>
               </div>
             </motion.section>
           </div>

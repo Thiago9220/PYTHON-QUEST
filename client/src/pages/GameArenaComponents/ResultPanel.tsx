@@ -14,6 +14,7 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   hasNextChallenge: boolean;
+  wasAlreadyCompleted?: boolean;
 }
 
 export function ResultPanel({
@@ -28,7 +29,10 @@ export function ResultPanel({
   onNext,
   onBack,
   hasNextChallenge,
+  wasAlreadyCompleted = false,
 }: Props) {
+  const showNextButton = isCorrect || wasAlreadyCompleted;
+
   return (
     <div className={`${isExpanded ? "flex-[2]" : "lg:w-[380px]"} flex flex-col bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-500`}>
       <div className="flex items-center justify-between px-4 py-3 bg-slate-950 text-sky-100 border-b border-white/5">
@@ -66,7 +70,7 @@ export function ResultPanel({
           >
             <div className="flex items-center gap-2 mb-1.5 font-black text-xs uppercase tracking-wider">
               {isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-              <span>{isCorrect ? "Ritual Sincronizado" : "Erro na Frequência"}</span>
+              <span>{isCorrect ? "Protocolo Sincronizado" : "Erro na Frequência"}</span>
             </div>
             <p className="text-xs font-medium leading-relaxed opacity-90">{feedback}</p>
           </motion.div>
@@ -87,7 +91,7 @@ export function ResultPanel({
           </div>
         </div>
 
-        {isCorrect && (
+        {showNextButton && (
           <Button 
             onClick={hasNextChallenge ? onNext : onBack} 
             className="w-full bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95"

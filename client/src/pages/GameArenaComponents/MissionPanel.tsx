@@ -10,7 +10,13 @@ interface Props {
   hintsUsed?: number;
 }
 
-export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = "#0ea5e9", hintsUsed = 0 }: Props) {
+export function MissionPanel({ 
+  challenge, 
+  activeTab, 
+  setActiveTab, 
+  themeColor = "#0ea5e9", 
+  hintsUsed = 0,
+}: Props) {
   return (
     <div className="flex flex-col glass-dark overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl">
       <div className="flex bg-slate-900/60 border-b border-white/5 backdrop-blur-md">
@@ -56,7 +62,7 @@ export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = 
                 className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity"
                 style={{ backgroundImage: `linear-gradient(to bottom right, ${themeColor}, transparent)` }}
               />
-              <h3 className="text-white/50 text-[9px] font-black uppercase tracking-[0.25em] mb-2">Objetivo do Scriptweaver</h3>
+              <h3 className="text-white/50 text-[9px] font-black uppercase tracking-[0.25em] mb-2">Diretriz do Operador</h3>
               <p className="text-white leading-relaxed font-bold text-lg tracking-tight">{challenge.description}</p>
             </div>
 
@@ -71,7 +77,7 @@ export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = 
                   <Lightbulb className="text-amber-400" size={18} />
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest">Dica Ancestral {idx + 1}</span>
+                  <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest">Dica do Sistema {idx + 1}</span>
                   <p className="text-xs text-slate-400 font-medium leading-relaxed">{hint.text}</p>
                 </div>
               </motion.div>

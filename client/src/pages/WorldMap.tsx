@@ -144,7 +144,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
               Saudações, <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{state.playerName || "Explorador"}</span>.
             </h1>
             <p className="text-slate-400 text-xl font-medium">
-              Sua jornada de Scriptweaver continua: <span className="text-white font-black">{getCompletedCount()}</span> de {getTotalChallenges()} rituais concluídos.
+              Sua jornada como Operador continua: <span className="text-white font-black">{getCompletedCount()}</span> de {getTotalChallenges()} Nodes invadidos.
             </p>
           </div>
         </div>

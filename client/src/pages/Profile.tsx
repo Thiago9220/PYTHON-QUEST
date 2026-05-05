@@ -157,7 +157,7 @@ export default function Profile({ onBack }: Props) {
               Mapa
             </Button>
             <div className="hidden h-6 w-px bg-white/10 sm:block" />
-            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-sky-400">Perfil do Scriptweaver</h1>
+            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-sky-400">Terminal do Operador</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -301,12 +301,12 @@ export default function Profile({ onBack }: Props) {
                     <Award className="h-8 w-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white">Certificado de Ritualismo</h3>
+                    <h3 className="text-2xl font-black text-white">Certificado de Acesso Root</h3>
                     <p className="text-sm font-medium text-slate-400">Valide seus conhecimentos arcanos em Python.</p>
                   </div>
                 </div>
                 <p className="text-slate-400 leading-relaxed text-sm mb-6 max-w-xl">
-                  A Grande Serpente reconhece apenas aqueles que dominam 80% do arquipélago. O certificado é o selo final da sua maestria.
+                  O Core concede permissão Root apenas àqueles que invadem 80% dos nós da rede. O certificado é a chave mestra final.
                 </p>
               </div>
               <Button 
@@ -389,7 +389,7 @@ export default function Profile({ onBack }: Props) {
 
             <div className="space-y-6">
               <div>
-                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Alcunha do Scriptweaver</label>
+                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Codinome do Operador</label>
                 <Input 
                   value={displayName} 
                   onChange={(e) => setDisplayName(e.target.value)} 
