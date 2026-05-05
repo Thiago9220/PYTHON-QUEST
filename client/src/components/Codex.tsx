@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Book, BookOpen, Code2, Copy, Play, X, Zap, History, Flame, LayoutList, Split, Terminal
+  Book, BookOpen, Code2, Copy, Play, X, Zap, History, Flame, LayoutList, Split, Terminal, Cpu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,7 +12,7 @@ type Props = {
   onSendToEditor?: (code: string) => void;
 };
 
-type TabId = "why_python" | "basics" | "control_flow" | "collections" | "functions" | "history" | "clean_code";
+type TabId = "why_python" | "basics" | "control_flow" | "collections" | "functions" | "cyber_tools" | "history" | "clean_code";
 
 const TABS = [
   { id: "why_python", title: "Protocolo Zero", icon: Zap },
@@ -20,6 +20,7 @@ const TABS = [
   { id: "control_flow", title: "Roteamento Lógico", icon: Split },
   { id: "collections", title: "Bancos de Memória", icon: LayoutList },
   { id: "functions", title: "Sub-rotinas", icon: Code2 },
+  { id: "cyber_tools", title: "Módulos Táticos", icon: Cpu },
   { id: "history", title: "Logs do Sistema", icon: History },
   { id: "clean_code", title: "Diretrizes de Segurança", icon: Flame },
 ] as const;
@@ -37,19 +38,31 @@ const RITUALS = {
     { title: "if / elif / else", desc: "Bifurcação lógica múltipla. Avalia diferentes cenários sequencialmente.", code: "acesso = 2\nif acesso == 1:\n    print('Nível 1')\nelif acesso == 2:\n    print('Nível 2')\nelse:\n    print('Negado')" },
     { title: "for (Loops)", desc: "Automatiza a execução de um script em massa para vários alvos.", code: "for i in range(3):\n    print('Bypass no Firewall...')" },
     { title: "while (Loops)", desc: "Mantém a execução contínua enquanto uma condição for verdadeira.", code: "tentativas = 0\nwhile tentativas < 3:\n    print('Quebrando senha...')\n    tentativas += 1" },
-    { title: "break / continue", desc: "Interrompe totalmente um loop (break) ou pula para a próxima iteração (continue).", code: "for p in range(5):\n    if p == 2:\n        continue\n    print(f'Porta {p} aberta')" }
+    { title: "break / continue", desc: "Interrompe totalmente um loop (break) ou pula para a próxima iteração (continue).", code: "for p in range(5):\n    if p == 2:\n        continue\n    print(f'Porta {p} aberta')" },
+    { title: "try / except", desc: "Bypass de Erros. Evita que o script pare se uma operação falhar (ex: conexão recusada).", code: "try:\n    print('Conectando...')\n    x = 10 / 0 # Erro proposital\nexcept:\n    print('Bypass: Erro detectado e ignorado.')" }
   ],
   collections: [
     { title: "Listas", desc: "Vetores para carregar múltiplos pacotes de dados em uma ordem sequencial.", code: "modulos = ['Stealth', 'Scanner']\nmodulos.append('Rootkit')\nprint(modulos[0])" },
     { title: "Dicionários", desc: "Banco de dados local associando chaves de registro aos seus valores.", code: "alvo = {'ip': '192.168.1.1', 'status': 'ativo'}\nprint(alvo['ip'])" },
     { title: "Tuplas", desc: "Listas blindadas (imutáveis). Seus dados não podem ser alterados após a criação.", code: "coordenadas = (45.5, -22.3)\nprint(coordenadas[1])" },
     { title: "Sets (Conjuntos)", desc: "Coleção de dados únicos não ordenados. Excelente para remover duplicatas.", code: "ips = {'10.0.0.1', '10.0.0.2', '10.0.0.1'}\nprint(ips) # O duplicado some" },
-    { title: "Slicing", desc: "Extrai fragmentos específicos de listas ou textos.", code: "hash = 'a3f9c1b7'\nprint(hash[0:4]) # a3f9" }
+    { title: "Slicing", desc: "Extrai fragmentos específicos de listas ou textos.", code: "hash = 'a3f9c1b7'\nprint(hash[0:4]) # a3f9" },
+    { title: "List Comprehension", desc: "Processamento de dados em massa em uma única linha. Otimiza varreduras.", code: "alvos = [f'10.0.0.{i}' for i in range(5)]\nprint(alvos)" }
   ],
   functions: [
     { title: "def (Definir)", desc: "Empacota uma sequência de comandos em uma sub-rotina reutilizável.", code: "def hackear():\n    print('Iniciando invasão...')\n\nhackear()" },
     { title: "Parâmetros", desc: "Variáveis de entrada que a sub-rotina exige para funcionar.", code: "def atacar(ip):\n    print(f'Atacando {ip}')\n\natacar('192.168.1.1')" },
     { title: "return (Retorno)", desc: "O resultado que a sub-rotina devolve para o sistema após a execução.", code: "def descriptografar(dado):\n    return dado + '_decrypted'\n\nresultado = descriptografar('senha')\nprint(resultado)" }
+  ],
+  cyber_tools: [
+    { title: "import os (Sistema)", desc: "Acessa o núcleo do sistema operacional alvo para varredura e manipulação de diretórios.", code: "import os\n# Lista arquivos na raiz do sistema\nprint(os.listdir('.'))" },
+    { title: "import hashlib (Criptografia)", desc: "Gera e compara hashes de segurança (ex: SHA-256) para forja ou quebra de senhas.", code: "import hashlib\nalvo = hashlib.sha256(b'admin123').hexdigest()\nprint(f'Hash gerado: {alvo}')" },
+    { title: "import base64 (Ofuscação)", desc: "Codifica e decodifica payloads para ocultar o tráfego na rede e burlar firewalls.", code: "import base64\nmensagem = b'Acesso Root'\ncripto = base64.b64encode(mensagem)\nprint(cripto)" },
+    { title: "import socket (Rede)", desc: "Abre sockets TCP/UDP de baixo nível para port scanning e interceptação de pacotes.", code: "import socket\nrede = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nprint('Socket TCP pronto.')" },
+    { title: "import random (Caos)", desc: "Gera entropia e números aleatórios, vital para criptografia e evasão de padrões.", code: "import random\nporta = random.randint(1024, 65535)\nprint(f'Porta: {porta}')" },
+    { title: "with open (Arquivos)", desc: "Acesso silencioso a arquivos. Garante que os vestígios (locks) sejam removidos.", code: "with open('logs.txt', 'w') as f:\n    f.write('Acesso: Admin')\nprint('Logs salvos.')" },
+    { title: "import json (Parser)", desc: "Decodifica dados interceptados em formato JSON de bancos de dados remotos.", code: "import json\ndado_raw = '{\"status\": \"ok\", \"id\": 1}'\ndata = json.loads(dado_raw)\nprint(f'ID: {data[\"id\"]}')" },
+    { title: "import sys (Argumentos)", desc: "Captura parâmetros passados via linha de comando ao executar seu script de ataque.", code: "import sys\n# Uso: script.py <ip>\nif len(sys.argv) > 1:\n    print(f'Injetando em: {sys.argv[1]}')" }
   ]
 };
 
@@ -93,7 +106,7 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
                 <Zap size={16} /> Por que Python?
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium mb-8">
-                Criada para ser lida por humanos, não apenas por máquinas. O Python permite que você foque na lógica da intrusão, e não na sintaxe pesada dos sistemas legados.
+                Criada para ser lida por humanos, não apenas por máquinas. O Python permite que você foque na lógica da intrusão, e não na sintaxe pesada dos sistemas legados. É a linguagem que transformou usuários comuns em <strong className="text-sky-400">Aritetos da Rede</strong>.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
@@ -175,7 +188,14 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
                   <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                   <div>
                     <h4 className="text-emerald-300 font-bold mb-1">Anotações Estratégicas</h4>
-                    <p className="text-slate-300 leading-relaxed">Comente o <strong className="text-white">motivo</strong> ("Bypass temporário para evitar detecção"), e não o óbvio ("Este código faz um loop de 3"). A sintaxe já é autodescritiva.</p>
+                    <p className="text-slate-300 leading-relaxed">Comente o <strong className="text-white">motivo</strong> ("Bypass temporário"), e não o óbvio ("Loop de 3"). A sintaxe já é autodescritiva.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4 items-start">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                  <div>
+                    <h4 className="text-emerald-300 font-bold mb-1">Sanitização de Inputs</h4>
+                    <p className="text-slate-300 leading-relaxed">Nunca confie em dados externos. Valide e converta tipos (ex: <code className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded text-sm">int()</code>) para evitar injeções acidentais no Core.</p>
                   </div>
                 </li>
               </ul>
@@ -187,6 +207,7 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
       case "control_flow":
       case "collections":
       case "functions":
+      case "cyber_tools":
         const rituals = RITUALS[activeTab as keyof typeof RITUALS];
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
