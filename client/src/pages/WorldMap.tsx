@@ -175,10 +175,21 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
                   boxShadow: unlocked ? `0 10px 30px -10px ${themeColor}20` : undefined
                 }}
               >
-                <div className="h-48 relative overflow-hidden" style={{ backgroundColor: `${themeColor}20` }}>
-                  {/* Glowing core */}
+                <div className="h-48 relative overflow-hidden">
+                  {/* World Background Image */}
+                  {world.bgImage ? (
+                    <img 
+                      src={world.bgImage} 
+                      alt={world.title} 
+                      className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-900" />
+                  )}
+                  
+                  {/* Glowing overlay */}
                   <div 
-                    className="absolute inset-0 opacity-50"
+                    className="absolute inset-0 opacity-40 mix-blend-overlay"
                     style={{ backgroundImage: `radial-gradient(circle at 50% 120%, ${themeColor}, transparent 70%)` }}
                   />
                   {/* Holographic Overlays */}

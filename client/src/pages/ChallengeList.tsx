@@ -54,9 +54,9 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
   const themeColor = world.color || "#0EA5E9";
 
   const motivationalMessage = (() => {
-    if (completedCount === 0) return "Inicie sua jornada sagrada e restaure o equilíbrio do código.";
-    if (completionPct === 100) return "Domínio total alcançado! Você transcedeu os desafios desta região.";
-    if (completionPct >= 75) return `Quase lá: restam apenas ${remaining} prova${remaining > 1 ? "s" : ""} de sabedoria.`;
+    if (completedCount === 0) return "Inicie o protocolo de invasão e restaure o Core do sistema.";
+    if (completionPct === 100) return "Domínio total do setor alcançado! Todos os módulos foram reescritos.";
+    if (completionPct >= 75) return `Quase lá: restam apenas ${remaining} script${remaining > 1 ? "s" : ""} para o bypass final.`;
     if (completionPct >= 50) return "Sua conexão com o Arquipélago está se fortalecendo.";
     return "Um bom começo. O conhecimento Python aguarda sua determinação.";
   })();
@@ -133,7 +133,18 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
 
       <main className="relative z-10 flex-1">
         {/* World Hero Section */}
-        <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-32">
+        <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-32 border-b border-white/5">
+          {/* World Background Image */}
+          {world.bgImage && (
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={world.bgImage} 
+                alt={world.title} 
+                className="absolute inset-0 w-full h-full object-cover opacity-20"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/80 to-slate-950" />
+            </div>
+          )}
           <div className="max-w-7xl mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -194,7 +205,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                   onClick={() => nextChallengeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} 
                   className="w-full md:w-auto bg-white text-slate-950 hover:bg-slate-200 font-black uppercase tracking-widest text-xs h-12 px-8 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"
                 >
-                  {completedCount === 0 ? "INICIAR RITUAL" : `CONTINUAR #${nextIncompleteIdx + 1}`}
+                  {completedCount === 0 ? "INICIAR PROTOCOLO" : `CONTINUAR #${nextIncompleteIdx + 1}`}
                 </Button>
               )}
             </div>
@@ -204,7 +215,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
 
           {/* List */}
           <div className="space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6 pl-4 border-l-2 border-white/10">Rituais Disponíveis</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6 pl-4 border-l-2 border-white/10">Scripts Disponíveis</h2>
             {world.challenges.map((challenge, idx) => {
               const completed = isChallengeCompleted(challenge.id);
               const progressState = state.challengeProgress[challenge.id];
@@ -267,7 +278,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                       </div>
                       
                       <p className={`text-sm leading-relaxed truncate font-medium ${isLocked ? "text-slate-700" : "text-slate-400"}`}>
-                        {isLocked ? "Complete o ritual anterior para desbloquear este conhecimento." : challenge.description}
+                        {isLocked ? "Complete o script anterior para desbloquear este módulo." : challenge.description}
                       </p>
 
                       {!isLocked && (

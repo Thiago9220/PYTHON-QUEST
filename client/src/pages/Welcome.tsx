@@ -46,22 +46,16 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#020617]">
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Deep Space / Aurora Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(14,165,233,0.15),transparent_35%),radial-gradient(circle_at_85%_80%,rgba(16,185,129,0.15),transparent_35%)]" />
+      <div className="absolute inset-0">
+        {/* Cyberpunk Background Image */}
+        <img 
+          src="/assets/images/cyberpunk_bg.png" 
+          alt="Cyberpunk Hacker Background" 
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/40 to-[#020617]" />
         
-        {/* Moving Aurora Glows */}
-        <motion.div 
-          animate={{ opacity: [0.1, 0.2, 0.1], x: [-20, 20, -20] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-sky-500/20 blur-[150px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ opacity: [0.1, 0.15, 0.1], x: [20, -20, 20] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] bg-emerald-500/10 blur-[150px] rounded-full" 
-        />
-
+        {/* Subtle Scanline/Grid Overlay */}
         <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px]" />
       </div>
 
