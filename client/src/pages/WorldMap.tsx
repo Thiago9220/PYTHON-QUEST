@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, Lock, LogOut, Star, Trophy, HelpCircle, Sparkles } from "lucide-react";
+import { BookOpen, ChevronRight, Lock, LogOut, Star, Trophy, HelpCircle } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -138,7 +138,6 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
         <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md">
-              <Sparkles className="h-3 w-3 text-sky-400" />
               <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Arquipélago Aurora</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">

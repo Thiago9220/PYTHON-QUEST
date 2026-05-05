@@ -8,6 +8,8 @@ import WorldMap from "./pages/WorldMap";
 import ChallengeList from "./pages/ChallengeList";
 import GameArena from "./pages/GameArena";
 import Profile from "./pages/Profile";
+import { PomodoroProvider } from "./contexts/PomodoroContext";
+import { PomodoroTimer } from "./components/PomodoroTimer";
 
 type View =
   | { name: "welcome" }
@@ -57,6 +59,8 @@ function AppContent() {
 
       {view.name === "profile" && <Profile onBack={goMap} />}
 
+      {view.name !== "welcome" && <PomodoroTimer />}
+
       <Toaster position="top-center" expand={false} richColors />
     </div>
   );
@@ -67,7 +71,9 @@ export default function App() {
     <ThemeProvider defaultTheme="light">
       <AuthProvider>
         <GameProvider>
-          <AppContent />
+          <PomodoroProvider>
+            <AppContent />
+          </PomodoroProvider>
         </GameProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -9,7 +9,6 @@ import {
   LogOut, 
   Star, 
   Trophy,
-  Sparkles,
   ChevronRight,
   BookOpen,
   Zap
@@ -142,7 +141,6 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
               transition={{ duration: 0.8 }}
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md mb-6">
-                <Sparkles className="h-3 w-3" style={{ color: themeColor }} />
                 <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{world.subtitle}</span>
               </div>
               <h1 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-none">
@@ -275,7 +273,6 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                       {!isLocked && (
                         <div className="flex items-center gap-3 mt-4 flex-wrap">
                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-200 transition-colors">
-                            <Sparkles className="w-3 h-3" />
                             {challenge.concept}
                           </div>
                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-[9px] font-black uppercase tracking-widest text-sky-400">

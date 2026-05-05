@@ -9,8 +9,8 @@ import {
   RotateCcw, 
   Star, 
   Trophy,
-  Sparkles,
-  Zap
+  Zap,
+  Terminal
 } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { Button } from "@/components/ui/button";
@@ -167,7 +167,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
       <div className="flex-1 relative z-10 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-4 gap-4">
         {!isExpanded && (
           <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} themeColor={world?.color} />
+            <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} themeColor={world?.color} hintsUsed={engine.hintsUsed} />
 
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
@@ -177,7 +177,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-white/5 bg-slate-900/40">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
-                    <Sparkles className="w-4 h-4 text-sky-400" />
+                    <Terminal className="w-4 h-4 text-sky-400" />
                   </div>
                   <div>
                     <div className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Câmara de Código</div>
@@ -219,25 +219,6 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                 isRunning={engine.isRunning}
                 pythonReady={engine.pythonReady}
               />
-
-              {engine.showHint && engine.currentHintIdx > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="border-t border-amber-400/20 px-5 py-4 bg-amber-400/5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-[0.2em]">Dica Ancestral {engine.currentHintIdx}</span>
-                        <p className="text-slate-300 text-xs font-medium leading-relaxed mt-1">{challenge.hints[engine.currentHintIdx - 1]?.text}</p>
-                      </div>
-                    </div>
-                    <button onClick={() => engine.setShowHint(false)} className="text-slate-600 hover:text-white p-1 transition-colors">×</button>
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           </div>
         )}

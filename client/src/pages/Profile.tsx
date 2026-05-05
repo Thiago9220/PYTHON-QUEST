@@ -12,7 +12,6 @@ import {
   Target,
   Trophy,
   X,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -219,7 +218,6 @@ export default function Profile({ onBack }: Props) {
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-md">
-                      <Sparkles className="h-3 w-3 text-sky-400" />
                       <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Iniciado do Arquipélago</span>
                     </div>
                     <div className="flex items-center gap-4">

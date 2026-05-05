@@ -1,4 +1,5 @@
 import { BookOpen, ClipboardList, Lightbulb } from "lucide-react";
+import { motion } from "framer-motion";
 import { Challenge } from "@/lib/types";
 
 interface Props {
@@ -6,9 +7,10 @@ interface Props {
   activeTab: "mission" | "concept";
   setActiveTab: (tab: "mission" | "concept") => void;
   themeColor?: string;
+  hintsUsed?: number;
 }
 
-export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = "#0ea5e9" }: Props) {
+export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = "#0ea5e9", hintsUsed = 0 }: Props) {
   return (
     <div className="flex flex-col glass-dark overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl">
       <div className="flex bg-slate-900/60 border-b border-white/5 backdrop-blur-md">
@@ -58,17 +60,22 @@ export function MissionPanel({ challenge, activeTab, setActiveTab, themeColor = 
               <p className="text-white leading-relaxed font-bold text-lg tracking-tight">{challenge.description}</p>
             </div>
 
-            {challenge.hints[0] && (
-              <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
+            {hintsUsed > 0 && challenge.hints.slice(0, hintsUsed).map((hint, idx) => (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl"
+              >
                 <div className="bg-amber-500/10 p-2 rounded-xl shadow-sm">
                   <Lightbulb className="text-amber-400" size={18} />
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest">Dica Ancestral</span>
-                  <p className="text-xs text-slate-400 font-medium leading-relaxed">{challenge.hints[0].text}</p>
+                  <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest">Dica Ancestral {idx + 1}</span>
+                  <p className="text-xs text-slate-400 font-medium leading-relaxed">{hint.text}</p>
                 </div>
-              </div>
-            )}
+              </motion.div>
+            ))}
           </div>
         ) : (
           <div className="space-y-4">

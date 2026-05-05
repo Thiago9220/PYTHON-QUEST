@@ -113,43 +113,43 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 18, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white border border-sky-100 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[88vh] overflow-hidden flex flex-col"
+            className="glass-dark border border-white/10 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[88vh] overflow-hidden flex flex-col bg-slate-900/95 backdrop-blur-xl"
           >
-            <div className="p-5 md:p-7 border-b border-sky-100 flex items-center justify-between bg-gradient-to-r from-sky-50 to-emerald-50 shrink-0">
+            <div className="p-5 md:p-7 border-b border-white/5 flex items-center justify-between bg-slate-950/40 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 bg-sky-100 rounded-2xl flex items-center justify-center border border-sky-200 shrink-0">
-                  <BookOpen className="w-6 h-6 text-sky-700" />
+                <div className="w-11 h-11 bg-sky-500/10 rounded-2xl flex items-center justify-center border border-sky-500/20 shrink-0">
+                  <BookOpen className="w-6 h-6 text-sky-400" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-xl md:text-2xl font-black text-slate-950 truncate">Guia Python</h2>
-                  <p className="text-xs text-slate-500 uppercase tracking-widest font-mono">Sintaxe essencial para os desafios</p>
+                  <h2 className="text-xl md:text-2xl font-black text-white truncate">Guia Python</h2>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Sintaxe essencial para os desafios</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl text-slate-500 hover:text-slate-900">
+              <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl text-slate-500 hover:text-white hover:bg-white/5">
                 <X className="w-6 h-6" />
               </Button>
             </div>
 
-            <div className="p-4 md:p-6 border-b border-sky-100 bg-white shrink-0">
+            <div className="p-4 md:p-6 border-b border-white/5 bg-slate-950/20 shrink-0">
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Buscar: print, if, for..."
-                    className="pl-9 border-sky-100"
+                    placeholder="Buscar rituais: print, if, for..."
+                    className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-sky-500 rounded-xl"
                   />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                   {categories.map((item) => (
                     <button
                       key={item}
                       onClick={() => setCategory(item)}
-                      className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap border ${
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap border transition-all ${
                         category === item
-                          ? "bg-sky-600 text-white border-sky-600"
-                          : "bg-white text-slate-600 border-sky-100 hover:border-sky-300"
+                          ? "bg-sky-600 text-white border-sky-500 shadow-lg shadow-sky-900/20"
+                          : "bg-white/5 text-slate-400 border-white/10 hover:border-white/20 hover:text-white"
                       }`}
                     >
                       {item}
@@ -162,29 +162,29 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filtered.map((entry) => (
-                  <div key={entry.title} className="border border-sky-100 rounded-2xl bg-white shadow-sm overflow-hidden">
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3 mb-3">
+                  <div key={entry.title} className="border border-white/10 rounded-2xl bg-slate-900/60 shadow-xl overflow-hidden group hover:border-white/20 transition-all">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-3 mb-4">
                         <div>
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-sky-700">{entry.category}</span>
-                          <h3 className="text-lg font-black text-slate-950 mt-1">{entry.title}</h3>
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-sky-400">{entry.category}</span>
+                          <h3 className="text-xl font-black text-white mt-1 group-hover:text-sky-300 transition-colors">{entry.title}</h3>
                         </div>
-                        <Code2 className="w-5 h-5 text-sky-500 shrink-0" />
+                        <Code2 className="w-5 h-5 text-sky-500/50 shrink-0 group-hover:text-sky-400 transition-colors" />
                       </div>
-                      <p className="text-sm text-slate-600 leading-relaxed mb-4">{entry.description}</p>
-                      <pre className="bg-slate-950 text-sky-100 rounded-xl p-4 text-sm overflow-x-auto whitespace-pre-wrap">
+                      <p className="text-sm text-slate-400 font-medium leading-relaxed mb-5">{entry.description}</p>
+                      <pre className="bg-slate-950 border border-white/5 text-sky-100 rounded-xl p-4 text-sm overflow-x-auto whitespace-pre-wrap font-mono selection:bg-sky-500/30">
                         {entry.code}
                       </pre>
                     </div>
-                    <div className="px-5 py-3 bg-sky-50 border-t border-sky-100 flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => copyCode(entry.code)}>
-                        <Copy className="w-4 h-4 mr-1" />
+                    <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex justify-end gap-3">
+                      <Button variant="ghost" size="sm" onClick={() => copyCode(entry.code)} className="text-slate-400 hover:text-white hover:bg-white/5 font-bold">
+                        <Copy className="w-4 h-4 mr-2" />
                         Copiar
                       </Button>
                       {onSendToEditor && (
-                        <Button size="sm" onClick={() => onSendToEditor(entry.code)} className="bg-sky-600 hover:bg-sky-700">
-                          <Play className="w-4 h-4 mr-1" />
-                          Enviar
+                        <Button size="sm" onClick={() => onSendToEditor(entry.code)} className="bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-[10px] px-4 rounded-lg shadow-lg shadow-sky-900/20">
+                          <Play className="w-4 h-4 mr-2" />
+                          Injetar Código
                         </Button>
                       )}
                     </div>
