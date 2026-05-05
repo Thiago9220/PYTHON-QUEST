@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
-import { GameProvider } from "./contexts/GameContext";
+import { GameProvider, useGame } from "./contexts/GameContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Welcome from "./pages/Welcome";
@@ -8,6 +8,7 @@ import WorldMap from "./pages/WorldMap";
 import ChallengeList from "./pages/ChallengeList";
 import GameArena from "./pages/GameArena";
 import Profile from "./pages/Profile";
+import { GitSimulator } from "./components/GitSimulator";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 
@@ -16,10 +17,34 @@ type View =
   | { name: "map" }
   | { name: "list"; worldId: string }
   | { name: "arena"; challengeId: string; worldId: string }
-  | { name: "profile" };
+  | { name: "profile" }
+  | { name: "git-simulator" };
 
 function AppContent() {
-  const [view, setView] = useState<View>({ name: "welcome" });
+  const { state, hasHydrated } = useGame();
+  const [view, setView] = useState<View>(() => {
+    const saved = localStorage.getItem("python_quest_current_view");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return { name: "welcome" };
+      }
+    }
+    return { name: "welcome" };
+  });
+
+  // Persist view changes
+  useEffect(() => {
+    localStorage.setItem("python_quest_current_view", JSON.stringify(view));
+  }, [view]);
+
+  // Handle initial redirection if already logged in/identified
+  useEffect(() => {
+    if (hasHydrated && state.playerName && view.name === "welcome") {
+      setView({ name: "map" });
+    }
+  }, [hasHydrated, state.playerName, view.name]);
 
   const goWelcome = () => setView({ name: "welcome" });
   const goMap = () => setView({ name: "map" });
@@ -33,8 +58,14 @@ function AppContent() {
       {view.name === "welcome" && <Welcome onStart={goMap} />}
 
       {view.name === "map" && (
-        <WorldMap onSelectWorld={goList} onOpenProfile={goProfile} />
+        <WorldMap
+          onSelectWorld={goList}
+          onOpenProfile={goProfile}
+          onOpenGitSimulator={() => setView({ name: "git-simulator" })}
+        />
       )}
+
+      {view.name === "git-simulator" && <GitSimulator onBack={goMap} />}
 
       {view.name === "list" && (
         <ChallengeList

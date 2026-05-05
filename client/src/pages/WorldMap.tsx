@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, Lock, LogOut, Star, Trophy, HelpCircle } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -20,9 +20,10 @@ const WORLD_TAGS: Record<string, string> = {
 type Props = {
   onSelectWorld: (worldId: string) => void;
   onOpenProfile: () => void;
+  onOpenGitSimulator: () => void;
 };
 
-export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
+export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator }: Props) {
   const {
     state,
     dispatch,
@@ -104,6 +105,16 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
               <span className="text-xs font-black text-white">{unlockedAchievements.length}/{state.achievements.length}</span>
             </button>
 
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onOpenGitSimulator}
+              className="h-9 w-9 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+              title="Aprender Git & GitHub"
+            >
+              <GitBranch className="w-4 h-4" />
+            </Button>
+
             <div className="h-8 w-px bg-white/10 mx-1 hidden md:block" />
 
             <div
@@ -134,16 +145,16 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
-        <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="space-y-4">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8 md:py-10">
+        <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md">
-              <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Arquipélago Aurora</span>
+              <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Arquipélago Aurora</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
               Saudações, <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{state.playerName || "Explorador"}</span>.
             </h1>
-            <p className="text-slate-400 text-xl font-medium">
+            <p className="text-slate-400 text-lg font-medium">
               Sua jornada como Operador continua: <span className="text-white font-black">{getCompletedCount()}</span> de {getTotalChallenges()} Nodes invadidos.
             </p>
           </div>

@@ -224,31 +224,51 @@ print(f"Ola, {nome}!")
             transition={{ duration: 0.4 }}
             className="mx-auto w-full max-w-md"
           >
-            <div className="rounded-3xl border border-sky-100 bg-white/90 p-8 text-center shadow-2xl shadow-sky-950/10 backdrop-blur">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-400 font-black text-white shadow-lg shadow-sky-900/20">
-                PY
-              </div>
-              <h2 className="mb-2 text-3xl font-black text-slate-950">Como voce quer aparecer?</h2>
-              <p className="mb-7 text-sm text-slate-500">Seu nome sera usado no mapa, no perfil e no certificado.</p>
+            <div className="rounded-[2.5rem] border border-white/10 bg-slate-950/80 p-10 text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden group">
+              {/* Decorative scanline effect inside the card */}
+              <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,24,38,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
+              
+              <div className="relative z-10">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-sky-500 to-emerald-400 font-black text-white text-2xl shadow-[0_0_30px_rgba(14,165,233,0.4)]">
+                  PY
+                </div>
+                
+                <h2 className="mb-2 text-3xl font-black text-white tracking-tight">Identificação</h2>
+                <p className="mb-8 text-sm text-slate-400 font-medium">Informe seu codinome para os registros da rede.</p>
 
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleStart()}
-                placeholder="Digite seu nome..."
-                maxLength={20}
-                className="mb-6 border-sky-200 bg-white py-6 text-center text-lg text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-sky-500/20"
-                autoFocus
-              />
+                <div className="relative mb-8">
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleStart()}
+                    placeholder="Codinome do Operador..."
+                    maxLength={20}
+                    className="h-14 border-white/10 bg-white/5 py-6 text-center text-lg text-white placeholder:text-slate-600 focus:border-sky-500 focus:ring-sky-500/20 rounded-xl transition-all"
+                    autoFocus
+                  />
+                  <div className="absolute inset-0 rounded-xl border border-sky-500/20 pointer-events-none" />
+                </div>
 
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep("hero")} className="flex-1 border-sky-200">
-                  Voltar
-                </Button>
-                <Button onClick={handleStart} disabled={name.trim().length < 2} className="flex-1 bg-sky-600 font-bold hover:bg-sky-700">
-                  Entrar no mapa
-                </Button>
+                <div className="flex gap-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setStep("hero")} 
+                    className="flex-1 border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 h-12 rounded-xl font-bold transition-all"
+                  >
+                    Voltar
+                  </Button>
+                  <Button 
+                    onClick={handleStart} 
+                    disabled={name.trim().length < 2} 
+                    className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)] transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
+                  >
+                    INICIAR BYPASS
+                  </Button>
+                </div>
               </div>
+
+              {/* Bottom decorative line */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-sky-500/50 to-transparent" />
             </div>
           </motion.div>
         )}
