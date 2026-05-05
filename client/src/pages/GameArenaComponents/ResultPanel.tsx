@@ -69,8 +69,8 @@ export function ResultPanel({
             }`}
           >
             <div className="flex items-center gap-2 mb-1.5 font-black text-xs uppercase tracking-wider">
-              {isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-              <span>{isCorrect ? "Protocolo Sincronizado" : "Erro na Frequência"}</span>
+              {isCorrect ? <CheckCircle2 size={16} className="animate-bounce" /> : <XCircle size={16} />}
+              <span>{isCorrect ? "Acesso Root Concedido" : "Erro na Frequência"}</span>
             </div>
             <p className="text-xs font-medium leading-relaxed opacity-90">{feedback}</p>
           </motion.div>
@@ -94,9 +94,9 @@ export function ResultPanel({
         {showNextButton && (
           <Button 
             onClick={hasNextChallenge ? onNext : onBack} 
-            className="w-full bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95 animate-pulse"
           >
-            {hasNextChallenge ? "PRÓXIMO RITUAL" : "VOLTAR AO ARQUIPÉLAGO"}
+            {hasNextChallenge ? "PRÓXIMO MÓDULO" : "VOLTAR AO TERMINAL"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}

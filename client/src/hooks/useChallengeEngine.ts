@@ -40,24 +40,27 @@ export function useChallengeEngine(
     wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
   });
 
-  const confettiFiredRef = useRef<string | null>(null);
+  const lastChallengeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    confettiFiredRef.current = null;
-    setState((prev) => ({
-      ...prev,
-      code: challenge?.starterCode ?? "",
-      output: "",
-      isCorrect: null,
-      feedback: "",
-      hintsUsed: 0,
-      attempts: 0,
-      showHint: false,
-      currentHintIdx: 0,
-      showCutscene: false,
-      wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
-    }));
-  }, [challenge?.id, isChallengeCompleted]);
+    if (challenge?.id && lastChallengeIdRef.current !== challenge.id) {
+      lastChallengeIdRef.current = challenge.id;
+      confettiFiredRef.current = null;
+      setState((prev) => ({
+        ...prev,
+        code: challenge?.starterCode ?? "",
+        output: "",
+        isCorrect: null,
+        feedback: "",
+        hintsUsed: 0,
+        attempts: 0,
+        showHint: false,
+        currentHintIdx: 0,
+        showCutscene: false,
+        wasAlreadyCompleted: isChallengeCompleted(challenge.id),
+      }));
+    }
+  }, [challenge?.id, isChallengeCompleted, challenge?.starterCode]);
 
   useEffect(() => {
     async function init() {

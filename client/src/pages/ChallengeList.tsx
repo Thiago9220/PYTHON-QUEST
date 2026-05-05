@@ -196,7 +196,9 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                       transition={{ duration: 1.5, ease: "circOut" }}
                     />
                   </div>
-                  <span className="text-sm font-black font-mono text-white" style={{ color: themeColor }}>{completionPct}%</span>
+                  <span className="text-sm font-black font-mono text-white" style={{ color: themeColor }}>
+                    {completedCount}/{world.challenges.length} - {completionPct}%
+                  </span>
                 </div>
               </div>
               

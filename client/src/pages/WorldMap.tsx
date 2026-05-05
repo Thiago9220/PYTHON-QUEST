@@ -232,7 +232,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
                   <div className="space-y-3 pt-4">
                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
                       <span>Progresso</span>
-                      <span className="text-white">{worldProgress}%</span>
+                      <span className="text-white">{completed}/{total} - {worldProgress}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                       <motion.div 

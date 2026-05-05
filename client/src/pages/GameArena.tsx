@@ -213,7 +213,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                     className="bg-sky-600 hover:bg-sky-500 h-10 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
                   >
                     <Play className="w-4 h-4 mr-2" />
-                    {engine.isRunning ? "PROJETANDO..." : engine.isCorrect ? "SINCRONIZADO" : "EXECUTAR"}
+                    {engine.isRunning ? "PROJETANDO..." : engine.isCorrect ? "SISTEMA COMPROMETIDO" : "EXECUTAR"}
                   </Button>
                 </div>
               </div>
