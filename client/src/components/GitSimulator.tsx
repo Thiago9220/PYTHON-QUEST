@@ -885,9 +885,9 @@ export function GitSimulator({ onBack }: Props) {
             <div className="inline-flex p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-5">
               <Terminal className="w-10 h-10" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">Git Simulator</h1>
-            <p className="text-emerald-400 font-mono text-xs uppercase tracking-[0.3em] mb-6">Treine sem medo de quebrar nada</p>
-            <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight">Git Simulator</h1>
+            <p className="text-emerald-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">Treine sem medo de quebrar nada</p>
+            <p className="text-slate-400 text-lg max-w-3xl mx-auto leading-relaxed">
               Um terminal simulado para você praticar Git e GitHub digitando comandos reais. Sem instalar nada, sem risco de perder código, com grafo de commits ao vivo e missões que ensinam do zero.
             </p>
           </div>
@@ -900,18 +900,18 @@ export function GitSimulator({ onBack }: Props) {
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Clock className="w-5 h-5 text-amber-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Máquina do tempo</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Volte para qualquer versão anterior do seu código com um comando. Quebrou algo? Desfaça em segundos.</p>
+                <p className="text-base font-bold text-white mb-1">Máquina do tempo</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Volte para qualquer versão anterior do seu código com um comando. Quebrou algo? Desfaça em segundos.</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Users className="w-5 h-5 text-sky-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Trabalho em time</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Várias pessoas mexendo no mesmo projeto sem pisar no pé umas das outras. O Git resolve quem mudou o quê.</p>
+                <p className="text-base font-bold text-white mb-1">Trabalho em time</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Várias pessoas mexendo no mesmo projeto sem pisar no pé umas das outras. O Git resolve quem mudou o quê.</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Shield className="w-5 h-5 text-fuchsia-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Indispensável no mercado</p>
-                <p className="text-xs text-slate-400 leading-relaxed">99% das empresas de tecnologia usam Git. É o requisito mais básico — saber Git é como saber abrir um arquivo.</p>
+                <p className="text-base font-bold text-white mb-1">Indispensável no mercado</p>
+                <p className="text-sm text-slate-400 leading-relaxed">99% das empresas de tecnologia usam Git. É o requisito mais básico — saber Git é como saber abrir um arquivo.</p>
               </div>
             </div>
           </section>
@@ -923,21 +923,21 @@ export function GitSimulator({ onBack }: Props) {
             </h2>
             <div className="grid md:grid-cols-2 gap-3">
               <div className="bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold uppercase tracking-widest mb-3">
                   <Terminal className="w-3.5 h-3.5" /> Git (programa)
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">Programa de linha de comando instalado no seu computador. Tira "fotografias" do projeto a cada commit, mantém histórico, gerencia branches.</p>
-                <p className="text-[11px] text-slate-500 font-mono">Local • Offline • Linha de comando</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Programa de linha de comando instalado no seu computador. Tira "fotografias" do projeto a cada commit, mantém histórico, gerencia branches.</p>
+                <p className="text-xs text-slate-500 font-mono">Local • Offline • Linha de comando</p>
               </div>
               <div className="bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-widest mb-3">
+                <div className="flex items-center gap-2 text-sky-400 text-sm font-bold uppercase tracking-widest mb-3">
                   <Cloud className="w-3.5 h-3.5" /> GitHub (site)
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">Plataforma na nuvem que hospeda repositórios Git. Permite compartilhar código, colaborar via Pull Requests, e funciona como portfólio público.</p>
-                <p className="text-[11px] text-slate-500 font-mono">Nuvem • Online • Interface web</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Plataforma na nuvem que hospeda repositórios Git. Permite compartilhar código, colaborar via Pull Requests, e funciona como portfólio público.</p>
+                <p className="text-xs text-slate-500 font-mono">Nuvem • Online • Interface web</p>
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-3 text-center italic">Analogia: Git é o Word; GitHub é o Google Drive. Você usa o programa local e sincroniza com a nuvem.</p>
+            <p className="text-sm text-slate-500 mt-3 text-center italic">Analogia: Git é o Word; GitHub é o Google Drive. Você usa o programa local e sincroniza com a nuvem.</p>
           </section>
 
           {/* As 3 áreas do Git */}
@@ -945,22 +945,22 @@ export function GitSimulator({ onBack }: Props) {
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
               <Folder className="w-4 h-4" /> As 3 áreas do Git
             </h2>
-            <p className="text-sm text-slate-400 mb-4">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
+            <p className="text-base text-slate-400 mb-4">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 relative">
-                <div className="text-[10px] font-mono uppercase tracking-widest text-amber-400 mb-2">1. Working Directory</div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
-                <code className="text-[10px] text-amber-300 font-mono">edita arquivo.js</code>
+                <div className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2">1. Working Directory</div>
+                <p className="text-base text-slate-300 leading-relaxed mb-2">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
+                <code className="text-xs text-amber-300 font-mono">edita arquivo.js</code>
               </div>
               <div className="bg-sky-500/5 border border-sky-500/20 rounded-2xl p-4">
-                <div className="text-[10px] font-mono uppercase tracking-widest text-sky-400 mb-2">2. Staging (Índice)</div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">Sala de espera. Você marca aqui o que vai entrar no próximo commit (snapshot).</p>
-                <code className="text-[10px] text-sky-300 font-mono">git add arquivo.js</code>
+                <div className="text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">2. Staging (Índice)</div>
+                <p className="text-base text-slate-300 leading-relaxed mb-2">Sala de espera. Você marca aqui o que vai entrar no próximo commit (snapshot).</p>
+                <code className="text-xs text-sky-300 font-mono">git add arquivo.js</code>
               </div>
               <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
-                <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 mb-2">3. Repository</div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
-                <code className="text-[10px] text-emerald-300 font-mono">git commit -m "msg"</code>
+                <div className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">3. Repository</div>
+                <p className="text-base text-slate-300 leading-relaxed mb-2">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
+                <code className="text-xs text-emerald-300 font-mono">git commit -m "msg"</code>
               </div>
             </div>
           </section>
@@ -981,9 +981,9 @@ export function GitSimulator({ onBack }: Props) {
                 { t: "Remote", d: "Cópia do repositório em outro lugar (ex: GitHub). 'origin' é o nome padrão.", c: "text-cyan-300" },
                 { t: "Push / Pull", d: "Push envia commits locais para o remote. Pull baixa commits do remote para o local.", c: "text-pink-300" },
               ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3 p-3">
-                  <span className={`text-xs font-bold font-mono ${item.c} min-w-[100px] pt-0.5`}>{item.t}</span>
-                  <span className="text-xs text-slate-400 leading-relaxed flex-1">{item.d}</span>
+                <div key={i} className="flex items-start gap-3 p-4">
+                  <span className={`text-sm font-bold font-mono ${item.c} min-w-[120px] pt-0.5`}>{item.t}</span>
+                  <span className="text-sm text-slate-400 leading-relaxed flex-1">{item.d}</span>
                 </div>
               ))}
             </div>
@@ -999,10 +999,10 @@ export function GitSimulator({ onBack }: Props) {
                 const s = levelStyles[i] ?? levelStyles[0];
                 return (
                   <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
-                    <div className={`w-9 h-9 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-sm shrink-0`}>{lv.id}</div>
+                    <div className={`w-10 h-10 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-base shrink-0`}>{lv.id}</div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white mb-1">{lv.title}</p>
-                      <p className="text-xs text-slate-400 leading-relaxed">{lv.briefing}</p>
+                      <p className="text-base font-bold text-white mb-1">{lv.title}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed">{lv.briefing}</p>
                     </div>
                   </div>
                 );
@@ -1015,10 +1015,10 @@ export function GitSimulator({ onBack }: Props) {
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-3 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Dicas do simulador
             </h2>
-            <ul className="text-xs text-slate-400 space-y-1.5">
+            <ul className="text-sm text-slate-400 space-y-2">
               <li>• Digite <code className="text-emerald-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
-              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↑</kbd> e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↓</kbd> para navegar no histórico de comandos</li>
-              <li>• Pressione <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">Tab</kbd> para autocompletar comandos</li>
+              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd> e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para navegar no histórico de comandos</li>
+              <li>• Pressione <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar comandos</li>
               <li>• Clique em qualquer arquivo do Working Directory para abrir o editor</li>
               <li>• Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</li>
               <li>• <code className="text-emerald-300 font-mono">reset</code> reinicia o nível atual; <code className="text-emerald-300 font-mono">clear</code> limpa o terminal</li>
@@ -1030,7 +1030,7 @@ export function GitSimulator({ onBack }: Props) {
             <Button onClick={() => setPhase("playing")} size="lg" className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest px-10 py-6 text-base">
               Iniciar Treinamento <ChevronDown className="w-4 h-4 ml-2 -rotate-90" />
             </Button>
-            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
+            <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
           </div>
         </div>
       </div>

@@ -572,9 +572,9 @@ export function DockerSimulator({ onBack }: Props) {
             <div className="inline-flex p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 mb-5">
               <ContainerIcon className="w-10 h-10" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">Docker Simulator</h1>
-            <p className="text-sky-400 font-mono text-xs uppercase tracking-[0.3em] mb-6">Containerize sem dor de cabeça</p>
-            <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight">Docker Simulator</h1>
+            <p className="text-sky-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">Containerize sem dor de cabeça</p>
+            <p className="text-slate-400 text-lg max-w-3xl mx-auto leading-relaxed">
               Aprenda Docker digitando comandos reais. Sem instalar Docker, sem WSL, sem configuração — tudo simulado no navegador. Veja imagens sendo baixadas, containers ligando, portas mapeadas e volumes persistindo.
             </p>
           </div>
@@ -586,18 +586,18 @@ export function DockerSimulator({ onBack }: Props) {
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Boxes className="w-5 h-5 text-sky-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">"Funciona na minha máquina"</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Empacota seu app + dependências numa caixa portátil que roda igual em qualquer lugar.</p>
+                <p className="text-base font-bold text-white mb-1">"Funciona na minha máquina"</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Empacota seu app + dependências numa caixa portátil que roda igual em qualquer lugar.</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Server className="w-5 h-5 text-emerald-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Deploy descomplicado</p>
-                <p className="text-xs text-slate-400 leading-relaxed">"Build once, run anywhere". A mesma imagem vai do laptop pro servidor sem surpresas.</p>
+                <p className="text-base font-bold text-white mb-1">Deploy descomplicado</p>
+                <p className="text-sm text-slate-400 leading-relaxed">"Build once, run anywhere". A mesma imagem vai do laptop pro servidor sem surpresas.</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                 <Layers className="w-5 h-5 text-fuchsia-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Isolamento</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Rode 5 versões diferentes de Node ou Postgres na mesma máquina sem conflitos.</p>
+                <p className="text-base font-bold text-white mb-1">Isolamento</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Rode 5 versões diferentes de Node ou Postgres na mesma máquina sem conflitos.</p>
               </div>
             </div>
           </section>
@@ -608,21 +608,21 @@ export function DockerSimulator({ onBack }: Props) {
             </h2>
             <div className="grid md:grid-cols-2 gap-3">
               <div className="bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-widest mb-3">
+                <div className="flex items-center gap-2 text-sky-400 text-sm font-bold uppercase tracking-widest mb-3">
                   <Package className="w-3.5 h-3.5" /> Imagem (template)
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">Receita imutável e somente-leitura. Define qual SO, quais arquivos e qual comando rodar. Você baixa do Docker Hub ou constrói via Dockerfile.</p>
-                <p className="text-[11px] text-slate-500 font-mono">Estática · Versionada por tag · Compartilhável</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Receita imutável e somente-leitura. Define qual SO, quais arquivos e qual comando rodar. Você baixa do Docker Hub ou constrói via Dockerfile.</p>
+                <p className="text-xs text-slate-500 font-mono">Estática · Versionada por tag · Compartilhável</p>
               </div>
               <div className="bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold uppercase tracking-widest mb-3">
                   <ContainerIcon className="w-3.5 h-3.5" /> Container (instância)
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">Processo isolado rodando a partir de uma imagem. É descartável: você pode parar, reiniciar, deletar e criar dezenas a partir da mesma imagem.</p>
-                <p className="text-[11px] text-slate-500 font-mono">Dinâmico · Tem estado · Efêmero</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Processo isolado rodando a partir de uma imagem. É descartável: você pode parar, reiniciar, deletar e criar dezenas a partir da mesma imagem.</p>
+                <p className="text-xs text-slate-500 font-mono">Dinâmico · Tem estado · Efêmero</p>
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-3 text-center italic">Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado.</p>
+            <p className="text-sm text-slate-500 mt-3 text-center italic">Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado.</p>
           </section>
 
           <section>
@@ -672,9 +672,9 @@ export function DockerSimulator({ onBack }: Props) {
                 { t: "Port mapping", d: "Conecta uma porta do host (-p 8080) com uma porta do container (:80) para acesso externo.", c: "text-rose-300" },
                 { t: "docker-compose", d: "Ferramenta para orquestrar múltiplos containers via um arquivo YAML único.", c: "text-pink-300" },
               ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3 p-3">
-                  <span className={`text-xs font-bold font-mono ${item.c} min-w-[140px] pt-0.5`}>{item.t}</span>
-                  <span className="text-xs text-slate-400 leading-relaxed flex-1">{item.d}</span>
+                <div key={i} className="flex items-start gap-3 p-4">
+                  <span className={`text-sm font-bold font-mono ${item.c} min-w-[160px] pt-0.5`}>{item.t}</span>
+                  <span className="text-sm text-slate-400 leading-relaxed flex-1">{item.d}</span>
                 </div>
               ))}
             </div>
@@ -689,10 +689,10 @@ export function DockerSimulator({ onBack }: Props) {
                 const s = levelStyles[i] ?? levelStyles[0];
                 return (
                   <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
-                    <div className={`w-9 h-9 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-sm shrink-0`}>{lv.id}</div>
+                    <div className={`w-10 h-10 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-base shrink-0`}>{lv.id}</div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white mb-1">{lv.title}</p>
-                      <p className="text-xs text-slate-400 leading-relaxed">{lv.briefing}</p>
+                      <p className="text-base font-bold text-white mb-1">{lv.title}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed">{lv.briefing}</p>
                     </div>
                   </div>
                 );
@@ -704,9 +704,9 @@ export function DockerSimulator({ onBack }: Props) {
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-3 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Dicas do simulador
             </h2>
-            <ul className="text-xs text-slate-400 space-y-1.5">
+            <ul className="text-sm text-slate-400 space-y-2">
               <li>• Digite <code className="text-sky-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
-              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↓</kbd> para histórico e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">Tab</kbd> para autocompletar</li>
+              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para histórico e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar</li>
               <li>• Clique no <code className="text-amber-300 font-mono">Dockerfile</code> ou <code className="text-amber-300 font-mono">docker-compose.yml</code> para abrir o editor (níveis 2 e 4)</li>
               <li>• <code className="text-sky-300 font-mono">curl localhost:&lt;porta&gt;</code> testa portas mapeadas — o simulador devolve a resposta</li>
               <li>• <code className="text-sky-300 font-mono">reset</code> reinicia o nível atual; <code className="text-sky-300 font-mono">clear</code> limpa o terminal</li>

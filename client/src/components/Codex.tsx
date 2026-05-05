@@ -12,13 +12,14 @@ type Props = {
   onSendToEditor?: (code: string) => void;
 };
 
-type TabId = "why_python" | "basics" | "control_flow" | "collections" | "history" | "clean_code";
+type TabId = "why_python" | "basics" | "control_flow" | "collections" | "functions" | "history" | "clean_code";
 
 const TABS = [
   { id: "why_python", title: "Protocolo Zero", icon: Zap },
   { id: "basics", title: "Comandos de Núcleo", icon: BookOpen },
   { id: "control_flow", title: "Roteamento Lógico", icon: Split },
   { id: "collections", title: "Bancos de Memória", icon: LayoutList },
+  { id: "functions", title: "Sub-rotinas", icon: Code2 },
   { id: "history", title: "Logs do Sistema", icon: History },
   { id: "clean_code", title: "Diretrizes de Segurança", icon: Flame },
 ] as const;
@@ -26,16 +27,29 @@ const TABS = [
 const RITUALS = {
   basics: [
     { title: "print()", desc: "Envia dados para a interface de saída (console). Seu primeiro sinal para o Core.", code: "print('Conexão estabelecida.')" },
+    { title: "input()", desc: "Abre um canal de entrada para receber comandos do usuário em tempo real.", code: "alvo = input('Digite o IP: ')\nprint('Escaneando', alvo)" },
     { title: "Variáveis", desc: "Aloca blocos de memória para armazenar dados temporários na rede.", code: "operador = 'Neo'\nprint(operador)" },
-    { title: "Operadores", desc: "Processamento aritmético com módulos +, -, *, /.", code: "criptografia = 10 + 5\nprint(criptografia)" }
+    { title: "Tipos Primitivos", desc: "Classificação de dados: int (inteiros), float (decimais), str (textos) e bool (booleanos).", code: "nivel = 5        # int\npeso = 72.5      # float\nnome = 'Alice'   # str\nativo = True     # bool" },
+    { title: "Operadores", desc: "Processamento aritmético com módulos +, -, *, /, //, %.", code: "criptografia = 10 + 5\nsobra = 10 % 3\nprint(criptografia, sobra)" },
+    { title: "F-Strings", desc: "Injeção dinâmica de variáveis dentro de strings (textos).", code: "porta = 8080\nprint(f'Atacando a porta {porta}!')" }
   ],
   control_flow: [
-    { title: "if / else", desc: "Bifurcação lógica do sistema. Toma decisões baseadas em pacotes de dados.", code: "acesso = 1\nif acesso > 0:\n    print('Acesso Garantido')\nelse:\n    print('Acesso Negado')" },
-    { title: "for (Loops)", desc: "Automatiza a execução de um script em massa para vários alvos.", code: "for i in range(3):\n    print('Bypass no Firewall...')" }
+    { title: "if / elif / else", desc: "Bifurcação lógica múltipla. Avalia diferentes cenários sequencialmente.", code: "acesso = 2\nif acesso == 1:\n    print('Nível 1')\nelif acesso == 2:\n    print('Nível 2')\nelse:\n    print('Negado')" },
+    { title: "for (Loops)", desc: "Automatiza a execução de um script em massa para vários alvos.", code: "for i in range(3):\n    print('Bypass no Firewall...')" },
+    { title: "while (Loops)", desc: "Mantém a execução contínua enquanto uma condição for verdadeira.", code: "tentativas = 0\nwhile tentativas < 3:\n    print('Quebrando senha...')\n    tentativas += 1" },
+    { title: "break / continue", desc: "Interrompe totalmente um loop (break) ou pula para a próxima iteração (continue).", code: "for p in range(5):\n    if p == 2:\n        continue\n    print(f'Porta {p} aberta')" }
   ],
   collections: [
-    { title: "Listas", desc: "Vetores para carregar múltiplos pacotes de dados em uma ordem sequencial.", code: "modulos = ['Stealth', 'Scanner', 'Overclock']\nprint(modulos[0])" },
-    { title: "Dicionários", desc: "Banco de dados local associando chaves de registro aos seus valores.", code: "alvo = {'ip': '192.168.1.1', 'status': 'ativo'}\nprint(alvo['ip'])" }
+    { title: "Listas", desc: "Vetores para carregar múltiplos pacotes de dados em uma ordem sequencial.", code: "modulos = ['Stealth', 'Scanner']\nmodulos.append('Rootkit')\nprint(modulos[0])" },
+    { title: "Dicionários", desc: "Banco de dados local associando chaves de registro aos seus valores.", code: "alvo = {'ip': '192.168.1.1', 'status': 'ativo'}\nprint(alvo['ip'])" },
+    { title: "Tuplas", desc: "Listas blindadas (imutáveis). Seus dados não podem ser alterados após a criação.", code: "coordenadas = (45.5, -22.3)\nprint(coordenadas[1])" },
+    { title: "Sets (Conjuntos)", desc: "Coleção de dados únicos não ordenados. Excelente para remover duplicatas.", code: "ips = {'10.0.0.1', '10.0.0.2', '10.0.0.1'}\nprint(ips) # O duplicado some" },
+    { title: "Slicing", desc: "Extrai fragmentos específicos de listas ou textos.", code: "hash = 'a3f9c1b7'\nprint(hash[0:4]) # a3f9" }
+  ],
+  functions: [
+    { title: "def (Definir)", desc: "Empacota uma sequência de comandos em uma sub-rotina reutilizável.", code: "def hackear():\n    print('Iniciando invasão...')\n\nhackear()" },
+    { title: "Parâmetros", desc: "Variáveis de entrada que a sub-rotina exige para funcionar.", code: "def atacar(ip):\n    print(f'Atacando {ip}')\n\natacar('192.168.1.1')" },
+    { title: "return (Retorno)", desc: "O resultado que a sub-rotina devolve para o sistema após a execução.", code: "def descriptografar(dado):\n    return dado + '_decrypted'\n\nresultado = descriptografar('senha')\nprint(resultado)" }
   ]
 };
 
@@ -172,7 +186,8 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
       case "basics":
       case "control_flow":
       case "collections":
-        const rituals = RITUALS[activeTab];
+      case "functions":
+        const rituals = RITUALS[activeTab as keyof typeof RITUALS];
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <p className="text-slate-300 leading-relaxed font-medium text-lg mb-2">

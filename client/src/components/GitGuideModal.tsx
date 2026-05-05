@@ -39,8 +39,8 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                 <GitBranch className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-white uppercase tracking-wider">Protocolo Git & GitHub</h2>
-                <p className="text-[10px] text-emerald-400 font-mono uppercase tracking-[0.2em]">Sincronização de Mainframe</p>
+                <h2 className="text-xl font-black text-white uppercase tracking-wider">Protocolo Git & GitHub</h2>
+                <p className="text-xs text-emerald-400 font-mono uppercase tracking-[0.2em]">Sincronização de Mainframe</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-white rounded-full">
@@ -54,8 +54,8 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
             {/* Intro */}
             <div className="mb-12 text-center max-w-3xl mx-auto">
               <Github className="w-16 h-16 text-white mx-auto mb-6 opacity-80" />
-              <h3 className="text-3xl font-black text-white mb-4">A Máquina do Tempo do Código</h3>
-              <p className="text-slate-400 leading-relaxed text-lg">
+              <h3 className="text-4xl font-black text-white mb-4">A Máquina do Tempo do Código</h3>
+              <p className="text-slate-400 leading-relaxed text-xl">
                 No mundo hacker, perder um script é fatal. O <strong>Git</strong> é o seu sistema de backup temporal, permitindo salvar versões do seu código e voltar no tempo se algo der errado. O <strong>GitHub</strong> é o mainframe global onde você armazena esses backups e colabora com outros operadores.
               </p>
             </div>
@@ -67,10 +67,10 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                   <Terminal className="w-5 h-5 text-emerald-400" />
                   O que é Git?
                 </h4>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
                   É um programa instalado no seu terminal (computador local). Ele cria uma "fotografia" do seu projeto a cada alteração importante que você faz.
                 </p>
-                <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-xs text-emerald-300">
+                <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-sm text-emerald-300">
                   Sem internet • Roda no seu PC • Linha de comando
                 </div>
               </div>
@@ -80,10 +80,10 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                   <Github className="w-5 h-5 text-sky-400" />
                   O que é GitHub?
                 </h4>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
                   É um site (nuvem) que hospeda seus repositórios Git. Serve como um portfólio para mostrar seus projetos para empresas e outros programadores.
                 </p>
-                <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-xs text-sky-300">
+                <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-sm text-sky-300">
                   Precisa de internet • Hospedagem • Rede Social Dev
                 </div>
               </div>
@@ -136,10 +136,10 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                     <step.icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h5 className="font-bold text-white mb-1">{step.title}</h5>
-                    <p className="text-sm text-slate-400">{step.desc}</p>
+                    <h5 className="text-lg font-bold text-white mb-1">{step.title}</h5>
+                    <p className="text-base text-slate-400">{step.desc}</p>
                   </div>
-                  <div className="shrink-0 bg-slate-950 px-4 py-3 rounded-xl border border-white/10 font-mono text-sm text-slate-300 w-full md:w-auto text-center">
+                  <div className="shrink-0 bg-slate-950 px-4 py-3 rounded-xl border border-white/10 font-mono text-base text-slate-300 w-full md:w-auto text-center">
                     {step.cmd}
                   </div>
                 </div>
@@ -148,8 +148,8 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
 
             {/* Outro */}
             <div className="mt-12 bg-gradient-to-r from-emerald-900/20 to-sky-900/20 border border-emerald-500/20 rounded-3xl p-8 text-center max-w-3xl mx-auto">
-              <h4 className="text-emerald-400 font-bold mb-3">Próximos Passos</h4>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6">
+              <h4 className="text-emerald-400 text-lg font-bold mb-3">Próximos Passos</h4>
+              <p className="text-slate-300 text-base leading-relaxed mb-6">
                 Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Quest na nuvem!
               </p>
               <Button onClick={() => setSimOpen(true)} className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest">

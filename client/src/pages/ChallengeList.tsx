@@ -66,17 +66,22 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
       {/* Cinematic Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div 
-          className="absolute inset-0 opacity-20" 
+          className="absolute inset-0 opacity-20 transition-colors duration-1000" 
           style={{ 
             backgroundImage: `radial-gradient(circle at 20% 30%, ${themeColor}33, transparent 50%), radial-gradient(circle at 80% 70%, ${themeColor}22, transparent 50%)` 
           }} 
         />
-        <motion.div 
-          animate={{ opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute inset-0 bg-slate-950" 
-        />
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:80px_80px]" />
+        
+        {/* Animated Scanning Lines */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+          <motion.div 
+            animate={{ y: ["0%", "100%"] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="w-full h-[100px] bg-gradient-to-b from-transparent via-white to-transparent"
+          />
+        </div>
+
+        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px]" />
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/60 backdrop-blur-md">
@@ -133,86 +138,137 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
 
       <main className="relative z-10 flex-1">
         {/* World Hero Section */}
-        <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-32 border-b border-white/5">
-          {/* World Background Image */}
+        <section className="relative overflow-hidden pt-12 pb-16 md:pt-16 md:pb-20">
+          {/* World Background Image with mask */}
           {world.bgImage && (
-            <div className="absolute inset-0 z-0">
-              <img 
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              <motion.img 
+                initial={{ scale: 1.1, opacity: 0 }}
+                animate={{ scale: 1, opacity: 0.15 }}
+                transition={{ duration: 2 }}
                 src={world.bgImage} 
                 alt={world.title} 
-                className="absolute inset-0 w-full h-full object-cover opacity-20"
+                className="absolute inset-0 w-full h-full object-cover grayscale brightness-50"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/80 to-slate-950" />
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/80 to-slate-950" />
+              {/* Scanline pattern overlay on image */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none [background:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.1)_3px,rgba(255,255,255,0.1)_3px)]" />
             </div>
           )}
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md mb-6">
-                <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{world.subtitle}</span>
+              <div className="inline-flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-4 py-1 backdrop-blur-md mb-4">
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
+                <span className="font-mono text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Setor Identificado: {worldId.replace(/-/g, '_').toUpperCase()}</span>
               </div>
-              <h1 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-none">
-                {world.title}
+              <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter leading-none relative group cursor-default">
+                <span className="relative z-10">{world.title}</span>
+                <motion.span 
+                  className="absolute inset-0 z-0 opacity-20 blur-sm pointer-events-none group-hover:opacity-40 transition-opacity"
+                  style={{ color: themeColor }}
+                  animate={{ x: [-1, 1, -1], y: [1, -1, 1] }}
+                  transition={{ duration: 0.2, repeat: Infinity }}
+                >
+                  {world.title}
+                </motion.span>
               </h1>
-              <p className="max-w-2xl text-slate-400 text-lg md:text-xl leading-relaxed font-medium">
+              <p className="max-w-2xl text-slate-400 text-base md:text-lg leading-relaxed font-medium border-l-2 pl-6" style={{ borderColor: `${themeColor}40` }}>
                 {world.lore}
               </p>
             </motion.div>
           </div>
           
-          {/* Decorative Glow */}
-          <div 
-            className="absolute -right-[10%] top-0 h-[600px] w-[600px] rounded-full blur-[160px] opacity-20 pointer-events-none"
-            style={{ backgroundColor: themeColor }}
-          />
+          {/* HUD Decorative Elements */}
+          <div className="absolute top-10 right-10 hidden lg:block opacity-20 font-mono text-[10px] text-slate-500 pointer-events-none">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/2 h-full bg-white/20" />
+              </div>
+              <span>COORDS_X: 42.12</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }} className="w-1/2 h-full bg-white/20" />
+              </div>
+              <span>COORDS_Y: 89.04</span>
+            </div>
+          </div>
         </section>
 
         {/* Challenge List Section */}
         <section className="max-w-4xl mx-auto px-6 pb-32">
           {/* Progress Card */}
+          {/* Progress Card (Diagnostic View) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="glass-dark rounded-3xl border border-white/20 p-6 md:p-8 mb-12 shadow-2xl relative overflow-hidden group"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative rounded-2xl border border-white/10 bg-slate-900/40 p-5 md:p-6 mb-10 shadow-2xl backdrop-blur-xl overflow-hidden group"
           >
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-1 w-full text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                  <BookOpen className="w-4 h-4 text-sky-400" />
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Status da Expedição</p>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-4">{motivationalMessage}</h3>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                    <motion.div 
-                      className="h-full rounded-full shadow-[0_0_15px_rgba(56,189,248,0.3)]" 
-                      style={{ backgroundColor: themeColor }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${completionPct}%` }} 
-                      transition={{ duration: 1.5, ease: "circOut" }}
-                    />
+            {/* Technical Border Corners */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 opacity-50" style={{ borderColor: themeColor }} />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 opacity-50" style={{ borderColor: themeColor }} />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 opacity-50" style={{ borderColor: themeColor }} />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 opacity-50" style={{ borderColor: themeColor }} />
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-1 w-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                    <BookOpen className="w-4 h-4" style={{ color: themeColor }} />
                   </div>
-                  <span className="text-sm font-black font-mono text-white" style={{ color: themeColor }}>
-                    {completedCount}/{world.challenges.length} - {completionPct}%
-                  </span>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Relatório de Diagnóstico</p>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-tight">{motivationalMessage}</h3>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-slate-400">Progresso de Infiltração</span>
+                    <span className="text-white font-mono">{completedCount}/{world.challenges.length} NODES SINCRO</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                      {/* Grid background on progress bar */}
+                      <div className="absolute inset-0 opacity-20 [background-size:10px_100%] [background-image:linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)]" />
+                      <motion.div 
+                        className="h-full rounded-full relative z-10" 
+                        style={{ 
+                          backgroundColor: themeColor,
+                          boxShadow: `0 0 15px ${themeColor}80`
+                        }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${completionPct}%` }} 
+                        transition={{ duration: 1.5, ease: "circOut" }}
+                      />
+                    </div>
+                    <span className="text-xs font-black font-mono text-white min-w-[3ch]" style={{ color: themeColor }}>
+                      {completionPct}%
+                    </span>
+                  </div>
                 </div>
               </div>
               
               {nextIncompleteIdx !== -1 && (
                 <Button 
                   onClick={() => nextChallengeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} 
-                  className="w-full md:w-auto bg-white text-slate-950 hover:bg-slate-200 font-black uppercase tracking-widest text-xs h-12 px-8 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="w-full md:w-auto h-14 px-10 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] shadow-lg transition-all border group-hover:-translate-y-0.5 active:translate-y-0"
+                  style={{ 
+                    backgroundColor: `${themeColor}20`,
+                    borderColor: `${themeColor}40`,
+                    color: themeColor,
+                    boxShadow: `0 0 20px ${themeColor}20`
+                  }}
                 >
-                  {completedCount === 0 ? "INICIAR PROTOCOLO" : `CONTINUAR #${nextIncompleteIdx + 1}`}
+                  {completedCount === 0 ? "INICIAR PROTOCOLO" : `BYPASS NODE #${nextIncompleteIdx + 1}`}
+                  <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
             </div>
-            
-            <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
           </motion.div>
 
           {/* List */}
