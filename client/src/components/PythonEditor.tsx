@@ -23,12 +23,12 @@ export default function PythonEditor({ code, onChange, isRunning, pythonReady }:
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-[320px] lg:min-h-[360px]">
+      <div className="relative flex-1 min-h-[240px] lg:min-h-[280px]">
         <textarea
           value={code}
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
-          className="w-full h-full min-h-[320px] lg:min-h-[360px] p-5 bg-slate-950 text-sky-50 font-mono text-sm resize-none focus:outline-none selection:bg-sky-500/30"
+          className="w-full h-full min-h-[240px] lg:min-h-[280px] p-4 bg-slate-950 text-sky-50 font-mono text-sm resize-none focus:outline-none selection:bg-sky-500/30"
           placeholder="# Escreva seu codigo Python aqui..."
           disabled={!pythonReady || isRunning}
         />

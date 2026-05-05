@@ -1,16 +1,16 @@
-# 🐍 PYTHON-QUEST
+# 🐍 PYTHON-QUEST: A Ascensão do Scriptweaver
 
-**PYTHON-QUEST** é uma jornada épica de aprendizado inspirada no [SQL-QUEST](https://github.com/Thiago9220/SQL-QUEST). Transformamos o ensino de programação em uma aventura de RPG, onde você domina a linguagem Python através de desafios práticos, narrativa envolvente e conquistas.
+**PYTHON-QUEST** é uma jornada épica de aprendizado inspirada no [SQL-QUEST](https://github.com/Thiago9220/SQL-QUEST). Transformamos o ensino de programação em uma aventura de RPG imersiva, onde você assume o papel de um **Tecedor de Scripts** (Scriptweaver) em uma missão para restaurar a consciência da Grande Serpente de Python e salvar o Arquipélago Aurora.
 
-## 🌟 O que é o PYTHON-QUEST?
+## 🌟 O Desafio do Arquipélago
 
-Assim como no SQL-QUEST, você explorará diferentes "mundos", cada um focado em um pilar fundamental do Python:
+Navegue pelas ilhas flutuantes, cada uma guardando um fragmento essencial da lógica universal:
 
-1.  **Vila das Variáveis**: Onde você aprende a nomear e armazenar dados.
-2.  **Vale das Condições**: Onde o fluxo do seu código é decidido por lógica.
-3.  **Montanha dos Loops**: Onde a repetição se torna sua aliada.
-4.  **Floresta das Funções**: Onde você aprende a organizar e reutilizar seu poder.
-5.  **Caverna das Listas**: Onde grandes coleções de tesouros são gerenciadas.
+1.  **Cais da Identidade**: Onde nomes e valores dão forma à realidade (Variáveis).
+2.  **Encruzilhada do Destino**: Onde o fluxo da história é decidido pela lógica (Condições).
+3.  **Pico da Eternidade**: Onde a repetição rítmica gera poder infinito (Loops).
+4.  **Arvoredo dos Arcanos**: Onde rituais complexos são encapsulados em palavras mágicas (Funções).
+5.  **Cripta das Coleções**: Onde tesouros e dados são organizados e protegidos (Listas).
 
 ## 🛠️ Estrutura do Projeto
 

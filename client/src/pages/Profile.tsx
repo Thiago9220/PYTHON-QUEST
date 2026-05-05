@@ -12,6 +12,8 @@ import {
   Target,
   Trophy,
   X,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -108,221 +110,361 @@ export default function Profile({ onBack }: Props) {
     {
       label: "Desafios",
       value: `${completedCount}/${totalCount}`,
-      helper: challengesLeft > 0 ? `${challengesLeft} restantes` : "trilha completa",
+      helper: challengesLeft > 0 ? `${challengesLeft} restantes` : "Trilha completa",
       icon: Target,
-      bg: "bg-sky-50",
-      color: "text-sky-700",
+      color: "text-sky-400",
+      glow: "shadow-sky-500/20",
     },
     {
       label: "Conquistas",
       value: `${unlockedAchievements.length}/${state.achievements.length}`,
-      helper: "titulos e marcos",
+      helper: "Títulos e marcos",
       icon: Trophy,
-      bg: "bg-emerald-50",
-      color: "text-emerald-700",
+      color: "text-amber-400",
+      glow: "shadow-amber-500/20",
     },
     {
-      label: "Sequencia",
+      label: "Sequência",
       value: String(state.streak),
-      helper: "dias ativos",
+      helper: "Dias ativos",
       icon: Flame,
-      bg: "bg-orange-50",
-      color: "text-orange-700",
+      color: "text-orange-400",
+      glow: "shadow-orange-500/20",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 text-slate-900">
-      <header className="sticky top-0 z-30 border-b border-sky-100 bg-white/90 backdrop-blur-sm">
+    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-sky-500/30 overflow-x-hidden">
+      {/* Cinematic Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(14,165,233,0.1),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(16,185,129,0.08),transparent_50%)]" />
+        <motion.div 
+          animate={{ opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute -left-[10%] top-0 h-[500px] w-[500px] rounded-full bg-sky-500/10 blur-[120px]" 
+        />
+        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px]" />
+      </div>
+
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/60 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={onBack} className="text-slate-600 hover:text-sky-700">
-              <ArrowLeft className="mr-1 h-4 w-4" />
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={onBack} 
+              className="text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Mapa
             </Button>
-            <div className="hidden h-6 w-px bg-sky-100 sm:block" />
-            <h1 className="text-xl font-black text-sky-700">Perfil Python Quest</h1>
+            <div className="hidden h-6 w-px bg-white/10 sm:block" />
+            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-sky-400">Perfil do Scriptweaver</h1>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="text-slate-600 hover:text-sky-700" title="Guia Python">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setShowCodex(true)} 
+              className="text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" 
+              title="Códice de Python"
+            >
               <BookOpen className="h-5 w-5" />
             </Button>
             <VolumeControl isMuted={state.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-            <Button variant="ghost" onClick={logout} className="text-slate-500 hover:text-red-600">
-              <LogOut className="mr-1 h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              onClick={logout} 
+              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               Sair
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
-        <section className="overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-sm">
-          <div className="grid gap-8 p-6 md:grid-cols-[220px_1fr] md:p-8">
-            <div className="flex flex-col items-center justify-center">
-              <div className="relative">
-                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 to-emerald-400 text-5xl font-black text-white shadow-lg shadow-sky-950/10">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                  ) : (
-                    (displayName || "P").charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-sky-100 bg-white px-3 py-1 text-xs font-black text-sky-700 shadow-sm">
-                  <Medal className="h-3 w-3" />
-                  LVL {level}
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
+        {/* Main Profile Card */}
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-dark overflow-hidden rounded-[2.5rem] border border-white/20 p-1"
+        >
+          <div className="bg-slate-900/40 rounded-[2.4rem] p-6 md:p-10">
+            <div className="grid gap-10 lg:grid-cols-[240px_1fr]">
+              <div className="flex flex-col items-center">
+                <div className="relative group">
+                  <div className="absolute -inset-4 bg-sky-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-[2.5rem] border-2 border-white/20 bg-gradient-to-br from-sky-600/40 to-emerald-600/40 text-6xl font-black text-white shadow-2xl backdrop-blur-xl">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                    ) : (
+                      (displayName || "P").charAt(0).toUpperCase()
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
+                  </div>
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-sky-400/50 bg-slate-950 px-4 py-1.5 text-xs font-black text-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.3)] backdrop-blur-xl"
+                  >
+                    <Medal className="h-4 w-4" />
+                    NÍVEL {level}
+                  </motion.div>
                 </div>
               </div>
-            </div>
 
-            <div className="min-w-0">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <p className="mb-2 font-mono text-xs uppercase tracking-widest text-sky-700">Arquipelago Aurora</p>
-                  <div className="flex items-center gap-2">
-                    <h2 className="truncate text-4xl font-black text-slate-950">{displayName || "Explorador"}</h2>
-                    <Button variant="ghost" size="icon" onClick={() => setShowEditProfile(true)} className="text-slate-400 hover:text-sky-700">
-                      <Edit2 className="h-4 w-4" />
+              <div className="min-w-0 flex flex-col justify-center">
+                <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-md">
+                      <Sparkles className="h-3 w-3 text-sky-400" />
+                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Iniciado do Arquipélago</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <h2 className="truncate text-5xl font-black text-white tracking-tight leading-tight">{displayName || "Explorador"}</h2>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setShowEditProfile(true)} 
+                        className="text-slate-500 hover:text-sky-400 hover:bg-white/5"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </Button>
+                    </div>
+                    <p className="mt-3 text-lg font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{displayTitle}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      onClick={() => setShowAchievements(true)} 
+                      className="bg-white/10 text-white hover:bg-white/20 border border-white/10 backdrop-blur-md font-bold px-6 rounded-xl"
+                    >
+                      <Trophy className="mr-2 h-4 w-4 text-amber-400" />
+                      Conquistas
                     </Button>
                   </div>
-                  <p className="mt-2 text-sm font-semibold text-slate-600">{displayTitle}</p>
                 </div>
 
-                <Button onClick={() => setShowAchievements(true)} variant="outline" className="border-sky-200 bg-white text-sky-700 hover:bg-sky-50">
-                  <Trophy className="mr-2 h-4 w-4" />
-                  Conquistas
-                </Button>
-              </div>
-
-              <p className="mt-6 max-w-3xl text-sm leading-relaxed text-slate-600">
-                Sua proxima meta: {challengesLeft > 0 ? `faltam ${challengesLeft} desafios para ampliar sua pratica em Python.` : "voce concluiu todos os desafios disponiveis."}
-              </p>
-
-              <div className="mt-6">
-                <div className="mb-2 flex items-center justify-between text-xs font-mono uppercase tracking-widest text-slate-500">
-                  <span>{state.totalXP.toLocaleString()} XP</span>
-                  <span>{isMaxLevel ? "nivel maximo" : `proximo nivel: ${nextLevelXP} XP`}</span>
-                </div>
-                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400"
-                  />
+                <div className="mt-8">
+                  <div className="mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <span className="text-sky-400">{state.totalXP.toLocaleString()} XP TOTAL</span>
+                    <span>{isMaxLevel ? "nível máximo" : `PRÓXIMO NÍVEL EM ${nextLevelXP - state.totalXP} XP`}</span>
+                  </div>
+                  <div className="relative h-4 overflow-hidden rounded-full bg-white/5 border border-white/10">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 1.2, ease: "circOut" }}
+                      className="absolute inset-0 h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-sky-100 bg-sky-50/50 p-6 md:grid-cols-3">
-            {stats.map((stat) => (
-              <button
+          <div className="grid gap-px border-t border-white/10 bg-white/5 p-1 md:grid-cols-3">
+            {stats.map((stat, idx) => (
+              <motion.button
                 key={stat.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * idx }}
                 onClick={stat.label === "Conquistas" ? () => setShowAchievements(true) : undefined}
-                className={`rounded-2xl border border-white bg-white p-5 text-left shadow-sm ${stat.label === "Conquistas" ? "hover:border-sky-300" : ""}`}
+                className="group relative bg-slate-900/60 p-8 text-left hover:bg-slate-800/60 transition-all first:md:rounded-bl-[2.4rem] last:md:rounded-br-[2.4rem]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs uppercase tracking-widest text-slate-500">{stat.label}</span>
-                  <div className={`rounded-xl ${stat.bg} p-2 ${stat.color}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">{stat.label}</span>
+                  <div className={`rounded-xl bg-white/5 p-2.5 transition-transform group-hover:scale-110 group-hover:rotate-6 ${stat.color} shadow-lg ${stat.glow}`}>
                     <stat.icon className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-3xl font-black text-slate-950">{stat.value}</div>
-                <p className="mt-1 text-sm text-slate-500">{stat.helper}</p>
-              </button>
+                <div className="text-4xl font-black text-white">{stat.value}</div>
+                <p className="mt-2 text-xs font-medium text-slate-400 group-hover:text-slate-300">{stat.helper}</p>
+                <div className="absolute inset-0 border-r border-white/5 group-last:border-r-0" />
+              </motion.button>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm md:p-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <Award className={isCertificateReady ? "h-8 w-8 text-emerald-600" : "h-8 w-8 text-slate-300"} />
-                  <h3 className="text-2xl font-black text-slate-950">Certificado de Jornada Python</h3>
+        {/* Certificate and Summary */}
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
+          <motion.section 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-dark rounded-[2rem] border border-white/20 p-8 flex flex-col justify-between"
+          >
+            <div className="flex flex-col md:flex-row gap-8 items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${isCertificateReady ? "text-emerald-400" : "text-slate-600"}`}>
+                    <Award className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white">Certificado de Ritualismo</h3>
+                    <p className="text-sm font-medium text-slate-400">Valide seus conhecimentos arcanos em Python.</p>
+                  </div>
                 </div>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-                  O certificado e liberado quando voce conclui pelo menos 80% dos desafios do Arquipelago Aurora.
+                <p className="text-slate-400 leading-relaxed text-sm mb-6 max-w-xl">
+                  A Grande Serpente reconhece apenas aqueles que dominam 80% do arquipélago. O certificado é o selo final da sua maestria.
                 </p>
               </div>
-              <Button onClick={handleOpenCertificate} disabled={!isCertificateReady} className="bg-sky-600 font-bold hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-500">
-                {isCertificateReady ? "Abrir certificado" : "Bloqueado"}
+              <Button 
+                onClick={handleOpenCertificate} 
+                disabled={!isCertificateReady} 
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] px-8 h-12 rounded-xl disabled:bg-white/5 disabled:text-slate-600 shadow-lg shadow-emerald-900/20"
+              >
+                {isCertificateReady ? "RECLAMAR SELO" : "BLOQUEADO"}
               </Button>
             </div>
 
-            <div className="mt-6">
-              <div className="mb-2 flex justify-between font-mono text-xs uppercase tracking-widest text-slate-500">
-                <span>Progresso</span>
-                <span>{Math.round(completionPercent * 100)}% / 80%</span>
+            <div className="mt-auto">
+              <div className="mb-3 flex justify-between font-mono text-[9px] font-black uppercase tracking-[0.2em]">
+                <span className="text-slate-500">PROGRESSO DE MAESTRIA</span>
+                <span className={isCertificateReady ? "text-emerald-400" : "text-slate-400"}>
+                  {Math.round(completionPercent * 100)}% / 80%
+                </span>
               </div>
-              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-3 overflow-hidden rounded-full bg-white/5 border border-white/10">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(100, completionPercent * 100)}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400"
+                  transition={{ duration: 1.5, ease: "circOut" }}
+                  className={`h-full rounded-full ${isCertificateReady ? "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-slate-700"}`}
                 />
               </div>
             </div>
-          </div>
+          </motion.section>
 
-          <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-7 w-7 text-sky-600" />
-              <h3 className="text-xl font-black text-slate-950">Resumo</h3>
+          <motion.section 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-dark rounded-[2rem] border border-white/20 p-8"
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <Zap className="h-6 w-6 text-sky-400" />
+              <h3 className="text-xl font-black text-white uppercase tracking-wider">Registros do Codex</h3>
             </div>
-            <div className="mt-5 space-y-3 text-sm text-slate-600">
-              <p>XP total: <span className="font-bold text-slate-950">{state.totalXP.toLocaleString()}</span></p>
-              <p>Conquistas liberadas: <span className="font-bold text-slate-950">{unlockedAchievements.length}</span></p>
-              <p>Titulo ativo: <span className="font-bold text-slate-950">{state.equippedTitle || title}</span></p>
+            
+            <div className="space-y-6">
+              {[
+                { label: "Experiência Pura", value: state.totalXP.toLocaleString(), suffix: "XP", color: "text-sky-400" },
+                { label: "Marcas Desbloqueadas", value: unlockedAchievements.length, suffix: "RITUAIS", color: "text-emerald-400" },
+                { label: "Título da Ordem", value: state.equippedTitle || title, suffix: "", color: "text-amber-400" },
+                { label: "Eficiência de Script", value: "A+", suffix: "RATING", color: "text-rose-400" },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                  <span className="font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1">{item.label}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-2xl font-black ${item.color}`}>{item.value}</span>
+                    <span className="text-[10px] font-black text-slate-600">{item.suffix}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
+          </motion.section>
+        </div>
       </main>
 
+      {/* Modals with Glassmorphism */}
       {showEditProfile && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-sky-950/25 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-sky-100 bg-white p-6 shadow-2xl shadow-sky-950/10">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-black text-slate-950">Editar perfil</h2>
-              <Button variant="ghost" size="icon" onClick={() => setShowEditProfile(false)}>
-                <X className="h-5 w-5" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" 
+            onClick={() => setShowEditProfile(false)}
+          />
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative w-full max-w-lg glass-dark rounded-[2.5rem] border border-white/20 p-8 shadow-2xl"
+          >
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-2xl font-black text-white">Reforjar Perfil</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowEditProfile(false)} className="text-slate-400 hover:text-white">
+                <X className="h-6 w-6" />
               </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Nome</label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={24} />
+                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Alcunha do Scriptweaver</label>
+                <Input 
+                  value={displayName} 
+                  onChange={(e) => setDisplayName(e.target.value)} 
+                  maxLength={24} 
+                  className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-12 rounded-xl focus:border-sky-500"
+                />
               </div>
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">URL do avatar</label>
-                <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." />
+                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Frequência Visual (URL Avatar)</label>
+                <Input 
+                  value={avatarUrl} 
+                  onChange={(e) => setAvatarUrl(e.target.value)} 
+                  placeholder="https://..." 
+                  className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-12 rounded-xl focus:border-sky-500"
+                />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowEditProfile(false)}>Cancelar</Button>
-              <Button onClick={handleSaveProfile} className="bg-sky-600 hover:bg-sky-700">Salvar</Button>
+            <div className="mt-10 flex gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowEditProfile(false)} 
+                className="flex-1 text-slate-400 hover:text-white hover:bg-white/5 font-bold h-12 rounded-xl"
+              >
+                Abafar
+              </Button>
+              <Button 
+                onClick={handleSaveProfile} 
+                className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-black h-12 rounded-xl shadow-lg shadow-sky-900/40"
+              >
+                REFORJAR
+              </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
       {showNameInput && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-sky-950/25 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-sky-100 bg-white p-6 shadow-2xl shadow-sky-950/10">
-            <h2 className="text-2xl font-black text-slate-950">Nome no certificado</h2>
-            <p className="mt-2 text-sm text-slate-600">Use o nome que deve aparecer no certificado final.</p>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-5" />
-            <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowNameInput(false)}>Cancelar</Button>
-              <Button onClick={handleConfirmCertificateName} className="bg-sky-600 hover:bg-sky-700">Confirmar</Button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" 
+            onClick={() => setShowNameInput(false)}
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-full max-w-md glass-dark rounded-[2.5rem] border border-white/20 p-8 shadow-2xl"
+          >
+            <h2 className="text-2xl font-black text-white">Nome do Receptáculo</h2>
+            <p className="mt-2 text-sm text-slate-400 font-medium">Informe seu nome completo para selar o certificado.</p>
+            <Input 
+              value={fullName} 
+              onChange={(e) => setFullName(e.target.value)} 
+              className="mt-6 bg-white/5 border-white/10 text-white h-14 rounded-xl text-center text-lg font-bold" 
+            />
+            <div className="mt-8 flex gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowNameInput(false)} 
+                className="flex-1 text-slate-400 hover:text-white h-12 font-bold"
+              >
+                Voltar
+              </Button>
+              <Button 
+                onClick={handleConfirmCertificateName} 
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black h-12 rounded-xl"
+              >
+                CONFIRMAR
+              </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 

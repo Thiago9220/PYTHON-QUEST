@@ -82,63 +82,83 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const answerCode = challenge.hints[challenge.hints.length - 1]?.text ?? challenge.expectedOutput;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 text-slate-900 flex flex-col">
-      <header className="flex-shrink-0 border-b border-sky-100 bg-white/90 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between md:items-center gap-3">
-          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+    <div className="min-h-screen bg-[#f8fbff] text-slate-900 flex flex-col relative overflow-hidden">
+      {/* Immersive Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-sky-200/20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-100/20 blur-[120px] rounded-full" />
+        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(14,165,233,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.2)_1px,transparent_1px)] [background-size:64px_64px]" />
+      </div>
+
+      <header className="flex-shrink-0 border-b border-sky-100/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 md:gap-5">
             <button
-              className="text-lg font-black text-sky-700 hover:text-sky-900 transition-colors mr-2"
+              className="group flex items-center gap-2"
               onClick={onBackToHome}
-              title="Voltar ao inicio"
             >
-              Python Quest
+              <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-sky-600/20 group-hover:scale-110 transition-transform">PY</div>
+              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-sky-700 to-sky-900 bg-clip-text text-transparent">Python Quest</span>
             </button>
-            <Button variant="ghost" size="sm" onClick={onBack} className="text-slate-600 hover:text-sky-700">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              {world.title}
-            </Button>
-            <span className="text-slate-300 hidden md:inline">/</span>
-            <span className="text-slate-700 text-sm font-medium">{challenge.title}</span>
-            <span className="text-xs font-mono text-sky-700 bg-sky-50 border border-sky-100 rounded-full px-2 py-0.5">
-              {challengeNumber}/{totalChallenges}
-            </span>
+            
+            <div className="h-6 w-px bg-sky-100 hidden md:block" />
+
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={onBack} className="h-8 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-full px-4 font-bold">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {world.title}
+              </Button>
+              <div className="flex items-center gap-2 px-3 py-1 bg-white border border-sky-100 rounded-full shadow-sm">
+                <span className="text-slate-800 text-sm font-black">{challenge.title}</span>
+                <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100/50">
+                  {challengeNumber}/{totalChallenges}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={`text-xs px-2.5 py-1 rounded-full border font-mono ${diffStyle.color}`}>
-              {diffStyle.label}
-            </span>
-            <span className="text-xs font-mono text-slate-600">{xpEarned} XP</span>
-            {alreadyCompleted && (
-              <span className="text-xs text-emerald-700 font-mono flex items-center gap-1">
-                <Star className="w-3 h-3 fill-emerald-500" /> Concluido
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-3 mr-2">
+              <span className={`text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border-2 font-black ${diffStyle.color}`}>
+                {diffStyle.label}
               </span>
-            )}
-            <button
-              onClick={() => setShowAchievements(true)}
-              className="flex items-center gap-1.5 text-slate-600 hover:text-sky-700 px-2 py-1 rounded-lg transition-all border border-transparent hover:border-sky-100"
-              title="Ver conquistas"
-            >
-              <Trophy className="w-4 h-4" />
-              <span className="text-xs font-mono font-bold">
-                {gameState.achievements.filter((a) => a.unlocked).length}/{gameState.achievements.length}
-              </span>
-            </button>
-            <VolumeControl isMuted={gameState.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-            <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="text-slate-600 hover:text-sky-700 w-8 h-8">
-              <BookOpen className="w-4 h-4" />
-            </Button>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">XP DISPONÍVEL</span>
+                <span className="text-xs font-black text-slate-800">{xpEarned}</span>
+              </div>
+            </div>
+
+            <div className="h-8 w-px bg-sky-100 hidden md:block" />
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAchievements(true)}
+                className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl transition-all border border-sky-100 shadow-sm hover:shadow-md group"
+              >
+                <Trophy className="w-4 h-4 text-amber-500 group-hover:rotate-12 transition-transform" />
+                <span className="text-xs font-black text-slate-700">
+                  {gameState.achievements.filter((a) => a.unlocked).length}/{gameState.achievements.length}
+                </span>
+              </button>
+              
+              <div className="flex items-center gap-1 bg-white border border-sky-100 rounded-xl p-1 shadow-sm">
+                <VolumeControl isMuted={gameState.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
+                <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="h-8 w-8 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-lg">
+                  <BookOpen className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-3 gap-3">
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-3 py-2 gap-2">
         {!isExpanded && (
-          <div className="flex-1 flex flex-col gap-3 min-w-0">
-            <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <div className="flex-1 flex flex-col gap-2 min-w-0">
+            <MissionPanel challenge={challenge} activeTab={activeTab} setActiveTab={setActiveTab} themeColor={world?.color} />
 
             <div className="bg-white border border-sky-100 rounded-xl overflow-hidden shadow-sm flex flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-sky-100 bg-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-sky-100 bg-white">
                 <div>
                   <div className="text-sm font-semibold text-slate-700">Editor</div>
                   <div className="text-xs text-slate-500">Ctrl+Enter tambem executa o codigo</div>
@@ -180,16 +200,16 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
               />
 
               {engine.showHint && engine.currentHintIdx > 0 && (
-                <div className="border-t border-amber-100 px-4 py-3 bg-amber-50">
+                <div className="border-t border-amber-100 px-3 py-2 bg-amber-50">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-sm text-amber-700 font-mono">Dica {engine.currentHintIdx}:</span>
-                        <p className="text-slate-700 text-sm mt-0.5">{challenge.hints[engine.currentHintIdx - 1]?.text}</p>
+                        <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Dica {engine.currentHintIdx}</span>
+                        <p className="text-slate-700 text-xs mt-0.5">{challenge.hints[engine.currentHintIdx - 1]?.text}</p>
                       </div>
                     </div>
-                    <button onClick={() => engine.setShowHint(false)} className="text-slate-400 hover:text-slate-700">x</button>
+                    <button onClick={() => engine.setShowHint(false)} className="text-slate-400 hover:text-slate-700 p-1">×</button>
                   </div>
                 </div>
               )}
@@ -218,6 +238,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
             npc={challenge.successNpc ?? "Mentor Aurora"}
             avatar={challenge.successAvatar ?? "PY"}
             text={challenge.successStory}
+            themeColor={world?.color}
             onComplete={() => engine.closeCutscene()}
           />
         )}
