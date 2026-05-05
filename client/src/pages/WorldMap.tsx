@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, Lock, LogOut, Star, Trophy, HelpCircle } from "lucide-react";
+import { BookOpen, ChevronRight, Lock, LogOut, Star, Trophy, HelpCircle, Sparkles } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -10,18 +10,11 @@ import { AchievementsModal } from "@/components/AchievementsModal";
 import TutorialTour, { TourStep } from "@/components/TutorialTour";
 import { useState } from "react";
 
-const WORLD_GRADIENTS: Record<string, string> = {
-  "vila-variaveis": "from-sky-300 via-cyan-200 to-white",
-  "vale-condicoes": "from-emerald-300 via-lime-200 to-white",
-  "montanha-loops": "from-orange-300 via-amber-200 to-white",
-  "floresta-funcoes": "from-violet-300 via-fuchsia-200 to-white",
-};
-
 const WORLD_TAGS: Record<string, string> = {
-  "vila-variaveis": "print, variaveis",
+  "vila-variaveis": "print, variáveis",
   "vale-condicoes": "if, else",
   "montanha-loops": "for, range",
-  "floresta-funcoes": "def, parametros",
+  "floresta-funcoes": "def, parâmetros",
 };
 
 type Props = {
@@ -49,18 +42,18 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
   const TOUR_STEPS: TourStep[] = [
     {
       targetId: "tutorial-intro",
-      title: "Arquipelago Aurora",
-      content: "Cada ilha ensina uma parte de Python com desafios curtos e executaveis no navegador.",
+      title: "Arquipélago Aurora",
+      content: "Cada ilha ensina uma parte de Python com desafios curtos e executáveis no navegador.",
     },
     {
       targetId: "tutorial-codex",
       title: "Guia Python",
-      content: "Abra o guia para revisar sintaxe, exemplos e padroes basicos antes de programar.",
+      content: "Abra o guia para revisar sintaxe, exemplos e padrões básicos antes de programar.",
     },
     {
       targetId: "tutorial-profile",
       title: "Progresso",
-      content: "Seu perfil guarda XP, conquistas, titulos e mundos concluidos.",
+      content: "Seu perfil guarda XP, conquistas, títulos e mundos concluídos.",
     },
   ];
 
@@ -70,84 +63,89 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
   };
 
   return (
-    <div className="min-h-screen text-slate-900 bg-[#f8fbff] relative overflow-hidden">
-      {/* Immersive Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-sky-200/20 blur-[140px] rounded-full" />
-        <div className="absolute bottom-0 right-1/3 w-[600px] h-[600px] bg-emerald-100/20 blur-[140px] rounded-full" />
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(14,165,233,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.2)_1px,transparent_1px)] [background-size:80px_80px]" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-sky-500/30 overflow-x-hidden">
+      {/* Cinematic Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(14,165,233,0.1),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(16,185,129,0.08),transparent_50%)]" />
+        <motion.div 
+          animate={{ opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute -left-[10%] top-0 h-[500px] w-[500px] rounded-full bg-sky-500/10 blur-[120px]" 
+        />
+        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px]" />
       </div>
 
-      <header className="border-b border-sky-100/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/60 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-6">
           <button 
-            className="group flex items-center gap-2" 
+            className="group flex items-center gap-3" 
             onClick={() => window.location.reload()}
           >
-            <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-sky-600/20 group-hover:scale-110 transition-transform">PY</div>
-            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-sky-700 to-sky-900 bg-clip-text text-transparent">Python Quest</span>
+            <div className="h-8 w-8 rounded-xl bg-sky-500 flex items-center justify-center text-white font-black text-xs shadow-[0_0_15px_rgba(14,165,233,0.5)] group-hover:scale-110 transition-transform">PY</div>
+            <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Quest</span>
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center bg-white/80 border border-sky-100 rounded-xl p-1 shadow-sm mr-2">
-              <Button variant="ghost" size="icon" onClick={() => setShowTour(true)} className="h-8 w-8 text-slate-500 hover:text-sky-700 hover:bg-sky-50" title="Tutorial">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-xl p-1 shadow-sm mr-2 backdrop-blur-md">
+              <Button variant="ghost" size="icon" onClick={() => setShowTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title="Tutorial">
                 <HelpCircle className="w-4 h-4" />
               </Button>
               <VolumeControl isMuted={state.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-              <Button id="tutorial-codex" variant="ghost" size="icon" onClick={() => setIsCodexOpen(true)} className="h-8 w-8 text-slate-500 hover:text-sky-700 hover:bg-sky-50" title="Guia Python">
+              <Button id="tutorial-codex" variant="ghost" size="icon" onClick={() => setIsCodexOpen(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title="Guia Python">
                 <BookOpen className="w-4 h-4" />
               </Button>
             </div>
 
             <button
               onClick={() => setIsAchievementsOpen(true)}
-              className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl transition-all border border-sky-100 shadow-sm group"
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-xl transition-all border border-white/10 shadow-sm group backdrop-blur-md"
             >
-              <Trophy className="w-4 h-4 text-amber-500 group-hover:rotate-12 transition-transform" />
-              <span className="text-xs font-black text-slate-700">{unlockedAchievements.length}/{state.achievements.length}</span>
+              <Trophy className="w-4 h-4 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span className="text-xs font-black text-white">{unlockedAchievements.length}/{state.achievements.length}</span>
             </button>
 
-            <div className="h-8 w-px bg-sky-100 mx-1 hidden md:block" />
+            <div className="h-8 w-px bg-white/10 mx-1 hidden md:block" />
 
             <div
               id="tutorial-profile"
               onClick={onOpenProfile}
-              className="hidden sm:flex bg-white hover:bg-slate-50 pl-4 py-1 rounded-full border border-sky-100 items-center shadow-sm gap-4 cursor-pointer transition-all hover:shadow-md"
+              className="hidden sm:flex bg-white/5 hover:bg-white/10 pl-4 py-1 rounded-full border border-white/10 items-center shadow-sm gap-4 cursor-pointer transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] backdrop-blur-md"
             >
               <div className="text-right hidden md:flex flex-col justify-center">
-                <div className="text-[9px] uppercase font-black text-slate-400 tracking-widest">
+                <div className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">
                   {title}
                 </div>
                 <div className="flex items-center justify-end gap-2">
-                  <span className="text-[10px] font-black text-sky-700 uppercase">LVL {level}</span>
-                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                    <motion.div className="h-full bg-gradient-to-r from-sky-500 to-emerald-400" animate={{ width: `${progress}%` }} />
+                  <span className="text-[10px] font-black text-sky-400 uppercase">LVL {level}</span>
+                  <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                    <motion.div className="h-full bg-gradient-to-r from-sky-400 to-emerald-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" animate={{ width: `${progress}%` }} />
                   </div>
                 </div>
               </div>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-emerald-400 flex items-center justify-center text-white font-black text-xs shadow-inner overflow-hidden border-2 border-white">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-600 to-emerald-600 flex items-center justify-center text-white font-black text-xs shadow-inner overflow-hidden border border-white/20">
                 {user?.avatarUrl ? <img src={user.avatarUrl} alt={state.playerName} className="w-full h-full object-cover" /> : state.playerName.charAt(0).toUpperCase()}
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" onClick={logout} className="h-9 w-9 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+            <Button variant="ghost" size="icon" onClick={logout} className="h-9 w-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 md:py-16">
-        <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-100 text-sky-700 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] mb-2">
-              Arquipélago Aurora
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
+        <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md">
+              <Sparkles className="h-3 w-3 text-sky-400" />
+              <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Arquipélago Aurora</span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-black text-slate-950 tracking-tight">
-              Saudações, <span className="text-sky-700">{state.playerName || "Explorador"}</span>.
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+              Saudações, <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{state.playerName || "Explorador"}</span>.
             </h1>
-            <p className="text-slate-500 text-lg font-medium">
-              Sua jornada de Scriptweaver continua: <span className="text-slate-950 font-bold">{getCompletedCount()}</span> de {getTotalChallenges()} rituais concluídos.
+            <p className="text-slate-400 text-xl font-medium">
+              Sua jornada de Scriptweaver continua: <span className="text-white font-black">{getCompletedCount()}</span> de {getTotalChallenges()} rituais concluídos.
             </p>
           </div>
         </div>
@@ -159,84 +157,100 @@ export default function WorldMap({ onSelectWorld, onOpenProfile }: Props) {
             const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
             const completedAll = completed === total && total > 0;
             const worldProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
-            const gradient = WORLD_GRADIENTS[world.id] || "from-sky-200 to-white";
+            const themeColor = world.color || "#0ea5e9";
 
             return (
               <motion.div
                 key={world.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1, ease: "easeOut" }}
                 onClick={() => unlocked && onSelectWorld(world.id)}
                 className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${
                   unlocked 
-                    ? "glass border-white/50 hover:border-sky-400 hover:-translate-y-2 hover:shadow-[0_32px_64px_-16px_rgba(14,165,233,0.2)] cursor-pointer" 
-                    : "border-slate-200 opacity-60 cursor-not-allowed bg-slate-50/50"
+                    ? "glass-dark hover:-translate-y-2 cursor-pointer" 
+                    : "border-white/5 opacity-50 cursor-not-allowed bg-slate-900/50"
                 }`}
+                style={{ 
+                  borderColor: unlocked ? `${themeColor}40` : undefined,
+                  boxShadow: unlocked ? `0 10px 30px -10px ${themeColor}20` : undefined
+                }}
               >
-                <div className={`h-44 bg-gradient-to-br ${gradient} relative overflow-hidden`}>
+                <div className="h-48 relative overflow-hidden" style={{ backgroundColor: `${themeColor}20` }}>
+                  {/* Glowing core */}
+                  <div 
+                    className="absolute inset-0 opacity-50"
+                    style={{ backgroundImage: `radial-gradient(circle at 50% 120%, ${themeColor}, transparent 70%)` }}
+                  />
                   {/* Holographic Overlays */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.9),transparent_40%)]" />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-tr from-sky-400/10 via-transparent to-emerald-400/10" />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 mix-blend-overlay" style={{ backgroundImage: `linear-gradient(to top right, transparent, ${themeColor})` }} />
                   
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/90 backdrop-blur-md border border-white rounded-full px-3 py-1 shadow-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">
+                  <div className="absolute top-5 left-5 inline-flex items-center gap-2 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
                       {WORLD_TAGS[world.id] || "Python"}
                     </span>
                   </div>
 
                   {!unlocked && (
-                    <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-sm flex flex-col items-center justify-center">
-                      <div className="bg-white/90 p-3 rounded-2xl shadow-xl">
+                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center">
+                      <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
                         <Lock className="w-6 h-6 text-slate-400" />
                       </div>
-                      <span className="mt-2 text-slate-900 font-black text-xs tracking-widest bg-white/80 px-3 py-1 rounded-full">{world.unlockRequirement.toLocaleString()} XP</span>
+                      <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} XP REQUERIDO</span>
                     </div>
                   )}
 
                   {completedAll && (
-                    <div className="absolute top-4 right-4 flex items-center gap-2 bg-emerald-500 text-white rounded-full px-3 py-1 shadow-lg shadow-emerald-500/30">
-                      <Star className="w-3 h-3 fill-white" />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Mestre</span>
+                    <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400 rounded-full px-3 py-1 shadow-lg shadow-emerald-500/20">
+                      <Star className="w-3 h-3 fill-emerald-400" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">Mestre</span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 space-y-5">
+                <div className="p-8 space-y-5 bg-slate-950/40">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-sky-600 mb-2">{world.subtitle}</p>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight group-hover:text-sky-700 transition-colors">{world.title}</h3>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2" style={{ color: themeColor }}>{world.subtitle}</p>
+                    <h3 className="text-2xl font-black text-white leading-tight group-hover:text-sky-300 transition-colors">{world.title}</h3>
                   </div>
 
-                  <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 font-medium h-[4.2rem]">
+                  <p className="text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium h-[4.2rem]">
                     {world.lore}
                   </p>
 
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="space-y-3 pt-4">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
                       <span>Progresso</span>
-                      <span className="text-slate-900">{worldProgress}%</span>
+                      <span className="text-white">{worldProgress}%</span>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${worldProgress}%` }}
                         transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full bg-gradient-to-r from-sky-500 to-emerald-400 rounded-full" 
+                        className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]" 
+                        style={{ backgroundColor: themeColor }}
                       />
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-4">
                     {unlocked ? (
-                      <Button className="w-full h-12 bg-slate-900 hover:bg-sky-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-slate-900/10 group-hover:shadow-sky-700/20 transition-all">
+                      <Button 
+                        className="w-full h-12 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all border group-hover:-translate-y-0.5"
+                        style={{ 
+                          backgroundColor: `${themeColor}20`,
+                          borderColor: `${themeColor}40`,
+                          color: themeColor
+                        }}
+                      >
                         {completed === 0 ? "Iniciar Desafio" : completedAll ? "Revisitar" : "Continuar Jornada"}
                         <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     ) : (
-                      <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] border-2 border-dashed border-slate-200 rounded-2xl h-12 flex items-center justify-center">
-                        <Lock className="w-3 h-3 mr-2" /> Bloqueado
+                      <div className="text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] border-2 border-dashed border-white/10 rounded-xl h-12 flex items-center justify-center bg-white/5">
+                        <Lock className="w-3 h-3 mr-2" /> Selado
                       </div>
                     )}
                   </div>

@@ -11,7 +11,8 @@ import {
   Trophy,
   Sparkles,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  Zap
 } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
