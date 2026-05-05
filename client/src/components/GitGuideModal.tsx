@@ -150,7 +150,7 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
             <div className="mt-12 bg-gradient-to-r from-emerald-900/20 to-sky-900/20 border border-emerald-500/20 rounded-3xl p-8 text-center max-w-3xl mx-auto">
               <h4 className="text-emerald-400 text-lg font-bold mb-3">Próximos Passos</h4>
               <p className="text-slate-300 text-base leading-relaxed mb-6">
-                Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Quest na nuvem!
+                Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Protocol na nuvem!
               </p>
               <Button onClick={() => setSimOpen(true)} className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest">
                 <Terminal className="w-4 h-4 mr-1" /> Abrir Simulador

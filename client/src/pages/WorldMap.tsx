@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -22,9 +22,10 @@ type Props = {
   onOpenProfile: () => void;
   onOpenGitSimulator: () => void;
   onOpenDockerSimulator: () => void;
+  onOpenNetworkSimulator: () => void;
 };
 
-export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator }: Props) {
+export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator, onOpenNetworkSimulator }: Props) {
   const {
     state,
     dispatch,
@@ -84,7 +85,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
             onClick={() => window.location.reload()}
           >
             <div className="h-8 w-8 rounded-xl bg-sky-500 flex items-center justify-center text-white font-black text-xs shadow-[0_0_15px_rgba(14,165,233,0.5)] group-hover:scale-110 transition-transform">PY</div>
-            <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Quest</span>
+            <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
           </button>
 
           <div className="flex items-center gap-3 md:gap-4">
@@ -124,6 +125,28 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               title="Aprender Docker"
             >
               <Container className="w-4 h-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onOpenNetworkSimulator}
+              className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+              title="Aprender Redes"
+            >
+              <Wifi className="w-4 h-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+              title="Aprender SQL (Query Quest)"
+            >
+              <a href="https://queryquest.com.br/" target="_blank" rel="noopener noreferrer">
+                <Database className="w-4 h-4" />
+              </a>
             </Button>
 
             <div className="h-8 w-px bg-white/10 mx-1 hidden md:block" />

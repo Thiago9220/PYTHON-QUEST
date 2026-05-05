@@ -23,7 +23,7 @@ export function Certificate({ fullName, completionDate, totalXP, challengesCompl
         <div className="flex items-center justify-between px-6 py-4 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-emerald-50 print:hidden">
           <div className="flex items-center gap-2 font-bold text-slate-900">
             <Award className="w-5 h-5 text-sky-600" />
-            Certificado Python Quest
+            Certificado Python Protocol
           </div>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-900">
             <X className="w-5 h-5" />
@@ -35,7 +35,7 @@ export function Certificate({ fullName, completionDate, totalXP, challengesCompl
             <div className="w-20 h-20 mx-auto rounded-3xl bg-sky-600 text-white flex items-center justify-center mb-8 shadow-lg shadow-sky-900/20">
               <Award className="w-10 h-10" />
             </div>
-            <p className="text-sm font-mono uppercase tracking-[0.35em] text-sky-700 mb-4">Python Quest Academy</p>
+            <p className="text-sm font-mono uppercase tracking-[0.35em] text-sky-700 mb-4">Python Protocol Academy</p>
             <h1 className="text-4xl md:text-5xl font-black text-slate-950 mb-5">Certificado de Jornada Python</h1>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8">
               Certificamos que <span className="font-bold text-slate-950">{fullName}</span> concluiu uma jornada de estudos em Python no Arquipelago Aurora, praticando fundamentos, condicoes, repeticoes e funcoes.

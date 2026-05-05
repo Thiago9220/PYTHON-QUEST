@@ -70,6 +70,10 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("why_python");
 
   useEffect(() => {
+    if (isOpen) {
+      setActiveTab("why_python");
+    }
+    
     if (!isOpen) return;
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = "hidden";

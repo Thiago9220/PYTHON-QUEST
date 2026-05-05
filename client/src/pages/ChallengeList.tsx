@@ -100,7 +100,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
               className="hidden sm:block text-sm font-black uppercase tracking-[0.2em] text-sky-400 hover:text-sky-300 transition-colors" 
               onClick={onBackToHome}
             >
-              Python Quest
+              Python Protocol
             </button>
           </div>
 

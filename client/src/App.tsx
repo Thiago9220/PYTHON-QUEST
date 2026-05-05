@@ -10,6 +10,7 @@ import GameArena from "./pages/GameArena";
 import Profile from "./pages/Profile";
 import { GitSimulator } from "./components/GitSimulator";
 import { DockerSimulator } from "./components/DockerSimulator";
+import { NetworkSimulator } from "./components/NetworkSimulator";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 
@@ -20,7 +21,8 @@ type View =
   | { name: "arena"; challengeId: string; worldId: string }
   | { name: "profile" }
   | { name: "git-simulator" }
-  | { name: "docker-simulator" };
+  | { name: "docker-simulator" }
+  | { name: "network-simulator" };
 
 function AppContent() {
   const { state, hasHydrated } = useGame();
@@ -65,12 +67,15 @@ function AppContent() {
           onOpenProfile={goProfile}
           onOpenGitSimulator={() => setView({ name: "git-simulator" })}
           onOpenDockerSimulator={() => setView({ name: "docker-simulator" })}
+          onOpenNetworkSimulator={() => setView({ name: "network-simulator" })}
         />
       )}
 
       {view.name === "git-simulator" && <GitSimulator onBack={goMap} />}
 
       {view.name === "docker-simulator" && <DockerSimulator onBack={goMap} />}
+      
+      {view.name === "network-simulator" && <NetworkSimulator onBack={goMap} />}
 
       {view.name === "list" && (
         <ChallengeList

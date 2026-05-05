@@ -110,7 +110,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
           <div className="flex flex-wrap items-center gap-4">
             <button className="group flex items-center gap-3" onClick={onBackToHome}>
               <div className="h-8 w-8 rounded-xl bg-sky-500 flex items-center justify-center text-white font-black text-xs shadow-[0_0_15px_rgba(14,165,233,0.5)] group-hover:scale-110 transition-transform">PY</div>
-              <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Quest</span>
+              <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
             </button>
             
             <div className="h-6 w-px bg-white/10 hidden md:block" />
