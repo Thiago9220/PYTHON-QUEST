@@ -872,10 +872,10 @@ export function GitSimulator({ onBack }: Props) {
     ];
     return (
       <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
             <img 
-              src="/assets/images/infrastructure_bg.png" 
-              alt="Infrastructure" 
+              src="/assets/images/git_bg.png" 
+              alt="Git Background" 
               className="w-full h-full object-cover"
             />
           </div>
@@ -1049,10 +1049,10 @@ export function GitSimulator({ onBack }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.06]">
         <img 
-          src="/assets/images/infrastructure_bg.png" 
-          alt="Infrastructure" 
+          src="/assets/images/git_bg.png" 
+          alt="Git Background" 
           className="w-full h-full object-cover"
         />
       </div>

@@ -41,6 +41,7 @@ export function useChallengeEngine(
   });
 
   const lastChallengeIdRef = useRef<string | null>(null);
+  const confettiFiredRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (challenge?.id && lastChallengeIdRef.current !== challenge.id) {

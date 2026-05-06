@@ -45,18 +45,28 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
   const TOUR_STEPS: TourStep[] = [
     {
       targetId: "tutorial-intro",
-      title: "Arquipélago Aurora",
-      content: "Cada ilha ensina uma parte de Python com desafios curtos e executáveis no navegador.",
+      title: "Protocolo Python",
+      content: "Bem-vindo ao sistema. Aqui você não apenas aprende Python, mas domina as ferramentas que sustentam a internet moderna.",
+    },
+    {
+      targetId: "tutorial-worlds",
+      title: "Núcleos Python",
+      content: "Explore as ilhas para aprender lógica, loops e funções. Cada node invadido libera novos conhecimentos.",
+    },
+    {
+      targetId: "tutorial-simulators",
+      title: "Módulos Táticos",
+      content: "O diferencial: Simuladores reais de Git, Docker e Redes. Pratique comandos reais sem instalar nada.",
     },
     {
       targetId: "tutorial-codex",
-      title: "Guia Python",
-      content: "Abra o guia para revisar sintaxe, exemplos e padrões básicos antes de programar.",
+      title: "Banco de Dados",
+      content: "O Codex contém toda a documentação técnica necessária para suas missões. Consulte sempre que precisar.",
     },
     {
       targetId: "tutorial-profile",
-      title: "Progresso",
-      content: "Seu perfil guarda XP, conquistas, títulos e mundos concluídos.",
+      title: "Nível de Acesso",
+      content: "Ganhe XP e conquistas para subir seu nível de Operador e desbloquear novos setores.",
     },
   ];
 
@@ -107,35 +117,40 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               <span className="text-xs font-black text-white">{unlockedAchievements.length}/{state.achievements.length}</span>
             </button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onOpenGitSimulator}
-              className="h-9 w-9 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-              title="Aprender Git & GitHub"
-            >
-              <GitBranch className="w-4 h-4" />
-            </Button>
+            <div id="tutorial-simulators" className="flex items-center gap-2">
+              <Button
+                id="tutorial-git"
+                variant="ghost"
+                size="icon"
+                onClick={onOpenGitSimulator}
+                className="h-9 w-9 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+                title="Aprender Git & GitHub"
+              >
+                <GitBranch className="w-4 h-4" />
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onOpenDockerSimulator}
-              className="h-9 w-9 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-              title="Aprender Docker"
-            >
-              <Container className="w-4 h-4" />
-            </Button>
+              <Button
+                id="tutorial-docker"
+                variant="ghost"
+                size="icon"
+                onClick={onOpenDockerSimulator}
+                className="h-9 w-9 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+                title="Aprender Docker"
+              >
+                <Container className="w-4 h-4" />
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onOpenNetworkSimulator}
-              className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-              title="Aprender Redes"
-            >
-              <Wifi className="w-4 h-4" />
-            </Button>
+              <Button
+                id="tutorial-network"
+                variant="ghost"
+                size="icon"
+                onClick={onOpenNetworkSimulator}
+                className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+                title="Aprender Redes"
+              >
+                <Wifi className="w-4 h-4" />
+              </Button>
+            </div>
 
             <Button
               variant="ghost"
@@ -182,19 +197,20 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8 md:py-10">
         <div id="tutorial-intro" className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md">
-              <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Arquipélago Aurora</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-[10px] font-black uppercase tracking-widest text-sky-400 mb-6 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+              Protocolo Principal
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
-              Saudações, <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{state.playerName || "Explorador"}</span>.
+            <h1 id="tutorial-intro" className="text-2xl md:text-3xl font-black text-white mb-1 leading-tight tracking-tight">
+              Acesso Autorizado, <span className="bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">{state.playerName || "Operador"}</span>.
             </h1>
-            <p className="text-slate-400 text-lg font-medium">
-              Sua jornada como Operador continua: <span className="text-white font-black">{getCompletedCount()}</span> de {getTotalChallenges()} Nodes invadidos.
+            <p className="text-slate-400 text-xs md:text-sm font-mono uppercase tracking-[0.2em] opacity-80">
+              Sua jornada como Operador continua: <span className="text-white font-bold">{getCompletedCount()}</span> de {getTotalChallenges()} Sistemas Comprometidos.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div id="tutorial-worlds" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {WORLDS.map((world, idx) => {
             const unlocked = isWorldUnlocked(world.id);
             const total = world.challenges.length;

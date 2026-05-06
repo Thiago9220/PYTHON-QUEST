@@ -57,7 +57,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
     if (completedCount === 0) return "Inicie o protocolo de invasão e restaure o Core do sistema.";
     if (completionPct === 100) return "Domínio total do setor alcançado! Todos os módulos foram reescritos.";
     if (completionPct >= 75) return `Quase lá: restam apenas ${remaining} script${remaining > 1 ? "s" : ""} para o bypass final.`;
-    if (completionPct >= 50) return "Sua conexão com o Arquipélago está se fortalecendo.";
+    if (completionPct >= 50) return "Sua sincronia com o Protocolo está se fortalecendo.";
     return "Um bom começo. O conhecimento Python aguarda sua determinação.";
   })();
 

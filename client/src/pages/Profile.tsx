@@ -218,10 +218,10 @@ export default function Profile({ onBack }: Props) {
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-md">
-                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Iniciado do Arquipélago</span>
+                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Agente do Protocolo</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <h2 className="truncate text-5xl font-black text-white tracking-tight leading-tight">{displayName || "Explorador"}</h2>
+                      <h2 className="truncate text-5xl font-black text-white tracking-tight leading-tight">{displayName || "Operador"}</h2>
                       <Button 
                         variant="ghost" 
                         size="icon" 
