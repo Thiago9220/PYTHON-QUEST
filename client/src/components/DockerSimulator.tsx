@@ -163,6 +163,7 @@ const LEVELS: LevelDef[] = [
 
 export function DockerSimulator({ onBack }: Props) {
   const [phase, setPhase] = useState<"intro" | "playing">("intro");
+  const [introStep, setIntroStep] = useState(0);
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
   const [completed, setCompleted] = useState<Set<number>>(new Set());
@@ -560,63 +561,57 @@ export function DockerSimulator({ onBack }: Props) {
       { border: "border-amber-500/20", bg: "bg-amber-500/10", borderInner: "border-amber-500/30", text: "text-amber-400" },
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", borderInner: "border-fuchsia-500/30", text: "text-fuchsia-400" },
     ];
-    return (
-      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
-            <img 
-              src="/assets/images/docker_bg.png" 
-              alt="Docker Background" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-        <div className="relative z-10 flex flex-col min-h-screen">
-          <div className="px-6 py-4">
-            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10 flex-1">
+    const steps: { title: string; content: React.ReactNode }[] = [
+      {
+        title: "Boas-vindas",
+        content: (
           <div className="text-center pt-6">
             <div className="inline-flex p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 mb-5">
               <ContainerIcon className="w-10 h-10" />
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight">Docker Simulator</h1>
             <p className="text-sky-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">Containerize sem dor de cabeça</p>
-            <p className="text-slate-400 text-lg max-w-3xl mx-auto leading-relaxed">
-              Aprenda Docker digitando comandos reais. Sem instalar Docker, sem WSL, sem configuração — tudo simulado no navegador. Veja imagens sendo baixadas, containers ligando, portas mapeadas e volumes persistindo.
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+              Aprenda Docker digitando comandos reais. Sem instalar Docker, sem WSL — tudo simulado no navegador. Veja imagens sendo baixadas, containers ligando, portas mapeadas e volumes persistindo.
             </p>
           </div>
-
+        ),
+      },
+      {
+        title: "Por que Docker?",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Por que Docker?
             </h2>
             <div className="grid md:grid-cols-3 gap-3">
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Boxes className="w-5 h-5 text-sky-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">"Funciona na minha máquina"</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Boxes className="w-6 h-6 text-sky-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">"Funciona na minha máquina"</p>
                 <p className="text-sm text-slate-400 leading-relaxed">Empacota seu app + dependências numa caixa portátil que roda igual em qualquer lugar.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Server className="w-5 h-5 text-emerald-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">Deploy descomplicado</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Server className="w-6 h-6 text-emerald-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Deploy descomplicado</p>
                 <p className="text-sm text-slate-400 leading-relaxed">"Build once, run anywhere". A mesma imagem vai do laptop pro servidor sem surpresas.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Layers className="w-5 h-5 text-fuchsia-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">Isolamento</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Layers className="w-6 h-6 text-fuchsia-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Isolamento</p>
                 <p className="text-sm text-slate-400 leading-relaxed">Rode 5 versões diferentes de Node ou Postgres na mesma máquina sem conflitos.</p>
               </div>
             </div>
           </section>
-
+        ),
+      },
+      {
+        title: "Imagem vs Container",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> Imagem vs Container
             </h2>
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid md:grid-cols-2 gap-3 mb-6">
               <div className="bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5">
                 <div className="flex items-center gap-2 text-sky-400 text-sm font-bold uppercase tracking-widest mb-3">
                   <Package className="w-3.5 h-3.5" /> Imagem (template)
@@ -632,43 +627,60 @@ export function DockerSimulator({ onBack }: Props) {
                 <p className="text-xs text-slate-500 font-mono">Dinâmico · Tem estado · Efêmero</p>
               </div>
             </div>
-            <p className="text-sm text-slate-500 mt-3 text-center italic">Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado.</p>
+            
+            <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden mb-4">
+              <img 
+                src="/assets/images/docker_edu.png" 
+                alt="Infográfico Educativo: Imagem vs Container" 
+                className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </div>
+            
+            <p className="text-sm text-slate-500 text-center italic">Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado.</p>
           </section>
-
+        ),
+      },
+      {
+        title: "Como tudo se conecta",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
               <Network className="w-4 h-4" /> Como tudo se conecta
             </h2>
-            <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-5">
+            <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
               <div className="grid md:grid-cols-4 gap-3 items-center text-center">
-                <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-3">
-                  <Cloud className="w-6 h-6 text-fuchsia-400 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-white">Docker Hub</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Registry público</p>
+                <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-4">
+                  <Cloud className="w-7 h-7 text-fuchsia-400 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-white">Docker Hub</p>
+                  <p className="text-xs text-slate-500 mt-1">Registry público</p>
                 </div>
                 <div className="text-slate-600 font-mono text-xs hidden md:block">docker pull →</div>
-                <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-3">
-                  <Package className="w-6 h-6 text-sky-400 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-white">Imagens Locais</p>
-                  <p className="text-[10px] text-slate-500 mt-1">No seu disco</p>
+                <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4">
+                  <Package className="w-7 h-7 text-sky-400 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-white">Imagens Locais</p>
+                  <p className="text-xs text-slate-500 mt-1">No seu disco</p>
                 </div>
                 <div className="text-slate-600 font-mono text-xs hidden md:block">docker run →</div>
               </div>
-              <div className="grid md:grid-cols-4 gap-3 items-center text-center mt-3">
+              <div className="grid md:grid-cols-4 gap-3 items-center text-center mt-4">
                 <div></div>
                 <div></div>
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3">
-                  <ContainerIcon className="w-6 h-6 text-emerald-400 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-white">Containers</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Rodando ou parados</p>
+                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
+                  <ContainerIcon className="w-7 h-7 text-emerald-400 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-white">Containers</p>
+                  <p className="text-xs text-slate-500 mt-1">Rodando ou parados</p>
                 </div>
                 <div></div>
               </div>
             </div>
           </section>
-
+        ),
+      },
+      {
+        title: "Glossário",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> Glossário rápido
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5">
@@ -689,9 +701,13 @@ export function DockerSimulator({ onBack }: Props) {
               ))}
             </div>
           </section>
-
+        ),
+      },
+      {
+        title: "Os 4 níveis",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
               <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
             </h2>
             <div className="space-y-2">
@@ -709,27 +725,91 @@ export function DockerSimulator({ onBack }: Props) {
               })}
             </div>
           </section>
-
-          <section className="bg-gradient-to-br from-sky-900/10 via-slate-900/40 to-emerald-900/10 border border-sky-500/20 rounded-2xl p-5">
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-3 flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" /> Dicas do simulador
-            </h2>
-            <ul className="text-sm text-slate-400 space-y-2">
-              <li>• Digite <code className="text-sky-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
-              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para histórico e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar</li>
-              <li>• Clique no <code className="text-amber-300 font-mono">Dockerfile</code> ou <code className="text-amber-300 font-mono">docker-compose.yml</code> para abrir o editor (níveis 2 e 4)</li>
-              <li>• <code className="text-sky-300 font-mono">curl localhost:&lt;porta&gt;</code> testa portas mapeadas — o simulador devolve a resposta</li>
-              <li>• <code className="text-sky-300 font-mono">reset</code> reinicia o nível atual; <code className="text-sky-300 font-mono">clear</code> limpa o terminal</li>
-            </ul>
+        ),
+      },
+      {
+        title: "Pronto para começar",
+        content: (
+          <section>
+            <div className="bg-gradient-to-br from-sky-900/10 via-slate-900/40 to-emerald-900/10 border border-sky-500/20 rounded-2xl p-6 mb-6">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" /> Dicas do simulador
+              </h2>
+              <ul className="text-sm text-slate-400 space-y-2">
+                <li>• Digite <code className="text-sky-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
+                <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para histórico e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar</li>
+                <li>• Clique no <code className="text-amber-300 font-mono">Dockerfile</code> ou <code className="text-amber-300 font-mono">docker-compose.yml</code> para abrir o editor (níveis 2 e 4)</li>
+                <li>• <code className="text-sky-300 font-mono">curl localhost:&lt;porta&gt;</code> testa portas mapeadas</li>
+                <li>• <code className="text-sky-300 font-mono">reset</code> reinicia o nível, <code className="text-sky-300 font-mono">clear</code> limpa o terminal</li>
+              </ul>
+            </div>
+            <div className="text-center">
+              <p className="text-base text-slate-300 mb-1">Você está pronto.</p>
+              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</p>
+            </div>
           </section>
+        ),
+      },
+    ];
 
-          <div className="flex flex-col items-center gap-3 pt-4">
-            <Button onClick={() => setPhase("playing")} size="lg" className="bg-sky-400 text-slate-950 hover:bg-sky-300 font-black uppercase tracking-widest px-10 py-6 text-base">
-              Iniciar Treinamento <ChevronDown className="w-4 h-4 ml-2 -rotate-90" />
-            </Button>
-            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
-          </div>
+    const isLast = introStep === steps.length - 1;
+    const goPrev = () => setIntroStep((s) => Math.max(0, s - 1));
+    const goNext = () => isLast ? setPhase("playing") : setIntroStep((s) => s + 1);
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
+          <img src="/assets/images/docker_bg.png" alt="" className="w-full h-full object-cover" />
         </div>
+
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <div className="flex items-center justify-between px-6 py-4">
+            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <button onClick={() => setPhase("playing")} className="text-xs text-slate-500 hover:text-sky-400 font-mono uppercase tracking-widest transition-colors">
+              Pular tour →
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-start justify-center px-4 pb-32">
+            <div className="max-w-4xl w-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={introStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {steps[introStep].content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-md border-t border-white/10">
+            <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+              <Button variant="ghost" onClick={goPrev} disabled={introStep === 0} className="text-slate-400 hover:text-white disabled:opacity-30">
+                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> Voltar
+              </Button>
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} de {steps.length}</p>
+                <div className="flex gap-1.5">
+                  {steps.map((_, i) => (
+                    <button key={i} onClick={() => setIntroStep(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === introStep ? "w-8 bg-sky-400" :
+                        i < introStep ? "w-1.5 bg-sky-400/60" : "w-1.5 bg-slate-700"
+                      }`} aria-label={`Ir para passo ${i + 1}`} />
+                  ))}
+                </div>
+              </div>
+              <Button onClick={goNext} className={isLast ? "bg-sky-400 text-slate-950 hover:bg-sky-300 font-bold" : "bg-slate-800 text-white hover:bg-slate-700"}>
+                {isLast ? "Iniciar Treinamento" : "Próximo"} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );

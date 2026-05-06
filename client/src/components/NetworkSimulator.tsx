@@ -4,7 +4,7 @@ import {
   Router, Laptop, ShieldAlert, FileSearch, Flag, X, Zap, Network as NetworkIcon, Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props { onBack: () => void }
 
@@ -182,6 +182,7 @@ const LEVELS: LevelDef[] = [
 
 export function NetworkSimulator({ onBack }: Props) {
   const [phase, setPhase] = useState<"intro" | "playing">("intro");
+  const [introStep, setIntroStep] = useState(0);
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
   const [completed, setCompleted] = useState<Set<number>>(new Set());
@@ -687,22 +688,10 @@ export function NetworkSimulator({ onBack }: Props) {
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", text: "text-fuchsia-400", borderInner: "border-fuchsia-500/30" },
       { border: "border-red-500/20", bg: "bg-red-500/10", text: "text-red-400", borderInner: "border-red-500/30" },
     ];
-    return (
-      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
-          <img 
-            src="/assets/images/network_bg.png" 
-            alt="Network Background" 
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="relative z-10">
-        <div className="px-6 py-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </div>
-        <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10">
+    const steps: { title: string; content: React.ReactNode }[] = [
+      {
+        title: "Boas-vindas",
+        content: (
           <div className="text-center pt-6">
             <div className="inline-flex p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-5">
               <Wifi className="w-10 h-10" />
@@ -713,35 +702,43 @@ export function NetworkSimulator({ onBack }: Props) {
               Um laboratório virtual de redes e cibersegurança ofensiva. Você assume o papel de um operador investigando a infraestrutura interna de uma empresa fictícia. Use comandos reais (<code className="text-cyan-300 font-mono text-xs">nmap, dig, nc, tcpdump</code>...) e veja a topologia se revelar conforme você avança.
             </p>
           </div>
-
+        ),
+      },
+      {
+        title: "Por que aprender redes?",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Por que aprender redes?
             </h2>
             <div className="grid md:grid-cols-3 gap-3">
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Globe className="w-5 h-5 text-cyan-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">A internet é redes</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Todo serviço (web, email, app, jogo) é tráfego de rede. Quem entende rede entende como tudo funciona.</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Globe className="w-6 h-6 text-cyan-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">A internet é redes</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Todo serviço (web, email, app, jogo) é tráfego de rede. Quem entende rede entende como tudo funciona.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <ShieldAlert className="w-5 h-5 text-red-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Segurança</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Pra defender, você precisa pensar como atacante. As mesmas ferramentas servem pra ambos os lados.</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <ShieldAlert className="w-6 h-6 text-red-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Segurança</p>
+                <p className="text-sm text-slate-400 leading-relaxed">Pra defender, você precisa pensar como atacante. As mesmas ferramentas servem pra ambos os lados.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <FileSearch className="w-5 h-5 text-amber-400 mb-2" />
-                <p className="text-sm font-bold text-white mb-1">Debug & SRE</p>
-                <p className="text-xs text-slate-400 leading-relaxed">"Por que esse serviço não responde?" 80% das vezes é rede. Saber sondar economiza horas.</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <FileSearch className="w-6 h-6 text-amber-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Debug & SRE</p>
+                <p className="text-sm text-slate-400 leading-relaxed">"Por que esse serviço não responde?" 80% das vezes é rede. Saber sondar economiza horas.</p>
               </div>
             </div>
           </section>
-
+        ),
+      },
+      {
+        title: "Conceitos fundamentais",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> Conceitos fundamentais
             </h2>
-            <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5">
+            <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5 mb-6">
               {[
                 { t: "IP",         d: "Endereço numérico único de cada máquina na rede. Ex: 192.168.1.42 (privado), 8.8.8.8 (público).", c: "text-cyan-300" },
                 { t: "Subrede",    d: "Faixa de IPs do mesmo segmento físico. 192.168.1.0/24 = 256 endereços (192.168.1.0 a 192.168.1.255).", c: "text-emerald-300" },
@@ -752,31 +749,47 @@ export function NetworkSimulator({ onBack }: Props) {
                 { t: "Banner",     d: "Mensagem inicial que muitos serviços enviam ao conectar — costuma vazar a versão do software.", c: "text-pink-300" },
                 { t: "CIDR",       d: "Forma compacta de expressar faixas: /24 = 256 IPs, /16 = 65536 IPs, /32 = 1 IP só.", c: "text-cyan-300" },
               ].map((it, i) => (
-                <div key={i} className="flex items-start gap-3 p-3">
-                  <span className={`text-xs font-bold font-mono ${it.c} min-w-[100px] pt-0.5`}>{it.t}</span>
-                  <span className="text-xs text-slate-400 leading-relaxed flex-1">{it.d}</span>
+                <div key={i} className="flex items-start gap-3 p-4">
+                  <span className={`text-sm font-bold font-mono ${it.c} min-w-[120px] pt-0.5`}>{it.t}</span>
+                  <span className="text-sm text-slate-400 leading-relaxed flex-1">{it.d}</span>
                 </div>
               ))}
             </div>
-          </section>
 
-          <section className="bg-gradient-to-br from-red-900/10 via-slate-900/40 to-cyan-900/10 border border-red-500/20 rounded-2xl p-5">
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-400 mb-3 flex items-center gap-2">
+            <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden">
+              <img 
+                src="/assets/images/network_edu.png" 
+                alt="Infográfico Educativo: Fluxo de Pacotes na Rede" 
+                className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </div>
+          </section>
+        ),
+      },
+      {
+        title: "Cenário CTF",
+        content: (
+          <section className="bg-gradient-to-br from-red-900/10 via-slate-900/40 to-cyan-900/10 border border-red-500/20 rounded-2xl p-6">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-400 mb-4 flex items-center gap-2">
               <Flag className="w-4 h-4" /> Cenário CTF
             </h2>
-            <p className="text-sm text-slate-300 leading-relaxed mb-2">
+            <p className="text-base text-slate-300 leading-relaxed mb-4">
               Você é um pentester contratado pela <strong>CorpHQ</strong> pra avaliar a segurança da rede interna. Sabe-se que existe um host vulnerável escondido entre as máquinas. Sua missão:
             </p>
-            <ol className="text-sm text-slate-400 leading-relaxed space-y-1 list-decimal list-inside ml-2">
+            <ol className="text-sm text-slate-400 leading-relaxed space-y-2 list-decimal list-inside ml-2">
               <li>Mapear a topologia (descobrir todos os hosts ativos)</li>
               <li>Identificar serviços expostos e suas versões</li>
               <li>Encontrar a "bandeira" (CTF flag) escondida no servidor vulnerável</li>
               <li>Gerar um relatório final com as vulnerabilidades descobertas</li>
             </ol>
           </section>
-
+        ),
+      },
+      {
+        title: "Os 5 níveis",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
               <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
             </h2>
             <div className="space-y-2">
@@ -794,29 +807,93 @@ export function NetworkSimulator({ onBack }: Props) {
               })}
             </div>
           </section>
-
-          <section className="bg-gradient-to-br from-cyan-900/10 via-slate-900/40 to-emerald-900/10 border border-cyan-500/20 rounded-2xl p-5">
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-3 flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" /> Dicas
-            </h2>
-            <ul className="text-xs text-slate-400 space-y-1.5">
-              <li>• Digite <code className="text-cyan-300 font-mono">help</code> a qualquer momento para listar todos os comandos</li>
-              <li>• <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">↓</kbd> navegam o histórico, <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] font-mono">Tab</kbd> autocompleta</li>
-              <li>• <strong>Clique nos hosts do mapa de topologia</strong> para ver portas e detalhes</li>
-              <li>• Pacotes ICMP/TCP/DNS são animados no mapa quando você dispara comandos</li>
-              <li>• <code className="text-cyan-300 font-mono">reset</code> reinicia o nível, <code className="text-cyan-300 font-mono">clear</code> limpa o terminal</li>
-            </ul>
+        ),
+      },
+      {
+        title: "Pronto para começar",
+        content: (
+          <section>
+            <div className="bg-gradient-to-br from-cyan-900/10 via-slate-900/40 to-emerald-900/10 border border-cyan-500/20 rounded-2xl p-6 mb-6">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-4 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" /> Dicas
+              </h2>
+              <ul className="text-sm text-slate-400 space-y-2">
+                <li>• Digite <code className="text-cyan-300 font-mono">help</code> a qualquer momento para listar todos os comandos</li>
+                <li>• <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> navegam o histórico, <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> autocompleta</li>
+                <li>• <strong>Clique nos hosts do mapa de topologia</strong> para ver portas e detalhes</li>
+                <li>• Pacotes ICMP/TCP/DNS são animados no mapa quando você dispara comandos</li>
+                <li>• <code className="text-cyan-300 font-mono">reset</code> reinicia o nível, <code className="text-cyan-300 font-mono">clear</code> limpa o terminal</li>
+              </ul>
+            </div>
+            <div className="text-center">
+              <p className="text-base text-slate-300 mb-1">Pronto, operador.</p>
+              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">17 missões · 5 níveis · ~30 minutos</p>
+            </div>
           </section>
+        ),
+      },
+    ];
 
-          <div className="flex flex-col items-center gap-3 pt-4">
-            <Button onClick={() => setPhase("playing")} size="lg" className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-black uppercase tracking-widest px-10 py-6 text-base">
-              Iniciar Operação <ChevronDown className="w-4 h-4 ml-2 -rotate-90" />
+    const isLast = introStep === steps.length - 1;
+    const goPrev = () => setIntroStep((s) => Math.max(0, s - 1));
+    const goNext = () => isLast ? setPhase("playing") : setIntroStep((s) => s + 1);
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
+          <img src="/assets/images/network_bg.png" alt="" className="w-full h-full object-cover" />
+        </div>
+
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <div className="flex items-center justify-between px-6 py-4">
+            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">17 missões · 5 níveis · ~30 minutos</p>
+            <button onClick={() => setPhase("playing")} className="text-xs text-slate-500 hover:text-cyan-400 font-mono uppercase tracking-widest transition-colors">
+              Pular tour →
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-start justify-center px-4 pb-32">
+            <div className="max-w-4xl w-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={introStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {steps[introStep].content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-md border-t border-white/10">
+            <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+              <Button variant="ghost" onClick={goPrev} disabled={introStep === 0} className="text-slate-400 hover:text-white disabled:opacity-30">
+                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> Voltar
+              </Button>
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} de {steps.length}</p>
+                <div className="flex gap-1.5">
+                  {steps.map((_, i) => (
+                    <button key={i} onClick={() => setIntroStep(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === introStep ? "w-8 bg-cyan-400" :
+                        i < introStep ? "w-1.5 bg-cyan-400/60" : "w-1.5 bg-slate-700"
+                      }`} aria-label={`Ir para passo ${i + 1}`} />
+                  ))}
+                </div>
+              </div>
+              <Button onClick={goNext} className={isLast ? "bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold" : "bg-slate-800 text-white hover:bg-slate-700"}>
+                {isLast ? "Iniciar Operação" : "Próximo"} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     );
   }
 

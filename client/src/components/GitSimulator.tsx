@@ -286,6 +286,7 @@ export function GitSimulator({ onBack }: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [phase, setPhase] = useState<"intro" | "playing">("intro");
+  const [introStep, setIntroStep] = useState(0);
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -870,64 +871,54 @@ export function GitSimulator({ onBack }: Props) {
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", borderInner: "border-fuchsia-500/30", text: "text-fuchsia-400" },
       { border: "border-violet-500/20", bg: "bg-violet-500/10", borderInner: "border-violet-500/30", text: "text-violet-400" },
     ];
-    return (
-      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
-            <img 
-              src="/assets/images/git_bg.png" 
-              alt="Git Background" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-        <div className="relative z-10 flex flex-col min-h-screen">
-          <div className="px-6 py-4">
-            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <div className="max-w-4xl mx-auto px-4 pb-16 space-y-10 flex-1">
-
-          {/* Hero */}
+    const steps: { title: string; content: React.ReactNode }[] = [
+      {
+        title: "Boas-vindas",
+        content: (
           <div className="text-center pt-6">
             <div className="inline-flex p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-5">
               <Terminal className="w-10 h-10" />
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight">Git Simulator</h1>
             <p className="text-emerald-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">Treine sem medo de quebrar nada</p>
-            <p className="text-slate-400 text-lg max-w-3xl mx-auto leading-relaxed">
-              Um terminal simulado para você praticar Git e GitHub digitando comandos reais. Sem instalar nada, sem risco de perder código, com grafo de commits ao vivo e missões que ensinam do zero.
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+              Um terminal simulado para você praticar Git e GitHub digitando comandos reais. Sem instalar nada, com grafo de commits ao vivo e missões que ensinam do zero.
             </p>
           </div>
-
-          {/* Por que Git */}
+        ),
+      },
+      {
+        title: "Por que aprender Git?",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Por que aprender Git?
             </h2>
             <div className="grid md:grid-cols-3 gap-3">
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Clock className="w-5 h-5 text-amber-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">Máquina do tempo</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Clock className="w-6 h-6 text-amber-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Máquina do tempo</p>
                 <p className="text-sm text-slate-400 leading-relaxed">Volte para qualquer versão anterior do seu código com um comando. Quebrou algo? Desfaça em segundos.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Users className="w-5 h-5 text-sky-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">Trabalho em time</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Users className="w-6 h-6 text-sky-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Trabalho em time</p>
                 <p className="text-sm text-slate-400 leading-relaxed">Várias pessoas mexendo no mesmo projeto sem pisar no pé umas das outras. O Git resolve quem mudou o quê.</p>
               </div>
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                <Shield className="w-5 h-5 text-fuchsia-400 mb-2" />
-                <p className="text-base font-bold text-white mb-1">Indispensável no mercado</p>
+              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
+                <Shield className="w-6 h-6 text-fuchsia-400 mb-3" />
+                <p className="text-base font-bold text-white mb-2">Indispensável no mercado</p>
                 <p className="text-sm text-slate-400 leading-relaxed">99% das empresas de tecnologia usam Git. É o requisito mais básico — saber Git é como saber abrir um arquivo.</p>
               </div>
             </div>
           </section>
-
-          {/* Git vs GitHub */}
+        ),
+      },
+      {
+        title: "Git vs GitHub",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> Git vs GitHub
             </h2>
             <div className="grid md:grid-cols-2 gap-3">
@@ -946,37 +937,43 @@ export function GitSimulator({ onBack }: Props) {
                 <p className="text-xs text-slate-500 font-mono">Nuvem • Online • Interface web</p>
               </div>
             </div>
-            <p className="text-sm text-slate-500 mt-3 text-center italic">Analogia: Git é o Word; GitHub é o Google Drive. Você usa o programa local e sincroniza com a nuvem.</p>
+            <p className="text-sm text-slate-500 mt-4 text-center italic">Analogia: Git é o Word; GitHub é o Google Drive. Você usa o programa local e sincroniza com a nuvem.</p>
           </section>
-
-          {/* As 3 áreas do Git */}
+        ),
+      },
+      {
+        title: "As 3 áreas do Git",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 flex items-center gap-2">
               <Folder className="w-4 h-4" /> As 3 áreas do Git
             </h2>
-            <p className="text-base text-slate-400 mb-4">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
+            <p className="text-base text-slate-400 mb-5">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
             <div className="grid md:grid-cols-3 gap-3">
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 relative">
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
                 <div className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2">1. Working Directory</div>
-                <p className="text-base text-slate-300 leading-relaxed mb-2">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
                 <code className="text-xs text-amber-300 font-mono">edita arquivo.js</code>
               </div>
-              <div className="bg-sky-500/5 border border-sky-500/20 rounded-2xl p-4">
+              <div className="bg-sky-500/5 border border-sky-500/20 rounded-2xl p-5">
                 <div className="text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">2. Staging (Índice)</div>
-                <p className="text-base text-slate-300 leading-relaxed mb-2">Sala de espera. Você marca aqui o que vai entrar no próximo commit (snapshot).</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Sala de espera. Você marca aqui o que vai entrar no próximo commit (snapshot).</p>
                 <code className="text-xs text-sky-300 font-mono">git add arquivo.js</code>
               </div>
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
                 <div className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">3. Repository</div>
-                <p className="text-base text-slate-300 leading-relaxed mb-2">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
                 <code className="text-xs text-emerald-300 font-mono">git commit -m "msg"</code>
               </div>
             </div>
           </section>
-
-          {/* Conceitos-chave */}
+        ),
+      },
+      {
+        title: "Glossário",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> Glossário rápido
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5">
@@ -997,10 +994,13 @@ export function GitSimulator({ onBack }: Props) {
               ))}
             </div>
           </section>
-
-          {/* Preview dos níveis */}
+        ),
+      },
+      {
+        title: "Os 5 níveis",
+        content: (
           <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 flex items-center gap-2">
               <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
             </h2>
             <div className="space-y-2">
@@ -1018,30 +1018,108 @@ export function GitSimulator({ onBack }: Props) {
               })}
             </div>
           </section>
-
-          {/* Atalhos do simulador */}
-          <section className="bg-gradient-to-br from-emerald-900/10 via-slate-900/40 to-sky-900/10 border border-emerald-500/20 rounded-2xl p-5">
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-3 flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" /> Dicas do simulador
-            </h2>
-            <ul className="text-sm text-slate-400 space-y-2">
-              <li>• Digite <code className="text-emerald-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
-              <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd> e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para navegar no histórico de comandos</li>
-              <li>• Pressione <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar comandos</li>
-              <li>• Clique em qualquer arquivo do Working Directory para abrir o editor</li>
-              <li>• Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</li>
-              <li>• <code className="text-emerald-300 font-mono">reset</code> reinicia o nível atual; <code className="text-emerald-300 font-mono">clear</code> limpa o terminal</li>
-            </ul>
+        ),
+      },
+      {
+        title: "Pronto para começar",
+        content: (
+          <section>
+            <div className="bg-gradient-to-br from-emerald-900/10 via-slate-900/40 to-sky-900/10 border border-emerald-500/20 rounded-2xl p-6 mb-6">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 mb-4 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" /> Dicas do simulador
+              </h2>
+              <ul className="text-sm text-slate-400 space-y-2">
+                <li>• Digite <code className="text-emerald-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
+                <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para navegar no histórico</li>
+                <li>• <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> autocompleta comandos</li>
+                <li>• Clique em qualquer arquivo do Working Directory para abrir o editor</li>
+                <li>• <code className="text-emerald-300 font-mono">reset</code> reinicia o nível, <code className="text-emerald-300 font-mono">clear</code> limpa o terminal</li>
+              </ul>
+            </div>
+            <div className="text-center">
+              <p className="text-base text-slate-300 mb-1">Você está pronto.</p>
+              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</p>
+            </div>
           </section>
+        ),
+      },
+    ];
 
-          {/* CTA */}
-          <div className="flex flex-col items-center gap-3 pt-4">
-            <Button onClick={() => setPhase("playing")} size="lg" className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest px-10 py-6 text-base">
-              Iniciar Treinamento <ChevronDown className="w-4 h-4 ml-2 -rotate-90" />
-            </Button>
-            <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Pronto em ~30 minutos · Sem cadastro · Tudo no seu navegador</p>
-          </div>
+    const isLast = introStep === steps.length - 1;
+    const goPrev = () => setIntroStep((s) => Math.max(0, s - 1));
+    const goNext = () => isLast ? setPhase("playing") : setIntroStep((s) => s + 1);
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.08]">
+          <img src="/assets/images/git_bg.png" alt="" className="w-full h-full object-cover" />
         </div>
+
+        <div className="relative z-10 flex flex-col min-h-screen">
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-6 py-4">
+            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <button onClick={() => setPhase("playing")} className="text-xs text-slate-500 hover:text-emerald-400 font-mono uppercase tracking-widest transition-colors">
+              Pular tour →
+            </button>
+          </div>
+
+          {/* Step content */}
+          <div className="flex-1 flex items-start justify-center px-4 pb-32">
+            <div className="max-w-4xl w-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={introStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {steps[introStep].content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Footer nav */}
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-md border-t border-white/10">
+            <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={goPrev}
+                disabled={introStep === 0}
+                className="text-slate-400 hover:text-white disabled:opacity-30"
+              >
+                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> Voltar
+              </Button>
+
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} de {steps.length}</p>
+                <div className="flex gap-1.5">
+                  {steps.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setIntroStep(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === introStep ? "w-8 bg-emerald-400" :
+                        i < introStep ? "w-1.5 bg-emerald-400/60" : "w-1.5 bg-slate-700"
+                      }`}
+                      aria-label={`Ir para passo ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={goNext}
+                className={isLast ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-bold" : "bg-slate-800 text-white hover:bg-slate-700"}
+              >
+                {isLast ? "Iniciar Treinamento" : "Próximo"} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
