@@ -16,6 +16,15 @@ interface PortInfo {
   service: string;
   version?: string;
   banner?: string;
+  cves?: string[];
+}
+
+interface HttpResponse {
+  status: number;
+  headers?: Record<string, string>;
+  body: string;
+  authRequired?: { user: string; pass: string };
+  flag?: string;
 }
 
 interface Host {
@@ -27,9 +36,14 @@ interface Host {
   ports: PortInfo[];
   whois?: string;
   webContent?: string;
+  webPaths?: Record<string, HttpResponse>;
   sshBanner?: string;
-  flag?: string; // CTF flag
+  flag?: string;
+  defaultCreds?: { user: string; pass: string };
+  exploit?: { vector: "vsftpd234" | "eternalblue" | "boa-traversal"; port: number; rootFlag?: string; loot?: string[] };
+  postExLoot?: string[];
 }
+
 
 interface NetState {
   myIp: string;
@@ -39,6 +53,7 @@ interface NetState {
   discovered: Set<string>;       // IPs the user has "found"
   scanned: Set<string>;          // IPs the user has fully nmap'd
   dnsCache: Record<string, string>;
+  dnsTxt: Record<string, string[]>;
   flags: Set<string>;            // captured CTF flags
   // ephemeral packet flight for animation
   packets: { id: number; from: string; to: string; type: "icmp" | "tcp" | "dns"; t: number }[];
@@ -67,7 +82,8 @@ const initialNet = (): NetState => ({
   hosts: {
     "192.168.1.1":   { ip: "192.168.1.1",   hostname: "router.local",      os: "RouterOS", vendor: "MikroTik", status: "up",
       ports: [
-        { port: 22,  state: "open",   service: "ssh",  version: "OpenSSH 7.4", banner: "SSH-2.0-OpenSSH_7.4" },
+        { port: 22,  state: "open",   service: "ssh",  version: "OpenSSH 7.4", banner: "SSH-2.0-OpenSSH_7.4",
+          cves: ["CVE-2018-15473 (user enumeration)"] },
         { port: 80,  state: "open",   service: "http", version: "MikroTik HTTP", banner: "HTTP/1.1 200 OK\nServer: MikroTik\n" },
         { port: 53,  state: "open",   service: "dns" },
       ]
@@ -81,6 +97,20 @@ const initialNet = (): NetState => ({
         { port: 3306, state: "filtered", service: "mysql" },
       ],
       webContent: "<!DOCTYPE html>\n<html><body>\n<h1>CorpHQ Internal Portal</h1>\n<p>Authorized personnel only</p>\n<!-- TODO: remove this — admin panel at /admin -->\n</body></html>",
+      webPaths: {
+        "/": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html" },
+          body: "<!DOCTYPE html>\n<html><body>\n<h1>CorpHQ Internal Portal</h1>\n<p>Authorized personnel only</p>\n<!-- TODO: remove this — admin panel at /admin -->\n</body></html>" },
+        "/admin": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html", "X-Powered-By": "Internal-CMS/2.1" },
+          body: "<!DOCTYPE html>\n<html><body>\n<h1>Admin Panel — CorpHQ</h1>\n<form><input name=user><input name=pass type=password><button>Login</button></form>\n<!-- DEBUG token vazado em produção: CTF{admin_panel_index_was_public} -->\n</body></html>",
+          flag: "CTF{admin_panel_index_was_public}" },
+        "/.git/config": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/plain" },
+          body: "[core]\n  repositoryformatversion = 0\n[remote \"origin\"]\n  url = git@github.com:corphq/portal.git\n[branch \"main\"]\n  merge = refs/heads/main\n",
+          flag: "CTF{dotgit_exposed_on_webroot}" },
+        "/api/health": { status: 200, headers: { "Content-Type": "application/json" },
+          body: "{\"status\":\"ok\",\"version\":\"2.1.4\",\"db\":\"192.168.1.77:5432\"}" },
+        "/robots.txt": { status: 200, headers: { "Content-Type": "text/plain" },
+          body: "User-agent: *\nDisallow: /admin\nDisallow: /.git\nDisallow: /backup\n" },
+      },
     },
     "192.168.1.77":  { ip: "192.168.1.77",  hostname: "db.corp.local",     os: "Linux 5.15", status: "up",
       ports: [
@@ -90,18 +120,31 @@ const initialNet = (): NetState => ({
     },
     "192.168.1.100": { ip: "192.168.1.100", hostname: "ftp-legacy.corp.local", os: "Windows Server 2008", status: "up",
       ports: [
-        { port: 21,  state: "open", service: "ftp",     version: "vsftpd 2.3.4", banner: "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)" },
+        { port: 21,  state: "open", service: "ftp",     version: "vsftpd 2.3.4", banner: "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)",
+          cves: ["CVE-2011-2523 (vsftpd backdoor)"] },
         { port: 139, state: "open", service: "netbios" },
-        { port: 445, state: "open", service: "smb",     version: "Samba 3.6 (vulnerável a EternalBlue)" },
+        { port: 445, state: "open", service: "smb",     version: "Samba 3.6 (vulnerável a EternalBlue)",
+          cves: ["CVE-2017-0144 (EternalBlue/MS17-010)", "CVE-2017-7494 (SambaCry)"] },
         { port: 3389, state: "filtered", service: "rdp" },
       ],
       flag: "CTF{ftp_anonymous_was_enabled}",
     },
     "192.168.1.150": { ip: "192.168.1.150", hostname: "iot-cam.corp.local", os: "Embedded Linux", status: "up",
       ports: [
-        { port: 80, state: "open", service: "http", version: "Boa/0.94.14", banner: "HTTP/1.1 200 OK\nServer: Boa/0.94.14rc21\n" },
+        { port: 80, state: "open", service: "http", version: "Boa/0.94.14", banner: "HTTP/1.1 200 OK\nServer: Boa/0.94.14rc21\n",
+          cves: ["CVE-2017-9833 (Boa path traversal)", "CVE-2021-33558 (Boa info disclosure)"] },
         { port: 554, state: "open", service: "rtsp", version: "RTSP/1.0" },
       ],
+      defaultCreds: { user: "admin", pass: "admin" },
+      webPaths: {
+        "/": { status: 401, headers: { "Server": "Boa/0.94.14rc21", "WWW-Authenticate": "Basic realm=\"IPCam\"" },
+          body: "401 Unauthorized — autenticação necessária",
+          authRequired: { user: "admin", pass: "admin" } },
+        "/cgi-bin/snapshot": { status: 200, headers: { "Server": "Boa/0.94.14rc21", "Content-Type": "image/jpeg", "X-Flag": "CTF{iot_default_admin_admin}" },
+          body: "[binary jpeg snapshot — 38 KB] (header X-Flag vazou a flag)",
+          flag: "CTF{iot_default_admin_admin}",
+          authRequired: { user: "admin", pass: "admin" } },
+      },
     },
     "8.8.8.8":       { ip: "8.8.8.8",       hostname: "dns.google",         os: "Unknown", status: "up", ports: [{ port: 53, state: "open", service: "dns" }] },
   },
@@ -116,6 +159,15 @@ const initialNet = (): NetState => ({
     "google.com": "142.250.78.78",
     "dns.google": "8.8.8.8",
     "corp.local": "192.168.1.50",
+  },
+  dnsTxt: {
+    "corp.local": [
+      "v=spf1 include:_spf.corp.local -all",
+      "corphq-site-verify=8f3a91",
+      "ctf-flag=CTF{dns_txt_records_leak_secrets}",
+    ],
+    "web.corp.local": ["deploy=blue-green", "owner=devops@corp.local"],
+    "_dmarc.corp.local": ["v=DMARC1; p=quarantine; rua=mailto:dmarc@corp.local"],
   },
   flags: new Set(),
   packets: [],
@@ -181,7 +233,9 @@ const LEVELS: LevelDef[] = [
 ];
 
 export function NetworkSimulator({ onBack }: Props) {
-  const [phase, setPhase] = useState<"intro" | "playing">("intro");
+  const [phase, setPhase] = useState<"intro" | "playing">(() => {
+    return localStorage.getItem("network_sim_intro_seen") ? "playing" : "intro";
+  });
   const [introStep, setIntroStep] = useState(0);
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
@@ -273,11 +327,13 @@ export function NetworkSimulator({ onBack }: Props) {
       out("  traceroute <host>             rastreia caminho até host");
       out("  arp -a                        vizinhos no segmento (cache ARP)");
       out("  nslookup <host>               resolve nome em IP");
-      out("  dig <host>                    consulta DNS detalhada");
+      out("  dig [TXT|MX|+short] <host>    consulta DNS detalhada");
+      out("  dig -x <ip>                   reverse DNS (PTR)");
       out("  whois <domain>                informação de registro do domínio");
       out("  nmap [-sn|-sV|-A] <ip|cidr>   varredura de portas");
       out("  nmap -p <portas> <ip>         portas específicas");
-      out("  curl <url>                    requisição HTTP");
+      out("  searchsploit <termo|ip>       busca CVEs/exploits conhecidos");
+      out("  curl [-u user:pass] [-I] <url>  requisição HTTP (suporta paths e basic auth)");
       out("  nc <ip> <port>                netcat — banner grabbing / conexão raw");
       out("  ssh <user@ip>                 tenta sessão SSH");
       out("  netstat -tuln                 portas em escuta no seu host");
@@ -373,12 +429,61 @@ export function NetworkSimulator({ onBack }: Props) {
         return next;
       }
 
-      // dig
+      // dig  (supports: TXT, MX, A, -x reverso, +short)
       if (c === "dig") {
-        const target = args[1];
-        if (!target) { err("Uso: dig <host>"); return s; }
-        const ip = resolve(s, target);
+        const dArgs = args.slice(1);
+        const isReverse = dArgs.includes("-x");
+        const isShort = dArgs.includes("+short");
+        const reverseIp = isReverse ? dArgs[dArgs.indexOf("-x") + 1] : null;
+        const recordType = (dArgs.find((a) => /^(A|TXT|MX|NS|AAAA|ANY)$/.test(a)) ?? "A").toUpperCase();
+        const target = reverseIp ?? dArgs.find((a) => !a.startsWith("-") && !a.startsWith("+") && !/^(A|TXT|MX|NS|AAAA|ANY)$/i.test(a)) ?? "";
+        if (!target) { err("Uso: dig [TXT|MX|NS] <host>  |  dig -x <ip>  |  dig +short <host>"); return s; }
         launchPacket(s.myIp, "192.168.1.1", "dns");
+
+        if (isReverse) {
+          const reverseHost = Object.entries(s.dnsCache).find(([, v]) => v === reverseIp)?.[0];
+          if (isShort) { reverseHost ? out(`${reverseHost}.`) : out(``); return { ...next, _digViewed: true }; }
+          out(`; <<>> DiG 9.18.1 <<>> -x ${reverseIp}`);
+          out(`;; ->>HEADER<<- opcode: QUERY, status: ${reverseHost ? "NOERROR" : "NXDOMAIN"}, id: ${Math.floor(Math.random() * 65535)}`);
+          out(``);
+          if (reverseHost) {
+            const octets = reverseIp!.split(".").reverse().join(".");
+            out(`;; ANSWER SECTION:`);
+            out(`${octets}.in-addr.arpa.\t300\tIN\tPTR\t${reverseHost}.`);
+          }
+          return { ...next, _digViewed: true };
+        }
+
+        if (recordType === "TXT") {
+          const txt = s.dnsTxt?.[target];
+          if (isShort) { (txt ?? []).forEach((r) => out(`"${r}"`)); return { ...next, _digViewed: true }; }
+          out(`; <<>> DiG 9.18.1 <<>> TXT ${target}`);
+          out(`;; ->>HEADER<<- opcode: QUERY, status: ${txt ? "NOERROR" : "NXDOMAIN"}, id: ${Math.floor(Math.random() * 65535)}`);
+          out(``);
+          out(`;; QUESTION SECTION:`);
+          out(`;${target}.\t\t\tIN\tTXT`);
+          out(``);
+          if (txt && txt.length) {
+            out(`;; ANSWER SECTION:`);
+            txt.forEach((r) => {
+              out(`${target}.\t\t300\tIN\tTXT\t"${r}"`);
+              const m = r.match(/CTF\{[^}]+\}/);
+              if (m) next.flags.add(m[0]);
+            });
+          }
+          return { ...next, _digViewed: true };
+        }
+
+        if (recordType === "MX") {
+          out(`; <<>> DiG 9.18.1 <<>> MX ${target}`);
+          out(``);
+          out(`;; ANSWER SECTION:`);
+          out(`${target}.\t\t300\tIN\tMX\t10 mail.${target}.`);
+          return { ...next, _digViewed: true };
+        }
+
+        const ip = resolve(s, target);
+        if (isShort) { ip ? out(ip) : out(``); return { ...next, _digViewed: true }; }
         out(`; <<>> DiG 9.18.1 <<>> ${target}`);
         out(`;; global options: +cmd`);
         out(`;; Got answer:`);
@@ -479,14 +584,29 @@ export function NetworkSimulator({ onBack }: Props) {
         return s;
       }
 
-      // curl
+      // curl  (supports: -u user:pass, paths, -I head)
       if (c === "curl") {
-        const url = args[1];
-        if (!url) { err("Uso: curl <url>"); return s; }
-        const m = url.match(/^https?:\/\/([^\/:]+)(?::(\d+))?/);
+        const cArgs = args.slice(1);
+        let userPass: { user: string; pass: string } | null = null;
+        let headOnly = false;
+        let urlArg: string | null = null;
+        for (let i = 0; i < cArgs.length; i++) {
+          const a = cArgs[i];
+          if (a === "-u" && cArgs[i + 1]) {
+            const [u, p] = cArgs[++i].split(":");
+            userPass = { user: u ?? "", pass: p ?? "" };
+          } else if (a === "-I" || a === "--head") {
+            headOnly = true;
+          } else if (!a.startsWith("-")) {
+            urlArg = a;
+          }
+        }
+        if (!urlArg) { err("Uso: curl [-u user:pass] [-I] <url>"); return s; }
+        const m = urlArg.match(/^https?:\/\/([^\/:]+)(?::(\d+))?(\/[^\s]*)?/);
         if (!m) { err(`curl: (3) URL malformada`); return s; }
         const hostRef = m[1];
         const port = m[2] ? Number(m[2]) : 80;
+        const path = m[3] ?? "/";
         const ip = resolve(s, hostRef);
         if (!ip) { err(`curl: (6) Could not resolve host: ${hostRef}`); return s; }
         const h = s.hosts[ip];
@@ -494,19 +614,40 @@ export function NetworkSimulator({ onBack }: Props) {
         const portInfo = h.ports.find((p) => p.port === port);
         if (!portInfo || portInfo.state !== "open") { err(`curl: (7) Failed to connect to ${hostRef} port ${port}: Connection refused`); return s; }
         launchPacket(s.myIp, ip, "tcp");
-        if (h.webContent) {
+
+        const resp = h.webPaths?.[path];
+        if (resp) {
+          if (resp.authRequired && (!userPass || userPass.user !== resp.authRequired.user || userPass.pass !== resp.authRequired.pass)) {
+            out(`HTTP/1.1 401 Unauthorized`);
+            Object.entries(resp.headers ?? {}).forEach(([k, v]) => out(`${k}: ${v}`));
+            out(``);
+            if (!headOnly) out(`401 Unauthorized — autenticação necessária (Basic)`);
+            next.discovered.add(ip);
+            return next;
+          }
+          out(`HTTP/1.1 ${resp.status} ${resp.status === 200 ? "OK" : resp.status === 401 ? "Unauthorized" : resp.status === 404 ? "Not Found" : ""}`);
+          Object.entries(resp.headers ?? {}).forEach(([k, v]) => out(`${k}: ${v}`));
+          out(``);
+          if (!headOnly) out(resp.body);
+          if (resp.flag) next.flags.add(resp.flag);
+          if (h.ip === "192.168.1.50" && (path === "/" || path === "")) next.flags.add("portal-fetched");
+          next.discovered.add(ip);
+          return next;
+        }
+        if (h.webContent && (path === "/" || path === "")) {
           out(`HTTP/1.1 200 OK`);
           out(`Server: ${portInfo.version ?? "unknown"}`);
           out(`Content-Type: text/html`);
           out(``);
-          out(h.webContent);
+          if (!headOnly) out(h.webContent);
           if (h.ip === "192.168.1.50") next.flags.add("portal-fetched");
-        } else {
-          out(`HTTP/1.1 200 OK`);
-          out(`Server: ${portInfo.version ?? "unknown"}`);
-          out(``);
-          out(`<html><body>welcome</body></html>`);
+          next.discovered.add(ip);
+          return next;
         }
+        out(`HTTP/1.1 404 Not Found`);
+        out(`Server: ${portInfo.version ?? "unknown"}`);
+        out(``);
+        if (!headOnly) out(`<html><body><h1>404 Not Found</h1><p>${path}</p></body></html>`);
         next.discovered.add(ip);
         return next;
       }
@@ -602,6 +743,55 @@ export function NetworkSimulator({ onBack }: Props) {
         return { ...next, _tcpdumpViewed: true };
       }
 
+      // searchsploit (busca CVEs por termo, versão ou IP scaneado)
+      if (c === "searchsploit") {
+        const term = args.slice(1).join(" ").trim();
+        if (!term) { err("Uso: searchsploit <termo|versão|ip>"); return s; }
+        out(`---------------------------------- ----------------------------------`);
+        out(` Exploit Title                     |  Path`);
+        out(`---------------------------------- ----------------------------------`);
+
+        const collect: { title: string; path: string }[] = [];
+        const ipMatch = /^\d+\.\d+\.\d+\.\d+$/.test(term);
+        const cveDb: Record<string, { title: string; path: string }> = {
+          "CVE-2011-2523": { title: "vsftpd 2.3.4 — Backdoor Command Execution", path: "exploits/unix/remote/17491.rb" },
+          "CVE-2017-0144": { title: "Microsoft SMBv1 — Remote Code Execution (EternalBlue)", path: "exploits/windows/smb/ms17_010_eternalblue.rb" },
+          "CVE-2017-7494": { title: "Samba 3.5.0-4.6.4 — RCE (SambaCry)", path: "exploits/linux/samba/is_known_pipename.rb" },
+          "CVE-2017-9833": { title: "Boa Webserver 0.94.x — Path Traversal", path: "exploits/hardware/webapps/47185.txt" },
+          "CVE-2021-33558": { title: "Boa Webserver — Information Disclosure", path: "exploits/hardware/webapps/50202.txt" },
+          "CVE-2018-15473": { title: "OpenSSH < 7.7 — User Enumeration", path: "exploits/linux/remote/45233.py" },
+        };
+
+        if (ipMatch) {
+          const h = s.hosts[term];
+          if (!h || !s.scanned.has(term)) { err(`Sem dados para ${term}. Rode 'nmap -sV ${term}' antes.`); return s; }
+          h.ports.forEach((p) => (p.cves ?? []).forEach((cve) => {
+            const key = cve.split(" ")[0];
+            const ent = cveDb[key];
+            if (ent) collect.push(ent);
+            else collect.push({ title: cve, path: "—" });
+          }));
+        } else {
+          const t = term.toLowerCase();
+          Object.entries(cveDb).forEach(([k, v]) => {
+            if (k.toLowerCase().includes(t) || v.title.toLowerCase().includes(t)) collect.push(v);
+          });
+          if (/vsftpd/.test(t)) collect.push(cveDb["CVE-2011-2523"]);
+          if (/samba|smb|eternalblue/.test(t)) { collect.push(cveDb["CVE-2017-0144"]); collect.push(cveDb["CVE-2017-7494"]); }
+          if (/boa/.test(t)) { collect.push(cveDb["CVE-2017-9833"]); collect.push(cveDb["CVE-2021-33558"]); }
+          if (/openssh|ssh/.test(t)) collect.push(cveDb["CVE-2018-15473"]);
+        }
+
+        const seen = new Set<string>();
+        const dedup = collect.filter((e) => seen.has(e.title) ? false : (seen.add(e.title), true));
+        if (!dedup.length) { out(` Exploits: No Results`); }
+        else dedup.forEach((e) => out(` ${e.title.padEnd(33).slice(0, 33)} | ${e.path}`));
+        out(`---------------------------------- ----------------------------------`);
+        out(`Shellcodes: No Results`);
+        next.flags.add("searchsploit-used");
+        return next;
+      }
+
       // report (final do nível 5)
       if (c === "report") {
         ok(`╔═══════════════════════════════════════════════════════╗`);
@@ -644,10 +834,15 @@ export function NetworkSimulator({ onBack }: Props) {
       e.preventDefault();
       const completions = [
         "ifconfig", "ip a", "ping 192.168.1.1", "ping 8.8.8.8", "traceroute 8.8.8.8",
-        "arp -a", "nslookup web.corp.local", "dig web.corp.local", "whois corp.local",
+        "arp -a", "nslookup web.corp.local", "dig web.corp.local",
+        "dig TXT corp.local", "dig -x 192.168.1.50", "dig +short web.corp.local", "whois corp.local",
         "nmap -sn 192.168.1.0/24", "nmap 192.168.1.50", "nmap -sV 192.168.1.100",
         "nmap -p 22,80,443 192.168.1.50",
-        "curl http://192.168.1.50", "nc 192.168.1.50 22", "nc 192.168.1.100 21",
+        "searchsploit vsftpd 2.3.4", "searchsploit 192.168.1.100", "searchsploit boa",
+        "curl http://192.168.1.50", "curl http://192.168.1.50/admin", "curl http://192.168.1.50/.git/config",
+        "curl http://192.168.1.50/robots.txt", "curl -I http://192.168.1.50",
+        "curl -u admin:admin http://192.168.1.150/cgi-bin/snapshot",
+        "nc 192.168.1.50 22", "nc 192.168.1.100 21",
         "ssh root@192.168.1.50", "netstat -tuln", "tcpdump -i eth0", "report",
         "help", "clear", "reset",
       ];
@@ -836,7 +1031,14 @@ export function NetworkSimulator({ onBack }: Props) {
 
     const isLast = introStep === steps.length - 1;
     const goPrev = () => setIntroStep((s) => Math.max(0, s - 1));
-    const goNext = () => isLast ? setPhase("playing") : setIntroStep((s) => s + 1);
+    const goNext = () => {
+      if (isLast) {
+        localStorage.setItem("network_sim_intro_seen", "true");
+        setPhase("playing");
+      } else {
+        setIntroStep((s) => s + 1);
+      }
+    };
 
     return (
       <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
@@ -846,10 +1048,13 @@ export function NetworkSimulator({ onBack }: Props) {
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <div className="flex items-center justify-between px-6 py-4">
-            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+            <Button variant="ghost" size="icon" onClick={() => localStorage.getItem("network_sim_intro_seen") ? setPhase("playing") : onBack()} className="text-slate-400 hover:text-white rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <button onClick={() => setPhase("playing")} className="text-xs text-slate-500 hover:text-cyan-400 font-mono uppercase tracking-widest transition-colors">
+            <button onClick={() => {
+              localStorage.setItem("network_sim_intro_seen", "true");
+              setPhase("playing");
+            }} className="text-xs text-slate-500 hover:text-cyan-400 font-mono uppercase tracking-widest transition-colors">
               Pular tour →
             </button>
           </div>
@@ -925,7 +1130,12 @@ export function NetworkSimulator({ onBack }: Props) {
               <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-[0.2em]">Operador {state.myIp}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPhase("intro")} className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs">
+              <BookOpen className="w-4 h-4 mr-2" /> Manual
+            </Button>
+            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+          </div>
         </div>
 
         {/* Level selector */}
@@ -1111,13 +1321,16 @@ export function NetworkSimulator({ onBack }: Props) {
                   {state.scanned.has(sel.ip) ? (
                     <div className="space-y-1">
                       {sel.ports.filter((p) => p.state !== "closed").map((p) => (
-                        <div key={p.port} className={`flex items-center justify-between rounded px-2 py-1 font-mono text-[11px] ${
+                        <div key={p.port} className={`rounded px-2 py-1 font-mono text-[11px] ${
                           p.state === "open" ? "bg-emerald-500/5 border border-emerald-500/20 text-emerald-300" :
                           "bg-amber-500/5 border border-amber-500/20 text-amber-300"
                         }`}>
-                          <span>{p.port}/tcp</span>
-                          <span>{p.service}</span>
-                          <span className="text-[10px] text-slate-500">{p.state}</span>
+                          <div className="flex items-center justify-between">
+                            <span>{p.port}/tcp</span>
+                            <span>{p.service}</span>
+                            <span className="text-[10px] text-slate-500">{p.state}</span>
+                          </div>
+                          {p.version && <div className="text-[10px] text-slate-400 mt-0.5">{p.version}</div>}
                         </div>
                       ))}
                     </div>
@@ -1125,6 +1338,33 @@ export function NetworkSimulator({ onBack }: Props) {
                     <p className="text-[11px] text-slate-600 italic font-mono">execute nmap {sel.ip}</p>
                   )}
                 </div>
+                {state.scanned.has(sel.ip) && (() => {
+                  const allCves = sel.ports.flatMap((p) => p.cves ?? []);
+                  if (!allCves.length) return null;
+                  return (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-red-400 font-mono mb-1 flex items-center gap-1">
+                        <ShieldAlert className="w-3 h-3" /> CVEs detectadas
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {allCves.map((cve, i) => (
+                          <span key={i} className="bg-red-500/10 border border-red-500/30 rounded px-1.5 py-0.5 font-mono text-[10px] text-red-300">
+                            {cve}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-mono mt-1 italic">dica: searchsploit {sel.ip}</p>
+                    </div>
+                  );
+                })()}
+                {sel.defaultCreds && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-amber-400 font-mono mb-1">Credenciais padrão (suspeitas)</p>
+                    <code className="text-[11px] text-amber-300 font-mono bg-amber-500/5 border border-amber-500/20 rounded px-2 py-1 inline-block">
+                      {sel.defaultCreds.user}:{sel.defaultCreds.pass}
+                    </code>
+                  </div>
+                )}
                 {sel.flag && state.flags.has(sel.flag) && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2 flex items-center gap-2">
                     <Flag className="w-4 h-4 text-red-400" />

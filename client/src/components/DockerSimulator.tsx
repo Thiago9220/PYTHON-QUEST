@@ -162,7 +162,9 @@ const LEVELS: LevelDef[] = [
 ];
 
 export function DockerSimulator({ onBack }: Props) {
-  const [phase, setPhase] = useState<"intro" | "playing">("intro");
+  const [phase, setPhase] = useState<"intro" | "playing">(() => {
+    return localStorage.getItem("docker_sim_intro_seen") ? "playing" : "intro";
+  });
   const [introStep, setIntroStep] = useState(0);
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
@@ -754,7 +756,14 @@ export function DockerSimulator({ onBack }: Props) {
 
     const isLast = introStep === steps.length - 1;
     const goPrev = () => setIntroStep((s) => Math.max(0, s - 1));
-    const goNext = () => isLast ? setPhase("playing") : setIntroStep((s) => s + 1);
+    const goNext = () => {
+      if (isLast) {
+        localStorage.setItem("docker_sim_intro_seen", "true");
+        setPhase("playing");
+      } else {
+        setIntroStep((s) => s + 1);
+      }
+    };
 
     return (
       <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
@@ -764,10 +773,13 @@ export function DockerSimulator({ onBack }: Props) {
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <div className="flex items-center justify-between px-6 py-4">
-            <Button variant="ghost" size="icon" onClick={onBack} className="text-slate-400 hover:text-white rounded-full">
+            <Button variant="ghost" size="icon" onClick={() => localStorage.getItem("docker_sim_intro_seen") ? setPhase("playing") : onBack()} className="text-slate-400 hover:text-white rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <button onClick={() => setPhase("playing")} className="text-xs text-slate-500 hover:text-sky-400 font-mono uppercase tracking-widest transition-colors">
+            <button onClick={() => {
+              localStorage.setItem("docker_sim_intro_seen", "true");
+              setPhase("playing");
+            }} className="text-xs text-slate-500 hover:text-sky-400 font-mono uppercase tracking-widest transition-colors">
               Pular tour →
             </button>
           </div>
@@ -846,7 +858,12 @@ export function DockerSimulator({ onBack }: Props) {
               <p className="text-[10px] text-sky-400 font-mono uppercase tracking-[0.2em]">Containerize sem dor de cabeça</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPhase("intro")} className="text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 text-xs">
+              <BookOpen className="w-4 h-4 mr-2" /> Manual
+            </Button>
+            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+          </div>
         </div>
 
         {/* Level selector */}

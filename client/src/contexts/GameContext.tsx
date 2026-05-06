@@ -70,11 +70,11 @@ type PersistedGameSnapshot = {
   purchasedWorlds: string[];
 };
 
-const getSnapshotStorageKey = (userId: string) =>
-  `python_quest_game_snapshot:${userId}`;
+const getSnapshotStorageKey = (userId?: string) =>
+  `python_quest_game_snapshot:${userId || "guest"}`;
 
 const readPersistedSnapshot = (
-  userId: string
+  userId?: string
 ): PersistedGameSnapshot | null => {
   try {
     const raw = localStorage.getItem(getSnapshotStorageKey(userId));
@@ -86,7 +86,7 @@ const readPersistedSnapshot = (
 };
 
 const persistSnapshot = (
-  userId: string,
+  userId: string | undefined,
   snapshot: PersistedGameSnapshot
 ) => {
   try {
@@ -303,16 +303,28 @@ export function GameProvider({
     }
   }, [userId]);
 
-  // 1. DATA LOAD (Supabase)
+  // 1. DATA LOAD (Supabase or Local Guest)
   useEffect(() => {
     if (!userId) {
-      latestLoadRef.current += 1;
-      loadingRef.current = false;
-      dispatch({ type: "RESET_STATE" });
-      setPurchasedWorlds([]);
-      setHasHydrated(false);
-      setLoadError(null);
+      // Tenta carregar progresso de convidado do localStorage
+      const guestSnapshot = readPersistedSnapshot();
+      if (guestSnapshot) {
+        dispatch({
+          type: "LOAD_STATE",
+          state: {
+            ...guestSnapshot.state,
+            isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
+          },
+        });
+        setPurchasedWorlds(guestSnapshot.purchasedWorlds);
+      } else {
+        dispatch({ type: "RESET_STATE" });
+        setPurchasedWorlds([]);
+      }
+      
+      setHasHydrated(true);
       setIsLoading(false);
+      setLoadError(null);
       return;
     }
 
@@ -582,6 +594,13 @@ export function GameProvider({
   useEffect(() => {
     soundManager.enabled = !state.isMuted;
   }, [state.isMuted]);
+
+  // 5. GUEST PERSISTENCE (localStorage fallback)
+  useEffect(() => {
+    if (!userId && hasHydrated) {
+      persistSnapshot(undefined, { state, purchasedWorlds });
+    }
+  }, [state, purchasedWorlds, userId, hasHydrated]);
 
   return (
     <GameContext.Provider

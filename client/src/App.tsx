@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { GameProvider, useGame } from "./contexts/GameContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
@@ -107,15 +107,22 @@ function AppContent() {
   );
 }
 
+function AppContentWrapper() {
+  const { user } = useAuth();
+  return (
+    <GameProvider userId={user?.id}>
+      <PomodoroProvider>
+        <AppContent />
+      </PomodoroProvider>
+    </GameProvider>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider defaultTheme="light">
       <AuthProvider>
-        <GameProvider>
-          <PomodoroProvider>
-            <AppContent />
-          </PomodoroProvider>
-        </GameProvider>
+        <AppContentWrapper />
       </AuthProvider>
     </ThemeProvider>
   );
