@@ -188,28 +188,42 @@ export default function Profile({ onBack }: Props) {
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-dark overflow-hidden rounded-[2.5rem] border border-white/20 p-1"
+          className="relative glass-dark overflow-hidden rounded-[2.5rem] border border-white/20 p-1 group"
         >
+          {/* Decorative Corners */}
+          <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-sky-500/30 rounded-tl-xl pointer-events-none z-20" />
+          <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-sky-500/30 rounded-tr-xl pointer-events-none z-20" />
+          <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-sky-500/30 rounded-bl-xl pointer-events-none z-20" />
+          <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-sky-500/30 rounded-tr-xl pointer-events-none z-20" />
           <div className="bg-slate-900/40 rounded-[2.4rem] p-6 md:p-10">
             <div className="grid gap-10 lg:grid-cols-[240px_1fr]">
               <div className="flex flex-col items-center">
                 <div className="relative group">
-                  <div className="absolute -inset-4 bg-sky-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-[2.5rem] border-2 border-white/20 bg-gradient-to-br from-sky-600/40 to-emerald-600/40 text-6xl font-black text-white shadow-2xl backdrop-blur-xl">
+                  {/* Glowing Ring Background */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-sky-500 to-emerald-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+                  
+                  <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-full border-4 border-slate-900 bg-slate-950 shadow-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-br from-sky-900/20 to-emerald-900/20" />
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
                     ) : (
-                      (displayName || "P").charAt(0).toUpperCase()
+                      <span className="text-7xl font-black text-white/90 drop-shadow-2xl">
+                        {(displayName || "P").charAt(0).toUpperCase()}
+                      </span>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
+                    <div className="absolute inset-0 ring-1 ring-white/10 rounded-full" />
                   </div>
+
+                  {/* Level Badge Overlay */}
                   <motion.div 
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-sky-400/50 bg-slate-950 px-4 py-1.5 text-xs font-black text-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.3)] backdrop-blur-xl"
+                    className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center justify-center gap-1.5 rounded-xl border border-sky-400/50 bg-slate-950 px-4 py-2 shadow-[0_0_20px_rgba(56,189,248,0.4)] backdrop-blur-xl z-20"
                   >
-                    <Medal className="h-4 w-4" />
-                    NÍVEL {level}
+                    <div className="flex flex-col items-center leading-none">
+                      <span className="text-[7px] font-black text-sky-500 uppercase tracking-widest mb-1">Nível</span>
+                      <span className="text-base font-black text-white">{level}</span>
+                    </div>
                   </motion.div>
                 </div>
               </div>
@@ -217,46 +231,67 @@ export default function Profile({ onBack }: Props) {
               <div className="min-w-0 flex flex-col justify-center">
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-md">
-                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Agente do Protocolo</span>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Agente do Protocolo</div>
+                      <div className="px-3 py-1 rounded-md bg-sky-500/10 border border-sky-500/20 text-[9px] font-black text-sky-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                        <Award size={10} />
+                        RANK {level}
+                      </div>
                     </div>
+                    
                     <div className="flex items-center gap-4">
-                      <h2 className="truncate text-5xl font-black text-white tracking-tight leading-tight">{displayName || "Operador"}</h2>
+                      <h2 className="truncate text-6xl font-black text-white tracking-tighter leading-none">{displayName || "Operador"}</h2>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={() => setShowEditProfile(true)} 
-                        className="text-slate-500 hover:text-sky-400 hover:bg-white/5"
+                        className="text-slate-500 hover:text-sky-400 hover:bg-white/5 h-12 w-12"
                       >
                         <Edit2 className="h-5 w-5" />
                       </Button>
                     </div>
-                    <p className="mt-3 text-lg font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{displayTitle}</p>
+                    <p className="mt-4 text-xl font-black uppercase tracking-widest text-sky-400/80">{displayTitle}</p>
+                    
+                    <p className="mt-6 text-sm text-slate-400 font-medium max-w-md border-l-2 border-sky-500/30 pl-4">
+                      <span className="text-white">Sua próxima meta:</span> Restam {challengesLeft} missões para ampliar seu domínio no sistema central.
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap gap-3">
                     <Button 
                       onClick={() => setShowAchievements(true)} 
-                      className="bg-white/10 text-white hover:bg-white/20 border border-white/10 backdrop-blur-md font-bold px-6 rounded-xl"
+                      className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black px-6 rounded-xl shadow-lg shadow-sky-500/20 border-b-4 border-sky-700 active:border-b-0 active:translate-y-1 transition-all"
                     >
-                      <Trophy className="mr-2 h-4 w-4 text-amber-400" />
-                      Conquistas
+                      <Trophy className="mr-2 h-4 w-4" />
+                      CONQUISTAS
                     </Button>
                   </div>
                 </div>
 
-                <div className="mt-8">
-                  <div className="mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <span className="text-sky-400">{state.totalXP.toLocaleString()} XP TOTAL</span>
-                    <span>{isMaxLevel ? "nível máximo" : `PRÓXIMO NÍVEL EM ${nextLevelXP - state.totalXP} XP`}</span>
+                <div className="mt-12 bg-slate-950/40 p-6 rounded-2xl border border-white/5 shadow-inner">
+                  <div className="mb-4 flex items-end justify-between">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block">Conhecimento Acumulado</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-white tracking-tight">{state.totalXP.toLocaleString()}</span>
+                        <span className="text-xs font-black text-sky-500 uppercase">XP</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block">Próximo Marco</span>
+                      <span className="text-sm font-black text-white">{isMaxLevel ? "MÁXIMO" : `${nextLevelXP.toLocaleString()} XP`}</span>
+                    </div>
                   </div>
-                  <div className="relative h-4 overflow-hidden rounded-full bg-white/5 border border-white/10">
+                  <div className="relative h-3 overflow-hidden rounded-full bg-slate-900 border border-white/10 p-0.5">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
                       transition={{ duration: 1.2, ease: "circOut" }}
-                      className="absolute inset-0 h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+                      className="h-full rounded-full bg-gradient-to-r from-sky-600 to-emerald-500 shadow-[0_0_20px_rgba(56,189,248,0.4)]"
                     />
+                  </div>
+                  <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-sky-500/60">
+                    {Math.round(progress)}% rumo ao próximo rank
                   </div>
                 </div>
               </div>
@@ -271,17 +306,22 @@ export default function Profile({ onBack }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * idx }}
                 onClick={stat.label === "Conquistas" ? () => setShowAchievements(true) : undefined}
-                className="group relative bg-slate-900/60 p-8 text-left hover:bg-slate-800/60 transition-all first:md:rounded-bl-[2.4rem] last:md:rounded-br-[2.4rem]"
+                className="group relative bg-slate-900/60 p-8 text-left hover:bg-slate-800/80 transition-all first:md:rounded-bl-[2.4rem] last:md:rounded-br-[2.4rem] overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">{stat.label}</span>
-                  <div className={`rounded-xl bg-white/5 p-2.5 transition-transform group-hover:scale-110 group-hover:rotate-6 ${stat.color} shadow-lg ${stat.glow}`}>
-                    <stat.icon className="h-5 w-5" />
+                {/* Card Glow Effect */}
+                <div className={`absolute -inset-1 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity blur-lg ${stat.label === "Sequência" ? "from-orange-500" : stat.label === "Conquistas" ? "from-amber-500" : "from-sky-500"}`} />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">{stat.label}</span>
+                    <div className={`rounded-xl bg-white/5 p-2.5 transition-all group-hover:scale-110 group-hover:rotate-3 ${stat.color} shadow-lg ${stat.glow} border border-white/5`}>
+                      <stat.icon className="h-5 w-5" />
+                    </div>
                   </div>
+                  <div className="text-5xl font-black text-white tracking-tighter">{stat.value}</div>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-sky-400 transition-colors">{stat.helper}</p>
                 </div>
-                <div className="text-4xl font-black text-white">{stat.value}</div>
-                <p className="mt-2 text-xs font-medium text-slate-400 group-hover:text-slate-300">{stat.helper}</p>
-                <div className="absolute inset-0 border-r border-white/5 group-last:border-r-0" />
+                <div className="absolute inset-y-0 right-0 w-px bg-white/5 group-last:hidden" />
               </motion.button>
             ))}
           </div>

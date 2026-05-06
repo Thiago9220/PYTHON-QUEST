@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, X, CheckCircle2, Scroll } from "lucide-react";
+import { ChevronRight, ChevronLeft, X, CheckCircle2, Scroll, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type TourStep = {
@@ -177,7 +177,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
               {/* Imagem de Fundo (Modal inteiro) */}
               <div 
                 className="absolute inset-0 z-0 bg-cover bg-center rounded-3xl opacity-30 mix-blend-luminosity"
-                style={{ backgroundImage: "url('/imagem-fundo.webp')" }}
+                style={{ backgroundImage: "url('/assets/images/map_bg.png')" }}
               />
               <div className="absolute inset-0 z-0 rounded-3xl bg-gradient-to-t from-slate-950 via-slate-900/90 to-slate-900/40 pointer-events-none" />
               <div className="absolute inset-0 z-0 rounded-3xl bg-gradient-to-br from-sky-500/10 to-transparent pointer-events-none mix-blend-overlay" />

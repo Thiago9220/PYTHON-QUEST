@@ -64,7 +64,7 @@ export function MissionPanel({
                 style={{ backgroundImage: `linear-gradient(to bottom right, ${themeColor}, transparent)` }}
               />
               <h3 className="text-white/50 text-[9px] font-black uppercase tracking-[0.25em] mb-2">Diretriz do Operador</h3>
-              <p className="text-white leading-relaxed font-bold text-lg tracking-tight">{challenge.description}</p>
+              <p className="text-white leading-relaxed font-bold text-base tracking-tight">{challenge.description}</p>
             </div>
 
             {hintsUsed > 0 && (

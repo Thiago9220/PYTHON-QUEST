@@ -170,7 +170,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
                 <span className="font-mono text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Setor Identificado: {worldId.replace(/-/g, '_').toUpperCase()}</span>
               </div>
-              <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter leading-none relative group cursor-default">
+              <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-none relative group cursor-default">
                 <span className="relative z-10">{world.title}</span>
                 <motion.span 
                   className="absolute inset-0 z-0 opacity-20 blur-sm pointer-events-none group-hover:opacity-40 transition-opacity"
@@ -181,7 +181,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                   {world.title}
                 </motion.span>
               </h1>
-              <p className="max-w-2xl text-slate-400 text-base md:text-lg leading-relaxed font-medium border-l-2 pl-6" style={{ borderColor: `${themeColor}40` }}>
+              <p className="max-w-2xl text-slate-400 text-sm md:text-base leading-relaxed font-medium border-l-2 pl-6" style={{ borderColor: `${themeColor}40` }}>
                 {world.lore}
               </p>
             </motion.div>
