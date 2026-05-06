@@ -213,10 +213,19 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
       case "functions":
       case "cyber_tools":
         const rituals = RITUALS[activeTab as keyof typeof RITUALS];
+        
+        const tabDesc = {
+          basics: "Sintaxe primária de interação e processamento de dados. O núcleo operacional da linguagem Python.",
+          control_flow: "Estruturas de decisão e loops. Essenciais para criar rotas lógicas condicionais e automatizar suas ferramentas.",
+          collections: "Vetores de armazenamento para organizar múltiplos pacotes de dados simultâneos na memória volátil do sistema.",
+          functions: "Empacote sequências de comandos em blocos reutilizáveis para otimizar seus scripts e escalar seus ataques.",
+          cyber_tools: "Acesse as bibliotecas fundamentais do sistema. Utilize estes módulos nativos como blocos de construção para invasões complexas."
+        }[activeTab as keyof typeof RITUALS];
+
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <p className="text-slate-300 leading-relaxed font-medium text-lg mb-2">
-              Acesse as bibliotecas fundamentais do sistema. Utilize estes scripts como blocos de construção para suas invasões:
+              {tabDesc}
             </p>
             {rituals.map((r, i) => (
               <div key={i} className="border border-white/10 rounded-2xl bg-slate-900/60 overflow-hidden hover:border-sky-500/30 transition-all group">

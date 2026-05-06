@@ -949,7 +949,7 @@ export function GitSimulator({ onBack }: Props) {
               <Folder className="w-4 h-4" /> As 3 áreas do Git
             </h2>
             <p className="text-base text-slate-400 mb-5">Quando você edita um arquivo, ele passa por três estágios antes de virar parte do histórico:</p>
-            <div className="grid md:grid-cols-3 gap-3">
+            <div className="grid md:grid-cols-3 gap-3 mb-6">
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
                 <div className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2">1. Working Directory</div>
                 <p className="text-base text-slate-300 leading-relaxed mb-3">Os arquivos que você está editando agora. Mudanças aqui são "voláteis" até serem salvas.</p>
@@ -965,6 +965,14 @@ export function GitSimulator({ onBack }: Props) {
                 <p className="text-base text-slate-300 leading-relaxed mb-3">Histórico permanente. Cada commit é uma fotografia imutável com hash único.</p>
                 <code className="text-xs text-emerald-300 font-mono">git commit -m "msg"</code>
               </div>
+            </div>
+
+            <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden">
+              <img 
+                src="/assets/images/git_edu.png" 
+                alt="Infográfico Educativo: As 3 áreas do Git" 
+                className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+              />
             </div>
           </section>
         ),
