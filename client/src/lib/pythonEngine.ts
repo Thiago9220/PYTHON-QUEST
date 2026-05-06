@@ -93,8 +93,9 @@ export async function validatePythonChallenge(
   }
 
   try {
-    // Injetar o output no ambiente Python para o testCode poder validar
+    // Injetar o output e o código original no ambiente Python para o testCode poder validar
     pyodide.globals.set("output", result.output);
+    pyodide.globals.set("code", userCode);
     
     // Executar o código de teste
     await pyodide.runPythonAsync(challenge.testCode);

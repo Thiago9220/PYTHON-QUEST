@@ -67,9 +67,13 @@ export function AnswerRevealModal({ isOpen, onClose, expectedCode }: Props) {
               </pre>
 
               <div className="mt-6 flex gap-3">
-                <Button variant="outline" onClick={handleCopy} className="flex-1 h-11">
-                  {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copied ? "Copiado" : "Copiar"}
+                <Button 
+                  variant="ghost" 
+                  onClick={handleCopy} 
+                  className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                >
+                  {copied ? <Check className="w-4 h-4 mr-2 text-emerald-600" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copied ? "Copiado!" : "Copiar Código"}
                 </Button>
                 <Button onClick={onClose} className="flex-1 h-11 bg-sky-600 hover:bg-sky-700">
                   Entendi
