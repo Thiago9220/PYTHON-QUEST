@@ -2,15 +2,15 @@ import { WORLDS } from "@/lib/challenges";
 
 export const LEVELS = [
   { level: 1, title: "Curioso", minXP: 0 },
-  { level: 2, title: "Aprendiz", minXP: 200 },
-  { level: 3, title: "Estudante", minXP: 500 },
-  { level: 4, title: "Praticante", minXP: 1000 },
-  { level: 5, title: "Construtor", minXP: 1800 },
-  { level: 6, title: "Automatizador", minXP: 2800 },
-  { level: 7, title: "Especialista Python", minXP: 4000 },
-  { level: 8, title: "Navegador Aurora", minXP: 5500 },
-  { level: 9, title: "Arquiteto de Scripts", minXP: 7500 },
-  { level: 10, title: "Mestre Python", minXP: 10000 },
+  { level: 2, title: "Aprendiz", minXP: 800 },
+  { level: 3, title: "Estudante", minXP: 2000 },
+  { level: 4, title: "Praticante", minXP: 3500 },
+  { level: 5, title: "Construtor", minXP: 5000 },
+  { level: 6, title: "Automatizador", minXP: 6500 },
+  { level: 7, title: "Especialista Python", minXP: 8000 },
+  { level: 8, title: "Navegador Aurora", minXP: 9500 },
+  { level: 9, title: "Arquiteto de Scripts", minXP: 11000 },
+  { level: 10, title: "Mestre Python", minXP: 13000 },
 ];
 
 export const getStartOfDay = (timestamp: number) => {

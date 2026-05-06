@@ -1,4 +1,5 @@
-import { BookOpen, ClipboardList, Lightbulb } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BookOpen, ClipboardList, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Challenge } from "@/lib/types";
 
@@ -66,22 +67,9 @@ export function MissionPanel({
               <p className="text-white leading-relaxed font-bold text-lg tracking-tight">{challenge.description}</p>
             </div>
 
-            {hintsUsed > 0 && challenge.hints.slice(0, hintsUsed).map((hint, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl"
-              >
-                <div className="bg-amber-500/10 p-2 rounded-xl shadow-sm">
-                  <Lightbulb className="text-amber-400" size={18} />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest">Dica do Sistema {idx + 1}</span>
-                  <p className="text-xs text-slate-400 font-medium leading-relaxed">{hint.text}</p>
-                </div>
-              </motion.div>
-            ))}
+            {hintsUsed > 0 && (
+              <HintCarousel hints={challenge.hints.slice(0, hintsUsed)} />
+            )}
           </div>
         ) : (
           <div className="bg-slate-900 p-6 rounded-2xl border border-sky-500/20 shadow-lg">
@@ -95,5 +83,69 @@ export function MissionPanel({
         )}
       </div>
     </div>
+  );
+}
+
+function HintCarousel({ hints }: { hints: { text: string }[] }) {
+  const [currentIndex, setCurrentIndex] = useState(hints.length - 1);
+
+  // Update index when new hint arrives
+  useEffect(() => {
+    setCurrentIndex(hints.length - 1);
+  }, [hints.length]);
+
+  const currentHint = hints[currentIndex];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative overflow-hidden"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="bg-amber-500/20 p-1.5 rounded-lg">
+            <Lightbulb className="text-amber-400" size={14} />
+          </div>
+          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+            Arquivo de Ajuda {currentIndex + 1} de {hints.length}
+          </span>
+        </div>
+        
+        {hints.length > 1 && (
+          <div className="flex gap-1">
+            <button 
+              onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+              disabled={currentIndex === 0}
+              className="p-1 hover:bg-white/5 rounded-md disabled:opacity-30 text-slate-400"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button 
+              onClick={() => setCurrentIndex(Math.min(hints.length - 1, currentIndex + 1))}
+              disabled={currentIndex === hints.length - 1}
+              className="p-1 hover:bg-white/5 rounded-md disabled:opacity-30 text-slate-400"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl min-h-[80px] flex items-center">
+        <p className="text-xs text-slate-300 font-medium leading-relaxed italic">
+          "{currentHint.text}"
+        </p>
+      </div>
+
+      <div className="mt-2 flex justify-center gap-1">
+        {hints.map((_, i) => (
+          <div 
+            key={i} 
+            className={`h-1 rounded-full transition-all ${i === currentIndex ? "w-4 bg-amber-500" : "w-1 bg-white/10"}`}
+          />
+        ))}
+      </div>
+    </motion.div>
   );
 }

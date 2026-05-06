@@ -119,12 +119,17 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
             >
               <div className="hidden md:block text-right">
                 <div className="text-[8px] uppercase font-black text-slate-500 tracking-widest leading-none mb-1">
-                  LVL {level} {title}
+                  {title}
                 </div>
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-[10px] font-black text-sky-400 font-mono">{state.totalXP.toLocaleString()} XP</span>
-                  <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                    <motion.div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(56,189,248,0.5)]" animate={{ width: `${progress}%` }} />
+                <div className="flex items-center justify-end gap-3">
+                  <span className="text-[11px] font-black text-white tracking-tighter">
+                    {state.totalXP.toLocaleString()} <span className="text-[7px] text-sky-400">XP</span>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black text-sky-400 uppercase">LVL {level}</span>
+                    <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <motion.div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(56,189,248,0.5)]" animate={{ width: `${progress}%` }} />
+                    </div>
                   </div>
                 </div>
               </div>

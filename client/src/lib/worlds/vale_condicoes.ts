@@ -8,7 +8,7 @@ export const VALE_CONDICOES_WORLD: World = {
   color: "#22C55E",
   bgImage: "/assets/images/worlds/routing_node.png",
   lore: "No Nó de Roteamento, o Sistema Central testa sua lógica. O código não flui apenas em linha reta; ele deve decidir qual trilha seguir baseado em condições pré-definidas.",
-  unlockRequirement: 300,
+  unlockRequirement: 1500,
   challenges: [
     {
       id: "py-cond-01",

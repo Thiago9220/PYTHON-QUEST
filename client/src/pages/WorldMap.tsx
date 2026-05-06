@@ -175,10 +175,15 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 <div className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">
                   {title}
                 </div>
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-[10px] font-black text-sky-400 uppercase">LVL {level}</span>
-                  <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden border border-white/5">
-                    <motion.div className="h-full bg-gradient-to-r from-sky-400 to-emerald-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" animate={{ width: `${progress}%` }} />
+                <div className="flex items-center justify-end gap-3">
+                  <span className="text-[12px] font-black text-white tracking-tighter">
+                    {state.totalXP.toLocaleString()} <span className="text-[8px] text-sky-400">XP</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-sky-400 uppercase">LVL {level}</span>
+                    <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                      <motion.div className="h-full bg-gradient-to-r from-sky-400 to-emerald-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" animate={{ width: `${progress}%` }} />
+                    </div>
                   </div>
                 </div>
               </div>

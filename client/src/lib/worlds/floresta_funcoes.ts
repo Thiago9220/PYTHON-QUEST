@@ -8,7 +8,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
   color: "#8B5CF6",
   bgImage: "/assets/images/worlds/function_repo.png",
   lore: "No Repositório Central, os Hackers aprendem a otimizar scripts encapsulando rotinas em blocos reutilizáveis chamados Funções.",
-  unlockRequirement: 1500,
+  unlockRequirement: 7000,
   challenges: [
     {
       id: "py-func-01",
