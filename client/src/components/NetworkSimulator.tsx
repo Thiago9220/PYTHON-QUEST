@@ -258,7 +258,7 @@ export function NetworkSimulator({ onBack }: Props) {
   const levelDone = missionIdx >= level.missions.length;
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [lines]);
-  useEffect(() => { if (phase === "playing") inputRef.current?.focus(); }, [levelIdx, phase]);
+  useEffect(() => { if (phase === "playing") inputRef.current?.focus({ preventScroll: true }); }, [levelIdx, phase]);
 
   // mission auto-advance
   useEffect(() => {

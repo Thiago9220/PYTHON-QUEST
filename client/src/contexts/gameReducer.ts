@@ -17,6 +17,8 @@ export const INITIAL_STATE: GameState = {
   hasSeenWorldTour: false,
   hasSeenProfileTour: false,
   isDevMode: false,
+  studyAnswerUses: 0,
+  lastStudyAnswerDate: null,
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -30,77 +32,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "TOGGLE_DEV_MODE": {
       const newVal = !state.isDevMode;
       localStorage.setItem("python_quest_dev_mode", String(newVal));
-      return { ...state, isDevMode: newVal };
-    }
-
-    case "COMPLETE_TUTORIAL":
-      return { ...state, hasSeenTutorial: true };
-
-    case "COMPLETE_WORLD_TOUR":
-      return { ...state, hasSeenWorldTour: true };
-
-    case "COMPLETE_PROFILE_TOUR":
-      return { ...state, hasSeenProfileTour: true };
-
-    case "LOAD_STATE": {
-      const now = Date.now();
-      let newStreak = action.state.streak;
-      const lastPlayed = action.state.lastPlayedAt;
-
-      if (lastPlayed) {
-        if (!isSameDay(lastPlayed, now) && !isYesterday(lastPlayed, now)) {
-          newStreak = 0;
-        }
-      }
-      return { ...action.state, streak: newStreak };
-    }
-
-    case "RESET_STATE":
-      return INITIAL_STATE;
-
-    case "SET_PLAYER_NAME":
-      return { ...state, playerName: action.name };
-
-    case "SET_CURRENT_CHALLENGE":
-      return {
-        ...state,
-        currentWorldId: action.worldId,
-        currentChallengeId: action.challengeId,
-      };
-
-    case "RECORD_ATTEMPT": {
-      const prev = state.challengeProgress[action.challengeId] || {
-        completed: false,
-        attempts: 0,
-        hintsUsed: 0,
-        bestScore: 0,
-      };
-      return {
-        ...state,
-        challengeProgress: {
-          ...state.challengeProgress,
-          [action.challengeId]: { ...prev, attempts: prev.attempts + 1 },
-        },
-      };
-    }
-
-    case "COMPLETE_CHALLENGE": {
-      const prev = state.challengeProgress[action.challengeId] || {
-        completed: false,
-        attempts: 0,
-        hintsUsed: 0,
-        bestScore: 0,
-        bestChars: undefined,
-      };
-
-      const score = Math.max(0, action.xp - action.hintsUsed * 10);
-      const isFirstTimeCompletion = !prev.completed;
-      const newXP = isFirstTimeCompletion ? state.totalXP + score : state.totalXP;
-      
-      const now = Date.now();
-      let newStreak = state.streak;
-      
-      if (!state.lastPlayedAt) {
         newStreak = 1;
       } else {
         const playedToday = isSameDay(state.lastPlayedAt, now);

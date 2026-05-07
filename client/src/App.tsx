@@ -41,6 +41,7 @@ function AppContent() {
   // Persist view changes
   useEffect(() => {
     localStorage.setItem("python_quest_current_view", JSON.stringify(view));
+    window.scrollTo(0, 0);
   }, [view]);
 
   // Handle initial redirection if already logged in/identified

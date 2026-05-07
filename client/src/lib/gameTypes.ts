@@ -32,12 +32,15 @@ export type GameState = {
   hasSeenWorldTour: boolean;
   hasSeenProfileTour: boolean;
   isDevMode: boolean;
+  studyAnswerUses: number;
+  lastStudyAnswerDate: string | null;
 };
 
 export type GameAction =
   | { type: "SET_PLAYER_NAME"; name: string }
-  | { type: "COMPLETE_CHALLENGE"; challengeId: string; xp: number; hintsUsed: number; attempts: number; charCount: number }
+  | { type: "COMPLETE_CHALLENGE"; challengeId: string; xp: number; hintsUsed: number; attempts: number; charCount: number; usedStudyAnswer?: boolean }
   | { type: "RECORD_ATTEMPT"; challengeId: string }
+  | { type: "USE_STUDY_ANSWER" }
   | { type: "SET_CURRENT_CHALLENGE"; worldId: string; challengeId: string }
   | { type: "UNLOCK_ACHIEVEMENT"; achievementId: string }
   | { type: "SET_TITLE"; title: string }

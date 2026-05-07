@@ -15,6 +15,7 @@ const WORLD_TAGS: Record<string, string> = {
   "vale-condicoes": "if, else",
   "montanha-loops": "for, range",
   "floresta-funcoes": "def, parâmetros",
+  "ninho-listas": "listas, matrizes",
 };
 
 type Props = {
