@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Terminal, X, Save, Edit3, Lock, Trophy, ChevronDown, BookOpen, Lightbulb,
+  ArrowLeft, X, Save, Edit3, Lock, Trophy, ChevronDown, BookOpen, Lightbulb,
   Container as ContainerIcon, Package, Cloud, FileCode, Layers, Network, HardDrive, Server, Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ interface Image {
   id: string;
   size: string;
   builtFromDockerfile?: boolean;
+  defaultEnv?: Record<string, string>;
+  exposedPort?: number;
 }
 
 interface Container {
@@ -28,18 +30,42 @@ interface Container {
   status: "running" | "stopped";
   ports: { host: number; container: number }[];
   volumes: { host: string; container: string }[];
+  env: Record<string, string>;
+  network: string;
+  workdir?: string;
+  autoRemove?: boolean;
+  restartPolicy?: "no" | "always" | "on-failure" | "unless-stopped";
   createdAt: number;
   logs: string[];
+}
+
+interface Volume {
+  name: string;
+  driver: string;
+  mountpoint: string;
+  createdAt: number;
+}
+
+interface Network {
+  id: string;
+  name: string;
+  driver: string;
+  scope: string;
+  createdAt: number;
 }
 
 interface State {
   registry: Image[];
   images: Image[];
   containers: Container[];
+  volumes: Volume[];
+  networks: Network[];
   dockerfile: string;
   composeFile: string;
   composeUp: boolean;
   composeProject: string;
+  loggedIn?: string;
+  buildAnimation?: { steps: string[]; isMultiStage: boolean; finalSize: string; ts: number };
 }
 
 interface LevelDef {
@@ -51,6 +77,80 @@ interface LevelDef {
 }
 
 const randId = () => Math.random().toString(16).slice(2, 14);
+
+const longestCommonPrefix = (arr: string[]): string => {
+  if (!arr.length) return "";
+  let prefix = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    while (!arr[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+      if (!prefix) return "";
+    }
+  }
+  return prefix;
+};
+
+// Completions contextuais — o que sugerir depende do que já está digitado e do estado real.
+const computeCompletions = (input: string, s: any): string[] => {
+  const trimmed = input;
+  const ends = trimmed.endsWith(" ");
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  const last = ends ? "" : (tokens[tokens.length - 1] ?? "");
+  const head = ends ? tokens.join(" ") : tokens.slice(0, -1).join(" ");
+
+  const containerNames = (s.containers as Container[]).map((c) => c.name);
+  const runningNames = (s.containers as Container[]).filter((c) => c.status === "running").map((c) => c.name);
+  const stoppedNames = (s.containers as Container[]).filter((c) => c.status === "stopped").map((c) => c.name);
+  const localImages = (s.images as Image[]).map((i) => `${i.name}:${i.tag}`);
+  const registryImages = (s.registry as Image[]).map((i) => `${i.name}:${i.tag}`);
+  const volumeNames = (s.volumes as Volume[]).map((v) => v.name);
+  const networkNames = (s.networks as Network[]).map((n) => n.name);
+
+  const suggestFor = (pool: string[], prefix: string) =>
+    pool.filter((x) => x.startsWith(prefix)).map((x) => `${head} ${x}`.trim());
+
+  // Casos contextuais: head === comando que espera um alvo
+  if (head === "docker stop" || head === "docker restart" || head === "docker pause") return suggestFor(runningNames, last);
+  if (head === "docker start") return suggestFor(stoppedNames, last);
+  if (head === "docker rm" || head === "docker rm -f") return suggestFor(containerNames, last);
+  if (head === "docker logs" || head === "docker logs -f" || head === "docker logs --follow") return suggestFor(runningNames.concat(stoppedNames), last);
+  if (head === "docker inspect") return suggestFor([...containerNames, ...localImages], last);
+  if (head === "docker exec" || head === "docker exec -it" || head === "docker exec -i" || head === "docker exec -t") return suggestFor(runningNames, last);
+  if (head === "docker rmi") return suggestFor(localImages, last);
+  if (head === "docker pull") return suggestFor(registryImages, last);
+  if (head === "docker push" || head === "docker history" || head === "docker tag") return suggestFor(localImages, last);
+  if (/^docker tag \S+$/.test(head)) return suggestFor(localImages, last);
+
+  // volume / network subcommands
+  if (head === "docker volume rm" || head === "docker volume inspect") return suggestFor(volumeNames, last);
+  if (head === "docker network rm" || head === "docker network inspect") return suggestFor(networkNames.filter((n) => !["bridge", "host", "none"].includes(n)), last);
+  if (head === "docker network connect" || head === "docker network disconnect") return suggestFor(networkNames, last);
+  if (/^docker network (connect|disconnect) \S+$/.test(head)) return suggestFor(containerNames, last);
+  if (head === "docker volume") return suggestFor(["ls", "create", "rm", "inspect", "prune"], last);
+  if (head === "docker network") return suggestFor(["ls", "create", "rm", "inspect", "connect", "disconnect", "prune"], last);
+
+  if (head === "docker run" || /^docker run(\s+-[^\s]+)*$/.test(head)) return suggestFor(localImages.concat(registryImages), last);
+  if (/--network$/.test(head)) return suggestFor(networkNames, last);
+
+  // Caso geral: completar comando
+  const baseCompletions = [
+    "docker pull ", "docker images", "docker ps", "docker ps -a",
+    "docker run -d ", "docker run -d -p 8080:80 ", "docker run -d --name ",
+    "docker run -d -e ", "docker run -d --network ", "docker run -d --rm ",
+    "docker stop ", "docker start ", "docker restart ", "docker rm ", "docker rm -f ", "docker rmi ",
+    "docker logs ", "docker logs -f ", "docker inspect ", "docker exec -it ",
+    "docker build -t meuapp .",
+    "docker volume ls", "docker volume create ", "docker volume rm ", "docker volume inspect ", "docker volume prune",
+    "docker network ls", "docker network create ", "docker network rm ", "docker network inspect ",
+    "docker network connect ", "docker network disconnect ",
+    "docker tag ", "docker push ", "docker history ", "docker login ",
+    "docker stats", "docker system prune", "docker system prune -a", "docker system df",
+    "docker-compose up -d", "docker-compose down", "docker-compose ps",
+    "curl localhost:8080",
+    "help", "clear", "reset",
+  ];
+  return baseCompletions.filter((c) => c.startsWith(trimmed));
+};
 const randName = () => {
   const a = ["happy", "brave", "clever", "eager", "fierce", "gentle", "jolly", "kind", "lucky", "merry"];
   const b = ["einstein", "tesla", "curie", "darwin", "newton", "lovelace", "turing", "hopper", "knuth", "ritchie"];
@@ -59,17 +159,30 @@ const randName = () => {
 
 const REGISTRY_BASE: Image[] = [
   { name: "nginx", tag: "latest", id: randId(), size: "142MB" },
+  { name: "nginx", tag: "alpine", id: randId(), size: "23MB" },
   { name: "node", tag: "20", id: randId(), size: "996MB" },
+  { name: "node", tag: "20-alpine", id: randId(), size: "150MB" },
+  { name: "node", tag: "20-slim", id: randId(), size: "240MB" },
   { name: "python", tag: "3.12", id: randId(), size: "1.02GB" },
+  { name: "python", tag: "3.12-alpine", id: randId(), size: "55MB" },
   { name: "postgres", tag: "16", id: randId(), size: "425MB" },
   { name: "redis", tag: "7", id: randId(), size: "117MB" },
+  { name: "redis", tag: "7-alpine", id: randId(), size: "32MB" },
   { name: "alpine", tag: "latest", id: randId(), size: "7MB" },
+];
+
+const DEFAULT_NETWORKS: Network[] = [
+  { id: "br0bridge001", name: "bridge", driver: "bridge", scope: "local", createdAt: Date.now() },
+  { id: "ho0host00001", name: "host", driver: "host", scope: "local", createdAt: Date.now() },
+  { id: "no0none00001", name: "none", driver: "null", scope: "local", createdAt: Date.now() },
 ];
 
 const baseState = (): State => ({
   registry: [...REGISTRY_BASE],
   images: [],
   containers: [],
+  volumes: [],
+  networks: [...DEFAULT_NETWORKS],
   dockerfile: "",
   composeFile: "",
   composeUp: false,
@@ -159,6 +272,371 @@ const LEVELS: LevelDef[] = [
       { id: "down", title: "Derrube todos os serviços", hint: "docker-compose down", check: (s) => s.composeUp === false && (s as any)._composeWasUp === true },
     ],
   },
+  {
+    id: 5,
+    title: "Container Quebrado: Debug Real",
+    briefing: "Subiu pra produção e o site não responde. Você não tem acesso ao código — só ao Docker. Use 'docker ps -a', 'docker logs' e 'docker inspect' pra descobrir o que deu errado, mate o container quebrado e suba a versão correta.",
+    starter: () => {
+      const s = baseState();
+      // pré-popular nginx (já foi pulled em algum momento)
+      const nginxImg = REGISTRY_BASE.find((i) => i.name === "nginx" && i.tag === "latest")!;
+      s.images.push({ ...nginxImg });
+      // container "site_quebrado": deveria estar em 8080:80, mas o pipeline deployou em 8081:81
+      const brokenId = "9b4d2a771e3c";
+      s.containers.push({
+        id: brokenId,
+        name: "site_quebrado",
+        imageRef: "nginx:latest",
+        command: "(default)",
+        status: "running",
+        ports: [{ host: 8081, container: 81 }],
+        volumes: [],
+        env: { EXPECTED_PORT: "8080", DEPLOYED_BY: "ci-pipeline", APP_VERSION: "v1.2.3" },
+        network: "bridge",
+        createdAt: Date.now() - 1000 * 60 * 8,
+        logs: [
+          "[INFO] starting nginx 1.25",
+          "[INFO] using configuration from /etc/nginx/nginx.conf",
+          "[WARN] EXPECTED_PORT=8080 mas mapeamento foi sobrescrito para 81",
+          "[ERROR] nginx: [emerg] bind() to 0.0.0.0:81 failed — porta destino divergente do esperado pelo serviço (80)",
+          "[INFO] worker process started — sem clientes conectados nos últimos 8min",
+        ],
+      });
+      return s;
+    },
+    missions: [
+      {
+        id: "ps_a",
+        title: "Liste TODOS os containers (rodando ou não): docker ps -a",
+        hint: "docker ps -a",
+        check: (s) => (s as any)._listed === true,
+      },
+      {
+        id: "logs",
+        title: "Veja os logs do container 'site_quebrado'",
+        hint: "docker logs site_quebrado",
+        check: (s) => (s as any)._inspectedSiteQuebrado || (s as any)._loggedSiteQuebrado === true,
+      },
+      {
+        id: "inspect",
+        title: "Inspecione o container — confirme a porta mapeada",
+        hint: "docker inspect site_quebrado",
+        check: (s) => (s as any)._inspectedSiteQuebrado === true,
+      },
+      {
+        id: "stop_broken",
+        title: "Pare o container quebrado",
+        hint: "docker stop site_quebrado",
+        check: (s) => s.containers.some((c) => c.name === "site_quebrado" && c.status === "stopped"),
+      },
+      {
+        id: "rm_broken",
+        title: "Remova o container parado",
+        hint: "docker rm site_quebrado",
+        check: (s) => !s.containers.some((c) => c.name === "site_quebrado"),
+      },
+      {
+        id: "run_correct",
+        title: "Suba um nginx novo na porta correta (8080:80)",
+        hint: "docker run -d -p 8080:80 --name site nginx",
+        check: (s) => s.containers.some((c) => c.name !== "site_quebrado" && c.imageRef.startsWith("nginx") && c.status === "running" && c.ports.some((p) => p.host === 8080 && p.container === 80)),
+      },
+      {
+        id: "verify",
+        title: "Confirme que o site responde",
+        hint: "curl localhost:8080",
+        check: (s) => (s as any)._curled === true,
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: "Variáveis & Configuração",
+    briefing: "Containers são imutáveis — então toda config (senha do banco, URL de API, modo dev/prod) entra via variáveis de ambiente. Aprenda a injetar com -e, ler com 'docker inspect' e definir defaults via ENV no Dockerfile.",
+    starter: () => baseState(),
+    missions: [
+      {
+        id: "pull_pg",
+        title: "Baixe a imagem do postgres:16",
+        hint: "docker pull postgres:16",
+        check: (s) => s.images.some((i) => i.name === "postgres" && i.tag === "16"),
+      },
+      {
+        id: "run_with_env",
+        title: "Rode postgres passando POSTGRES_PASSWORD=secret e POSTGRES_DB=app",
+        hint: "docker run -d --name db -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=app postgres:16",
+        check: (s) => s.containers.some((c) =>
+          c.imageRef.startsWith("postgres") && c.status === "running" &&
+          c.env.POSTGRES_PASSWORD === "secret" && c.env.POSTGRES_DB === "app"),
+      },
+      {
+        id: "inspect_env",
+        title: "Inspecione e confirme as variáveis de ambiente",
+        hint: "docker inspect db",
+        check: (s) => (s as any)._inspectedEnvDb === true,
+      },
+      {
+        id: "exec_env",
+        title: "Entre no container e leia as variáveis: docker exec db env",
+        hint: "docker exec db env",
+        check: (s) => (s as any)._execEnvSeen === true,
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: "Volumes Nomeados: Persistência",
+    briefing: "Containers são descartáveis: tudo que você grava dentro some quando ele é removido. Volumes nomeados são pastas gerenciadas pelo Docker que sobrevivem ao ciclo de vida do container — é assim que bancos de dados não perdem dados.",
+    starter: () => {
+      const s = baseState();
+      const pgImg = REGISTRY_BASE.find((i) => i.name === "postgres" && i.tag === "16")!;
+      s.images.push({ ...pgImg });
+      return s;
+    },
+    missions: [
+      {
+        id: "create_vol",
+        title: "Crie um volume nomeado chamado 'pgdata'",
+        hint: "docker volume create pgdata",
+        check: (s) => s.volumes.some((v) => v.name === "pgdata"),
+      },
+      {
+        id: "list_vol",
+        title: "Liste os volumes para confirmar",
+        hint: "docker volume ls",
+        check: (s) => (s as any)._listedVolumes === true,
+      },
+      {
+        id: "run_with_vol",
+        title: "Rode postgres montando 'pgdata' em /var/lib/postgresql/data e com senha",
+        hint: "docker run -d --name db -e POSTGRES_PASSWORD=x -v pgdata:/var/lib/postgresql/data postgres:16",
+        check: (s) => s.containers.some((c) =>
+          c.imageRef.startsWith("postgres") && c.status === "running" &&
+          c.volumes.some((v) => v.host === "pgdata" && v.container === "/var/lib/postgresql/data")),
+      },
+      {
+        id: "destroy_ctr",
+        title: "Pare e remova o container — os dados devem sobreviver",
+        hint: "docker stop db   (depois)   docker rm db",
+        check: (s) => !s.containers.some((c) => c.name === "db") && s.volumes.some((v) => v.name === "pgdata"),
+      },
+      {
+        id: "recreate",
+        title: "Recrie o container montando o MESMO volume — prova a persistência",
+        hint: "docker run -d --name db2 -e POSTGRES_PASSWORD=x -v pgdata:/var/lib/postgresql/data postgres:16",
+        check: (s) => s.containers.some((c) =>
+          c.name === "db2" && c.volumes.some((v) => v.host === "pgdata")),
+      },
+    ],
+  },
+  {
+    id: 8,
+    title: "Redes Customizadas: Containers se Conversando",
+    briefing: "Por padrão, containers ficam isolados na rede 'bridge' e só falam por IP cru. Quando você cria uma network customizada, o Docker liga um DNS interno: containers passam a se chamar pelo NOME. É assim que web → db funciona em produção.",
+    starter: () => {
+      const s = baseState();
+      s.images.push({ ...REGISTRY_BASE.find((i) => i.name === "postgres" && i.tag === "16")! });
+      s.images.push({ ...REGISTRY_BASE.find((i) => i.name === "alpine" && i.tag === "latest")! });
+      return s;
+    },
+    missions: [
+      {
+        id: "create_net",
+        title: "Crie uma network customizada chamada 'app-net'",
+        hint: "docker network create app-net",
+        check: (s) => s.networks.some((n) => n.name === "app-net"),
+      },
+      {
+        id: "run_db",
+        title: "Rode postgres na rede 'app-net' com nome 'db'",
+        hint: "docker run -d --name db --network app-net -e POSTGRES_PASSWORD=x postgres:16",
+        check: (s) => s.containers.some((c) => c.name === "db" && c.network === "app-net" && c.status === "running"),
+      },
+      {
+        id: "run_app",
+        title: "Rode um container alpine na MESMA rede com nome 'app'",
+        hint: "docker run -d --name app --network app-net alpine sleep 3600",
+        check: (s) => s.containers.some((c) => c.name === "app" && c.network === "app-net" && c.status === "running"),
+      },
+      {
+        id: "ping",
+        title: "Do container 'app', faça ping em 'db' (DNS interno do Docker)",
+        hint: "docker exec app ping -c 2 db",
+        check: (s) => (s as any)._pingedDb === true,
+      },
+      {
+        id: "inspect_net",
+        title: "Inspecione a network e veja os 2 containers conectados",
+        hint: "docker network inspect app-net",
+        check: (s) => (s as any)._inspectedAppNet === true,
+      },
+    ],
+  },
+  {
+    id: 9,
+    title: "Multi-stage Build: Imagem Enxuta",
+    briefing: "Imagens grandes são lentas pra deployar e custam armazenamento. Multi-stage build resolve isso: você usa uma imagem 'gorda' para compilar e descarta TUDO, copiando só o artefato final pra uma imagem mínima. Edite o Dockerfile, faça o build e veja o tamanho despencar.",
+    starter: () => {
+      const s = baseState();
+      s.dockerfile = `# STAGE 1: builder — compila o app
+FROM node:20 AS builder
+WORKDIR /app
+COPY package.json .
+RUN npm install
+COPY . .
+RUN npm run build
+
+# STAGE 2: runtime — só o que precisa
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+`;
+      return s;
+    },
+    missions: [
+      {
+        id: "view",
+        title: "Abra o Dockerfile e estude as 2 stages",
+        hint: "Clique no arquivo Dockerfile",
+        check: (s) => (s as any)._dockerfileViewed === true,
+      },
+      {
+        id: "build",
+        title: "Construa a imagem 'app:slim' a partir do Dockerfile multi-stage",
+        hint: "docker build -t app:slim .",
+        check: (s) => s.images.some((i) => i.name === "app" && i.tag === "slim" && i.builtFromDockerfile),
+      },
+      {
+        id: "history",
+        title: "Veja as layers da imagem com docker history",
+        hint: "docker history app:slim",
+        check: (s) => (s as any)._historiedAppSlim === true,
+      },
+      {
+        id: "size",
+        title: "Confirme que o tamanho ficou abaixo de 200MB (multi-stage funcionou)",
+        hint: "docker images   (verifique o SIZE de app:slim)",
+        check: (s) => {
+          const img = s.images.find((i) => i.name === "app" && i.tag === "slim");
+          if (!img) return false;
+          const m = img.size.match(/^(\d+)MB/);
+          return !!m && Number(m[1]) <= 200;
+        },
+      },
+    ],
+  },
+  {
+    id: 10,
+    title: "Push & Versionamento",
+    briefing: "Você buildou uma imagem incrível — agora precisa publicar pra o time. Aprenda o ciclo completo: tagear com versão semântica, autenticar no registry, fazer push e validar que ela chegou no Docker Hub.",
+    starter: () => {
+      const s = baseState();
+      s.dockerfile = `FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package.json .
+RUN npm install --omit=dev
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]
+`;
+      return s;
+    },
+    missions: [
+      {
+        id: "build",
+        title: "Construa a imagem inicial 'meuapp:v1.0.0'",
+        hint: "docker build -t meuapp:v1.0.0 .",
+        check: (s) => s.images.some((i) => i.name === "meuapp" && i.tag === "v1.0.0"),
+      },
+      {
+        id: "tag_latest",
+        title: "Crie um alias 'meuapp:latest' apontando para a v1.0.0 (docker tag)",
+        hint: "docker tag meuapp:v1.0.0 meuapp:latest",
+        check: (s) => {
+          const v1 = s.images.find((i) => i.name === "meuapp" && i.tag === "v1.0.0");
+          const latest = s.images.find((i) => i.name === "meuapp" && i.tag === "latest");
+          return !!v1 && !!latest && v1.id === latest.id;
+        },
+      },
+      {
+        id: "login",
+        title: "Autentique no registry: docker login (use qualquer usuário)",
+        hint: "docker login operador",
+        check: (s) => !!s.loggedIn,
+      },
+      {
+        id: "push_v1",
+        title: "Faça push da v1.0.0 pro registry",
+        hint: "docker push meuapp:v1.0.0",
+        check: (s) => s.registry.some((i) => i.name === "meuapp" && i.tag === "v1.0.0"),
+      },
+      {
+        id: "push_latest",
+        title: "Faça push também da latest",
+        hint: "docker push meuapp:latest",
+        check: (s) => s.registry.some((i) => i.name === "meuapp" && i.tag === "latest"),
+      },
+    ],
+  },
+  {
+    id: 11,
+    title: "Boas Práticas & System Prune",
+    briefing: "Última missão: você herdou um ambiente sujo cheio de containers parados, imagens dangling e volumes órfãos comendo disco. Limpe a casa com system prune e termine entendendo por que escolher 'alpine' ao invés de 'latest' importa em produção.",
+    starter: () => {
+      const s = baseState();
+      // Pré-popular sujeira: imagens grandes + containers parados + volumes órfãos
+      s.images.push({ ...REGISTRY_BASE.find((i) => i.name === "node" && i.tag === "20")! });
+      s.images.push({ name: "legado", tag: "old", id: randId(), size: "780MB", builtFromDockerfile: true });
+      s.containers.push({
+        id: "deadc0de1234", name: "ctr_morto", imageRef: "legado:old", command: "(default)",
+        status: "stopped", ports: [], volumes: [], env: {}, network: "bridge",
+        createdAt: Date.now() - 1000 * 60 * 60 * 24, logs: ["[INFO] saiu com código 1"],
+      });
+      s.containers.push({
+        id: "ghostc0de999", name: "ctr_zumbi", imageRef: "legado:old", command: "(default)",
+        status: "stopped", ports: [], volumes: [], env: {}, network: "bridge",
+        createdAt: Date.now() - 1000 * 60 * 60 * 12, logs: ["[INFO] saiu com código 0"],
+      });
+      s.volumes.push({ name: "vol_orfao", driver: "local", mountpoint: "/var/lib/docker/volumes/vol_orfao/_data", createdAt: Date.now() - 1000 * 60 * 60 * 48 });
+      return s;
+    },
+    missions: [
+      {
+        id: "df",
+        title: "Veja quanto disco está sendo usado",
+        hint: "docker system df",
+        check: (s) => (s as any)._dfSeen === true,
+      },
+      {
+        id: "prune_basic",
+        title: "Limpe containers parados, networks e volumes órfãos",
+        hint: "docker system prune",
+        check: (s) => !s.containers.some((c) => c.status === "stopped") && !s.volumes.some((v) => v.name === "vol_orfao"),
+      },
+      {
+        id: "prune_all",
+        title: "Use prune com -a para remover também imagens não usadas",
+        hint: "docker system prune -a",
+        check: (s) => !s.images.some((i) => i.name === "legado" && i.tag === "old"),
+      },
+      {
+        id: "pull_alpine",
+        title: "Baixe uma versão alpine do node (muito menor que :20)",
+        hint: "docker pull node:20-alpine",
+        check: (s) => s.images.some((i) => i.name === "node" && i.tag === "20-alpine"),
+      },
+      {
+        id: "compare",
+        title: "Compare os tamanhos com docker images — alpine é ~6x menor",
+        hint: "docker images",
+        check: (s) => (s as any)._comparedSizes === true,
+      },
+    ],
+  },
 ];
 
 export function DockerSimulator({ onBack }: Props) {
@@ -178,6 +656,8 @@ export function DockerSimulator({ onBack }: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [editingFile, setEditingFile] = useState<"dockerfile" | "compose" | null>(null);
+  const [buildViz, setBuildViz] = useState<{ steps: string[]; isMultiStage: boolean; finalSize: string; revealed: number } | null>(null);
+  const lastBuildTs = useRef<number>(0);
   const [editorContent, setEditorContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -188,6 +668,26 @@ export function DockerSimulator({ onBack }: Props) {
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [lines]);
   useEffect(() => { if (phase === "playing") inputRef.current?.focus({ preventScroll: true }); }, [levelIdx, phase]);
+
+  // Animação de layers ao buildar — empilha cada step com delay
+  useEffect(() => {
+    const ba = state.buildAnimation;
+    if (!ba || ba.ts === lastBuildTs.current) return;
+    lastBuildTs.current = ba.ts;
+    setBuildViz({ steps: ba.steps, isMultiStage: ba.isMultiStage, finalSize: ba.finalSize, revealed: 0 });
+    let i = 0;
+    const tick = () => {
+      i++;
+      if (i > ba.steps.length) {
+        // mantém visível por 4s após completar e desaparece
+        setTimeout(() => setBuildViz(null), 4500);
+        return;
+      }
+      setBuildViz((prev) => prev ? { ...prev, revealed: i } : prev);
+      setTimeout(tick, 220);
+    };
+    setTimeout(tick, 100);
+  }, [state.buildAnimation?.ts]);
 
   useEffect(() => {
     if (levelDone || !mission) return;
@@ -221,19 +721,51 @@ export function DockerSimulator({ onBack }: Props) {
   const findContainer = (s: State, ref: string): Container | undefined =>
     s.containers.find((c) => c.id.startsWith(ref) || c.name === ref);
 
-  const parseRunArgs = (args: string): { detach: boolean; name?: string; ports: { host: number; container: number }[]; volumes: { host: string; container: string }[]; image: string; command: string } | null => {
+  const parseRunArgs = (args: string): {
+    detach: boolean; name?: string;
+    ports: { host: number; container: number }[];
+    volumes: { host: string; container: string }[];
+    env: Record<string, string>;
+    network?: string;
+    workdir?: string;
+    autoRemove: boolean;
+    restartPolicy?: Container["restartPolicy"];
+    image: string; command: string;
+  } | null => {
     const tokens = args.match(/(?:[^\s"]+|"[^"]*")+/g) ?? [];
     let detach = false;
     let name: string | undefined;
+    let network: string | undefined;
+    let workdir: string | undefined;
+    let autoRemove = false;
+    let restartPolicy: Container["restartPolicy"] | undefined;
+    const env: Record<string, string> = {};
     const ports: { host: number; container: number }[] = [];
     const volumes: { host: string; container: string }[] = [];
     let image = "";
     let cmd: string[] = [];
+    const stripQuotes = (s: string) => s.replace(/^"(.*)"$/, "$1");
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
       if (t === "-d" || t === "--detach") detach = true;
+      else if (t === "--rm") autoRemove = true;
+      else if (t === "-it" || t === "-ti" || t === "-i" || t === "-t") { /* ignorar — modo interativo */ }
       else if (t === "--name") name = tokens[++i];
-      else if (t === "-p" || t === "--publish") {
+      else if (t === "--network" || t === "--net") network = tokens[++i];
+      else if (t === "-w" || t === "--workdir") workdir = tokens[++i];
+      else if (t.startsWith("--restart=")) restartPolicy = t.slice(10) as any;
+      else if (t === "--restart") restartPolicy = tokens[++i] as any;
+      else if (t === "-e" || t === "--env") {
+        const kv = stripQuotes(tokens[++i] ?? "");
+        const eq = kv.indexOf("=");
+        if (eq > 0) env[kv.slice(0, eq)] = kv.slice(eq + 1);
+      } else if (t.startsWith("-e=") || t.startsWith("--env=")) {
+        const kv = stripQuotes(t.slice(t.indexOf("=") + 1));
+        const eq = kv.indexOf("=");
+        if (eq > 0) env[kv.slice(0, eq)] = kv.slice(eq + 1);
+      } else if (t === "--env-file") {
+        i++; // path ignorado — em sim, fingimos que carregou
+      } else if (t === "-p" || t === "--publish") {
         const v = tokens[++i];
         const [h, c] = v.split(":").map(Number);
         ports.push({ host: h, container: c });
@@ -245,7 +777,7 @@ export function DockerSimulator({ onBack }: Props) {
       else cmd.push(t);
     }
     if (!image) return null;
-    return { detach, name, ports, volumes, image, command: cmd.join(" ") || "(default)" };
+    return { detach, name, ports, volumes, env, network, workdir, autoRemove, restartPolicy, image, command: cmd.join(" ") || "(default)" };
   };
 
   const run = (raw: string) => {
@@ -257,21 +789,35 @@ export function DockerSimulator({ onBack }: Props) {
 
     if (cmd === "help") {
       out("Comandos suportados:");
-      out("  docker pull <image>[:tag]       baixa imagem do registry");
-      out("  docker images                   lista imagens locais");
-      out("  docker run [-d] [--name x] [-p H:C] [-v H:C] <image>");
-      out("  docker ps [-a]                  lista containers (-a inclui parados)");
-      out("  docker stop <id|name>           para um container");
-      out("  docker start <id|name>          inicia um container parado");
-      out("  docker rm <id|name>             remove container parado");
-      out("  docker rmi <image>              remove imagem local");
-      out("  docker logs <id|name>           mostra logs do container");
-      out("  docker exec <id|name> <cmd>     executa comando no container");
-      out("  docker build -t <nome> .        constrói imagem do Dockerfile");
+      out("  docker pull <image>[:tag]            baixa imagem do registry");
+      out("  docker images                        lista imagens locais");
+      out("  docker run [flags] <image>           cria e inicia um container");
+      out("    -d/--detach   --rm    --name X    -p H:C    -v H:C ou volname:/path");
+      out("    -e KEY=VAL    --env-file <path>   --network X   -w /path   --restart=always");
+      out("  docker ps [-a]                       lista containers (-a inclui parados)");
+      out("  docker stop|start|restart <id|name>  controla ciclo de vida");
+      out("  docker rm <id|name>                  remove container parado");
+      out("  docker rmi <image>                   remove imagem local");
+      out("  docker logs [-f] <id|name>           mostra logs (-f = follow)");
+      out("  docker inspect <id|name|imagem>      JSON detalhado (debug)");
+      out("  docker exec [-it] <id|name> <cmd>    executa comando no container");
+      out("                                       comandos úteis: ls, env, ps, cat <file>, ping <ctr>, sh");
+      out("  docker build -t <nome> .             constrói imagem do Dockerfile (ENV/EXPOSE/multi-stage)");
+      out("  docker history <image>               mostra layers e tamanho de cada uma");
+      out("  docker tag <src> <dst>               cria alias para uma imagem");
+      out("  docker login [user]                  autentica no registry simulado");
+      out("  docker push <image>                  publica imagem (exige login)");
+      out("  docker stats                         CPU/memória/rede dos containers rodando");
+      out("  docker system prune [-a] | system df cleanup e relatório de uso");
+      out("");
+      out("  docker volume ls | create X | rm X | inspect X | prune");
+      out("  docker network ls | create [--driver bridge] X | rm X | inspect X");
+      out("  docker network connect <net> <ctr> | disconnect <net> <ctr> | prune");
+      out("");
       out("  docker-compose up [-d] | down | ps");
-      out("  curl localhost:<porta>          testa porta mapeada");
+      out("  curl localhost:<porta>               testa porta mapeada");
       out("  clear | reset | help");
-      out("Atalhos: ↑/↓ histórico • Tab autocomplete • clique no Dockerfile/compose para editar");
+      out("Atalhos: ↑/↓ histórico • Tab autocomplete contextual • clique no Dockerfile/compose para editar");
       return;
     }
     if (cmd === "clear") { setLines([]); return; }
@@ -322,7 +868,10 @@ export function DockerSimulator({ onBack }: Props) {
       io.out("REPOSITORY        TAG       IMAGE ID       SIZE");
       if (!s.images.length) io.out("(nenhuma imagem local)");
       s.images.forEach((i) => io.out(`${i.name.padEnd(18)}${i.tag.padEnd(10)}${i.id.slice(0, 12).padEnd(15)}${i.size}`));
-      return null;
+      const hasFat = s.images.some((i) => i.name === "node" && i.tag === "20");
+      const hasAlpine = s.images.some((i) => i.name === "node" && /alpine/.test(i.tag));
+      if (hasFat && hasAlpine) (next as any)._comparedSizes = true;
+      return next;
     }
 
     // ps
@@ -357,9 +906,32 @@ export function DockerSimulator({ onBack }: Props) {
       const id = randId();
       const name = parsed.name ?? randName();
       if (s.containers.some((c) => c.name === name)) { io.err(`Conflict: container name '${name}' já em uso`); return null; }
+      // Validar network: deve existir
+      const targetNet = parsed.network ?? "bridge";
+      if (!s.networks.some((n) => n.name === targetNet)) {
+        io.err(`Error response from daemon: network ${targetNet} not found`);
+        return null;
+      }
+      // Auto-criar volume nomeado se -v <nome>:<path> e nome não existe ainda (comportamento real do Docker)
+      parsed.volumes.forEach((vol) => {
+        const isNamed = !vol.host.startsWith("/") && !vol.host.startsWith(".") && !vol.host.includes("\\");
+        if (isNamed && !next.volumes.some((v) => v.name === vol.host)) {
+          next.volumes.push({
+            name: vol.host, driver: "local",
+            mountpoint: `/var/lib/docker/volumes/${vol.host}/_data`,
+            createdAt: Date.now(),
+          });
+        }
+      });
+      // Mesclar env: ENV do Dockerfile (defaults da imagem) + -e (override)
+      const mergedEnv = { ...(img.defaultEnv ?? {}), ...parsed.env };
       const container: Container = {
         id, name, imageRef: `${imgName}:${imgTag}`, command: parsed.command,
-        status: "running", ports: parsed.ports, volumes: parsed.volumes, createdAt: Date.now(), logs: [`[${new Date().toISOString()}] Started container from ${imgName}:${imgTag}`],
+        status: "running", ports: parsed.ports, volumes: parsed.volumes,
+        env: mergedEnv, network: targetNet,
+        workdir: parsed.workdir, autoRemove: parsed.autoRemove, restartPolicy: parsed.restartPolicy,
+        createdAt: Date.now(),
+        logs: [`[${new Date().toISOString()}] Started container from ${imgName}:${imgTag}${parsed.network ? ` on network ${parsed.network}` : ""}`],
       };
       next.containers.push(container);
       io.out(parsed.detach ? id : `${id}\n(running in foreground — Ctrl+C para sair)`);
@@ -371,6 +943,12 @@ export function DockerSimulator({ onBack }: Props) {
     if (stopMatch) {
       const c = findContainer(s, stopMatch[1]);
       if (!c) { io.err(`No such container: ${stopMatch[1]}`); return null; }
+      if (c.autoRemove) {
+        next.containers = next.containers.filter((x) => x.id !== c.id);
+        io.out(c.name);
+        io.info(`(--rm: container '${c.name}' removido automaticamente)`);
+        return next;
+      }
       const idx = next.containers.findIndex((x) => x.id === c.id);
       next.containers[idx] = { ...c, status: "stopped" };
       io.out(c.name);
@@ -384,6 +962,17 @@ export function DockerSimulator({ onBack }: Props) {
       if (!c) { io.err(`No such container: ${startMatch[1]}`); return null; }
       const idx = next.containers.findIndex((x) => x.id === c.id);
       next.containers[idx] = { ...c, status: "running" };
+      io.out(c.name);
+      return next;
+    }
+
+    // restart
+    const restartMatch = args.match(/^restart\s+(\S+)$/);
+    if (restartMatch) {
+      const c = findContainer(s, restartMatch[1]);
+      if (!c) { io.err(`No such container: ${restartMatch[1]}`); return null; }
+      const idx = next.containers.findIndex((x) => x.id === c.id);
+      next.containers[idx] = { ...c, status: "running", logs: [...c.logs, `[${new Date().toISOString()}] Restarted`] };
       io.out(c.name);
       return next;
     }
@@ -413,28 +1002,133 @@ export function DockerSimulator({ onBack }: Props) {
       return next;
     }
 
-    // logs
-    const logsMatch = args.match(/^logs\s+(\S+)$/);
+    // logs (com -f / --follow)
+    const logsMatch = args.match(/^logs\s+(?:(-f|--follow|--tail\s+\d+)\s+)?(\S+)$/);
     if (logsMatch) {
-      const c = findContainer(s, logsMatch[1]);
-      if (!c) { io.err(`No such container: ${logsMatch[1]}`); return null; }
+      const flag = logsMatch[1];
+      const c = findContainer(s, logsMatch[2]);
+      if (!c) { io.err(`No such container: ${logsMatch[2]}`); return null; }
       c.logs.forEach((l) => io.out(l));
+      if (flag === "-f" || flag === "--follow") {
+        io.info("[seguindo logs em tempo real — Ctrl+C para sair (simulado)]");
+      }
+      if (c.name === "site_quebrado") (next as any)._loggedSiteQuebrado = true;
+      return next;
+    }
+
+    // inspect (container ou imagem)
+    const inspectMatch = args.match(/^inspect\s+(\S+)$/);
+    if (inspectMatch) {
+      const ref = inspectMatch[1];
+      const c = findContainer(s, ref);
+      if (c) {
+        const portsObj: any = {};
+        c.ports.forEach((p) => { portsObj[`${p.container}/tcp`] = [{ HostIp: "0.0.0.0", HostPort: String(p.host) }]; });
+        const mounts = c.volumes.map((v) => ({
+          Type: v.host.includes("/") ? "bind" : "volume",
+          Source: v.host, Destination: v.container, Mode: "rw", RW: true,
+        }));
+        const data = [{
+          Id: c.id,
+          Name: `/${c.name}`,
+          Image: c.imageRef,
+          State: { Status: c.status, Running: c.status === "running", StartedAt: new Date(c.createdAt).toISOString() },
+          Config: {
+            Image: c.imageRef,
+            Cmd: c.command === "(default)" ? null : c.command.split(" "),
+            WorkingDir: c.workdir ?? "",
+            Env: Object.entries(c.env).map(([k, v]) => `${k}=${v}`),
+          },
+          NetworkSettings: {
+            Networks: { [c.network]: { IPAddress: `172.17.0.${(parseInt(c.id.slice(0, 4), 16) % 250) + 2}` } },
+            Ports: portsObj,
+          },
+          Mounts: mounts,
+        }];
+        JSON.stringify(data, null, 2).split("\n").forEach((line) => io.out(line));
+        if (c.name === "site_quebrado") (next as any)._inspectedSiteQuebrado = true;
+        if (c.name === "db" && Object.keys(c.env).length > 0) (next as any)._inspectedEnvDb = true;
+        return next;
+      }
+      const [n, t = "latest"] = ref.split(":");
+      const img = s.images.find((i) => i.name === n && i.tag === t);
+      if (img) {
+        const data = [{
+          Id: `sha256:${img.id}`,
+          RepoTags: [`${img.name}:${img.tag}`],
+          Size: img.size,
+          BuiltFromDockerfile: !!img.builtFromDockerfile,
+        }];
+        JSON.stringify(data, null, 2).split("\n").forEach((line) => io.out(line));
+        return null;
+      }
+      io.err(`Error: No such object: ${ref}`);
       return null;
     }
 
     // exec
-    const execMatch = args.match(/^exec\s+(?:-it\s+)?(\S+)\s+(.+)$/);
+    const execShellMatch = args.match(/^exec\s+(?:-it\s+|-i\s+|-t\s+)?(\S+)\s+(sh|bash|\/bin\/sh|\/bin\/bash)$/);
+    if (execShellMatch) {
+      const c = findContainer(s, execShellMatch[1]);
+      if (!c) { io.err(`No such container: ${execShellMatch[1]}`); return null; }
+      if (c.status !== "running") { io.err(`Error response from daemon: container ${c.name} is not running`); return null; }
+      io.info(`[abrindo shell em '${c.name}' — sessão simulada]`);
+      io.out(`/ # _`);
+      io.info(`(dica: 'docker exec ${c.name} <cmd>' executa um único comando — ex: 'docker exec ${c.name} env')`);
+      return null;
+    }
+    const execMatch = args.match(/^exec\s+(?:-it\s+|-i\s+|-t\s+)?(\S+)\s+(.+)$/);
     if (execMatch) {
       const c = findContainer(s, execMatch[1]);
       if (!c) { io.err(`No such container: ${execMatch[1]}`); return null; }
-      if (c.status !== "running") { io.err(`Container ${c.name} não está rodando`); return null; }
-      const command = execMatch[2];
+      if (c.status !== "running") { io.err(`Error response from daemon: container ${c.name} is not running`); return null; }
+      const command = execMatch[2].trim();
       if (command === "ls" || command === "ls /") io.out("bin  dev  etc  home  lib  opt  proc  root  sbin  tmp  usr  var");
+      else if (command === "ls /app") io.out("package.json  node_modules  server.js");
       else if (command.startsWith("echo ")) io.out(command.slice(5).replace(/["']/g, ""));
       else if (command === "whoami") io.out("root");
+      else if (command === "pwd") io.out(c.workdir || "/");
       else if (command === "uname -a") io.out("Linux container 5.15.0 #1 SMP x86_64 GNU/Linux");
+      else if (command === "env") {
+        const entries = Object.entries(c.env);
+        if (!entries.length) io.out("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOSTNAME=" + c.id.slice(0, 12));
+        else entries.forEach(([k, v]) => io.out(`${k}=${v}`));
+        if (c.name === "db" && entries.length > 0) (next as any)._execEnvSeen = true;
+      }
+      else if (command === "ps" || command === "ps aux") {
+        io.out("  PID USER       TIME  COMMAND");
+        io.out("    1 root       0:00  " + (c.command === "(default)" ? "/docker-entrypoint.sh" : c.command));
+        io.out("   42 root       0:00  ps");
+      }
+      else if (command.startsWith("cat ")) {
+        const file = command.slice(4).trim();
+        if (file === "/etc/hostname") io.out(c.id.slice(0, 12));
+        else if (file === "/etc/os-release") io.out('PRETTY_NAME="Alpine Linux v3.19"\nID=alpine\nVERSION_ID=3.19.1');
+        else io.err(`cat: can't open '${file}': No such file or directory`);
+      }
+      else if (command.startsWith("ping ") || command.startsWith("ping -c")) {
+        // ping <host> — resolução por DNS interna do Docker funciona apenas em networks customizadas
+        const targetName = command.replace(/^ping\s+(?:-c\s+\d+\s+)?/, "").trim();
+        const target = s.containers.find((x) => x.name === targetName && x.status === "running");
+        const isCustomNet = c.network !== "bridge" && c.network !== "host" && c.network !== "none";
+        if (!target) {
+          io.err(`ping: bad address '${targetName}'`);
+        } else if (target.network !== c.network) {
+          io.err(`ping: bad address '${targetName}' — não está na mesma network ('${c.network}' vs '${target.network}')`);
+        } else if (!isCustomNet) {
+          io.err(`ping: bad address '${targetName}' — DNS interno só funciona em networks customizadas (você está em 'bridge')`);
+        } else {
+          const ip = `172.18.0.${(parseInt(target.id.slice(0, 4), 16) % 250) + 2}`;
+          io.out(`PING ${targetName} (${ip}): 56 data bytes`);
+          io.out(`64 bytes from ${ip}: seq=0 ttl=64 time=0.123 ms`);
+          io.out(`64 bytes from ${ip}: seq=1 ttl=64 time=0.098 ms`);
+          io.out(`--- ${targetName} ping statistics ---`);
+          io.out(`2 packets transmitted, 2 packets received, 0% packet loss`);
+          if (targetName === "db") (next as any)._pingedDb = true;
+        }
+      }
       else io.out(`(simulado) ${command}`);
-      return null;
+      return next;
     }
 
     // build
@@ -445,12 +1139,320 @@ export function DockerSimulator({ onBack }: Props) {
       const [n, t = "latest"] = ref.split(":");
       const lines = s.dockerfile.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
       io.out(`Sending build context to Docker daemon ...`);
-      lines.forEach((l, i) => io.out(`Step ${i + 1}/${lines.length} : ${l.trim()}`));
+      // Detectar multi-stage (FROM ... AS ...)
+      const fromLines = lines.filter((l) => /^FROM\s/i.test(l.trim()));
+      const stageNames = lines.filter((l) => /^FROM\s+\S+\s+AS\s+\S+/i.test(l.trim()))
+        .map((l) => l.trim().match(/^FROM\s+\S+\s+AS\s+(\S+)/i)?.[1] ?? "");
+      const isMultiStage = stageNames.length > 0 && fromLines.length > 1;
+      // Última stage define a imagem de base (e portanto o tamanho)
+      const lastFrom = fromLines[fromLines.length - 1] ?? "FROM node:20";
+      const baseImageRef = lastFrom.trim().match(/^FROM\s+(\S+)/i)?.[1] ?? "node:20";
+      const isAlpineBase = /alpine/i.test(baseImageRef);
+      const isSlimBase = /slim/i.test(baseImageRef);
+      // Parsear ENV e EXPOSE
+      const defaultEnv: Record<string, string> = {};
+      let exposedPort: number | undefined;
+      let copyFromCount = 0;
+      lines.forEach((l, i) => {
+        const trimmed = l.trim();
+        io.out(`Step ${i + 1}/${lines.length} : ${trimmed}`);
+        const envMatch = trimmed.match(/^ENV\s+(.+)$/i);
+        if (envMatch) {
+          const rest = envMatch[1];
+          if (rest.includes("=")) {
+            const pairs = rest.match(/(\w+)=("[^"]*"|\S+)/g) ?? [];
+            pairs.forEach((p) => {
+              const eq = p.indexOf("=");
+              const k = p.slice(0, eq);
+              const v = p.slice(eq + 1).replace(/^"|"$/g, "");
+              defaultEnv[k] = v;
+            });
+          } else {
+            const [k, ...vparts] = rest.split(/\s+/);
+            defaultEnv[k] = vparts.join(" ").replace(/^"|"$/g, "");
+          }
+        }
+        const exposeMatch = trimmed.match(/^EXPOSE\s+(\d+)/i);
+        if (exposeMatch) exposedPort = Number(exposeMatch[1]);
+        // COPY --from=<stage> indica multi-stage real (pega artefatos da stage anterior)
+        if (/^COPY\s+--from=/i.test(trimmed)) copyFromCount++;
+      });
       const id = randId();
+      // Tamanho final calculado a partir da base + impacto multi-stage
+      // Multi-stage com COPY --from corta TUDO que não for usado na última stage
+      let baseSize = 287; // padrão para node:20
+      if (isAlpineBase) baseSize = isMultiStage ? 50 : 150;
+      else if (isSlimBase) baseSize = isMultiStage ? 130 : 240;
+      else baseSize = isMultiStage && copyFromCount > 0 ? 200 : 287;
+      const size = `${baseSize}MB`;
       next.images = next.images.filter((i) => !(i.name === n && i.tag === t));
-      next.images.push({ name: n, tag: t, id, size: "287MB", builtFromDockerfile: true });
+      next.images.push({
+        name: n, tag: t, id, size,
+        builtFromDockerfile: true,
+        defaultEnv: Object.keys(defaultEnv).length > 0 ? defaultEnv : undefined,
+        exposedPort,
+      });
+      if (isMultiStage) {
+        io.out(`(multi-stage detectado: ${fromLines.length} stages, ${copyFromCount} COPY --from — imagem final enxuta)`);
+      }
+      if (isAlpineBase) io.out(`(base alpine: imagem ultra-leve — ótimo para produção)`);
       io.out(`Successfully built ${id.slice(0, 12)}`);
       io.out(`Successfully tagged ${n}:${t}`);
+      // dispara animação visual de layers
+      next.buildAnimation = {
+        steps: lines.map((l) => l.trim()),
+        isMultiStage,
+        finalSize: size,
+        ts: Date.now(),
+      };
+      return next;
+    }
+
+    // ===== docker volume * =====
+    if (args === "volume ls" || args === "volume list") {
+      io.out("DRIVER    VOLUME NAME");
+      if (!s.volumes.length) io.out("(nenhum volume)");
+      s.volumes.forEach((v) => io.out(`${v.driver.padEnd(10)}${v.name}`));
+      (next as any)._listedVolumes = true;
+      return next;
+    }
+    const volCreateMatch = args.match(/^volume\s+create\s+(\S+)$/);
+    if (volCreateMatch) {
+      const vname = volCreateMatch[1];
+      if (s.volumes.some((v) => v.name === vname)) { io.err(`Error: volume '${vname}' already exists`); return null; }
+      next.volumes.push({ name: vname, driver: "local", mountpoint: `/var/lib/docker/volumes/${vname}/_data`, createdAt: Date.now() });
+      io.out(vname);
+      return next;
+    }
+    const volRmMatch = args.match(/^volume\s+rm\s+(\S+)$/);
+    if (volRmMatch) {
+      const vname = volRmMatch[1];
+      const v = s.volumes.find((x) => x.name === vname);
+      if (!v) { io.err(`Error: no such volume: ${vname}`); return null; }
+      const inUse = s.containers.find((c) => c.volumes.some((vol) => vol.host === vname));
+      if (inUse) { io.err(`Error response from daemon: remove ${vname}: volume is in use - [${inUse.id.slice(0, 12)}]`); return null; }
+      next.volumes = next.volumes.filter((x) => x.name !== vname);
+      io.out(vname);
+      return next;
+    }
+    const volInspectMatch = args.match(/^volume\s+inspect\s+(\S+)$/);
+    if (volInspectMatch) {
+      const v = s.volumes.find((x) => x.name === volInspectMatch[1]);
+      if (!v) { io.err(`Error: no such volume: ${volInspectMatch[1]}`); return null; }
+      JSON.stringify([{ Name: v.name, Driver: v.driver, Mountpoint: v.mountpoint, CreatedAt: new Date(v.createdAt).toISOString(), Scope: "local" }], null, 2)
+        .split("\n").forEach((line) => io.out(line));
+      return null;
+    }
+    if (args === "volume prune" || args === "volume prune -f") {
+      const used = new Set(s.containers.flatMap((c) => c.volumes.map((v) => v.host)));
+      const removed = s.volumes.filter((v) => !used.has(v.name));
+      next.volumes = s.volumes.filter((v) => used.has(v.name));
+      io.out("Deleted Volumes:");
+      removed.forEach((v) => io.out(v.name));
+      io.out(`Total reclaimed space: ${removed.length * 50}MB`);
+      return next;
+    }
+
+    // ===== docker network * =====
+    if (args === "network ls" || args === "network list") {
+      io.out("NETWORK ID     NAME              DRIVER    SCOPE");
+      s.networks.forEach((n) => io.out(`${n.id.slice(0, 12).padEnd(15)}${n.name.padEnd(18)}${n.driver.padEnd(10)}${n.scope}`));
+      return null;
+    }
+    const netCreateMatch = args.match(/^network\s+create\s+(?:--driver\s+(\S+)\s+)?(\S+)$/);
+    if (netCreateMatch) {
+      const driver = netCreateMatch[1] ?? "bridge";
+      const nname = netCreateMatch[2];
+      if (s.networks.some((n) => n.name === nname)) { io.err(`Error response from daemon: network with name ${nname} already exists`); return null; }
+      const id = randId();
+      next.networks.push({ id, name: nname, driver, scope: "local", createdAt: Date.now() });
+      io.out(id);
+      return next;
+    }
+    const netRmMatch = args.match(/^network\s+rm\s+(\S+)$/);
+    if (netRmMatch) {
+      const nname = netRmMatch[1];
+      if (["bridge", "host", "none"].includes(nname)) { io.err(`Error response from daemon: ${nname} is a pre-defined network and cannot be removed`); return null; }
+      const n = s.networks.find((x) => x.name === nname);
+      if (!n) { io.err(`Error: No such network: ${nname}`); return null; }
+      const attached = s.containers.some((c) => c.network === nname);
+      if (attached) { io.err(`Error response from daemon: error while removing network: network ${nname} has active endpoints`); return null; }
+      next.networks = next.networks.filter((x) => x.name !== nname);
+      io.out(nname);
+      return next;
+    }
+    const netInspectMatch = args.match(/^network\s+inspect\s+(\S+)$/);
+    if (netInspectMatch) {
+      const n = s.networks.find((x) => x.name === netInspectMatch[1]);
+      if (!n) { io.err(`Error: No such network: ${netInspectMatch[1]}`); return null; }
+      const containers: any = {};
+      s.containers.filter((c) => c.network === n.name).forEach((c) => {
+        containers[c.id] = { Name: c.name, IPv4Address: `172.18.0.${(parseInt(c.id.slice(0, 4), 16) % 250) + 2}/16` };
+      });
+      JSON.stringify([{ Id: n.id, Name: n.name, Driver: n.driver, Scope: n.scope, Containers: containers, Created: new Date(n.createdAt).toISOString() }], null, 2)
+        .split("\n").forEach((line) => io.out(line));
+      if (n.name === "app-net") (next as any)._inspectedAppNet = true;
+      return next;
+    }
+    const netConnectMatch = args.match(/^network\s+connect\s+(\S+)\s+(\S+)$/);
+    if (netConnectMatch) {
+      const n = s.networks.find((x) => x.name === netConnectMatch[1]);
+      const c = findContainer(s, netConnectMatch[2]);
+      if (!n) { io.err(`Error: No such network: ${netConnectMatch[1]}`); return null; }
+      if (!c) { io.err(`No such container: ${netConnectMatch[2]}`); return null; }
+      const idx = next.containers.findIndex((x) => x.id === c.id);
+      next.containers[idx] = { ...c, network: n.name };
+      io.out("");
+      return next;
+    }
+    const netDisconnectMatch = args.match(/^network\s+disconnect\s+(\S+)\s+(\S+)$/);
+    if (netDisconnectMatch) {
+      const c = findContainer(s, netDisconnectMatch[2]);
+      if (!c) { io.err(`No such container: ${netDisconnectMatch[2]}`); return null; }
+      const idx = next.containers.findIndex((x) => x.id === c.id);
+      next.containers[idx] = { ...c, network: "bridge" };
+      io.out("");
+      return next;
+    }
+    if (args === "network prune" || args === "network prune -f") {
+      const used = new Set(s.containers.map((c) => c.network).concat(["bridge", "host", "none"]));
+      const removed = s.networks.filter((n) => !used.has(n.name));
+      next.networks = s.networks.filter((n) => used.has(n.name));
+      io.out("Deleted Networks:");
+      removed.forEach((n) => io.out(n.name));
+      return next;
+    }
+
+    // ===== docker tag <src>[:tag] <dst>[:tag] =====
+    const tagMatch = args.match(/^tag\s+(\S+)\s+(\S+)$/);
+    if (tagMatch) {
+      const [srcN, srcT = "latest"] = tagMatch[1].split(":");
+      const [dstN, dstT = "latest"] = tagMatch[2].split(":");
+      const src = s.images.find((i) => i.name === srcN && i.tag === srcT);
+      if (!src) { io.err(`Error response from daemon: No such image: ${tagMatch[1]}`); return null; }
+      // remove qualquer destino prévio com mesmo nome:tag (re-tag substitui)
+      next.images = next.images.filter((i) => !(i.name === dstN && i.tag === dstT));
+      next.images.push({ ...src, name: dstN, tag: dstT }); // mesmo id — alias
+      return next;
+    }
+
+    // ===== docker login =====
+    if (args === "login" || args.startsWith("login ")) {
+      const userMatch = args.match(/^login(?:\s+(?:-u\s+)?(\S+))?/);
+      const user = userMatch?.[1] ?? "operador";
+      io.out(`Login Succeeded`);
+      io.info(`Logged in as: ${user}`);
+      next.loggedIn = user;
+      return next;
+    }
+
+    if (args === "logout") {
+      io.out("Removing login credentials for https://index.docker.io/v1/");
+      next.loggedIn = undefined;
+      return next;
+    }
+
+    // ===== docker push <name>[:tag] =====
+    const pushMatch = args.match(/^push\s+(\S+)$/);
+    if (pushMatch) {
+      const ref = pushMatch[1];
+      const [n, t = "latest"] = ref.split(":");
+      if (!s.loggedIn) { io.err(`denied: requested access to the resource is denied — use 'docker login' primeiro`); return null; }
+      const img = s.images.find((i) => i.name === n && i.tag === t);
+      if (!img) { io.err(`An image does not exist locally with the tag: ${ref}`); return null; }
+      io.out(`The push refers to repository [docker.io/${s.loggedIn}/${n}]`);
+      io.out(`${img.id.slice(0, 12)}: Pushing image layer...`);
+      io.out(`${img.id.slice(0, 12)}: Pushed`);
+      io.out(`${t}: digest: sha256:${img.id}${"a".repeat(40)} size: ${img.size}`);
+      // adiciona ao registry simulado (substitui se já existe)
+      next.registry = next.registry.filter((i) => !(i.name === n && i.tag === t));
+      next.registry.push({ ...img, size: img.size });
+      return next;
+    }
+
+    // ===== docker history <image> =====
+    const historyMatch = args.match(/^history\s+(\S+)$/);
+    if (historyMatch) {
+      const ref = historyMatch[1];
+      const [n, t = "latest"] = ref.split(":");
+      const img = s.images.find((i) => i.name === n && i.tag === t);
+      if (!img) { io.err(`Error: No such image: ${ref}`); return null; }
+      io.out("IMAGE          CREATED        CREATED BY                                          SIZE");
+      if (img.builtFromDockerfile && s.dockerfile.trim()) {
+        const lines = s.dockerfile.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+        const fromIdxs = lines.map((l, i) => /^FROM\s/i.test(l.trim()) ? i : -1).filter((i) => i >= 0);
+        const lastStageStart = fromIdxs[fromIdxs.length - 1] ?? 0;
+        const stageLines = lines.slice(lastStageStart);
+        stageLines.forEach((l, i) => {
+          const cmd = l.trim();
+          const layerSize = cmd.startsWith("RUN") ? "120MB" : cmd.startsWith("COPY") || cmd.startsWith("ADD") ? "8MB" : "0B";
+          io.out(`${i === 0 ? img.id.slice(0, 12) : "<missing>".padEnd(13)}  3 minutes ago  /bin/sh -c #(nop) ${cmd.length > 45 ? cmd.slice(0, 44) + "…" : cmd.padEnd(45)} ${layerSize}`);
+        });
+      } else {
+        io.out(`${img.id.slice(0, 12)}  2 weeks ago    /bin/sh -c #(nop) CMD ["/${n}"]                ${img.size}`);
+      }
+      if (n === "app" && t === "slim") (next as any)._historiedAppSlim = true;
+      return next;
+    }
+
+    // ===== docker stats (snapshot, simulado) =====
+    if (args === "stats" || args === "stats --no-stream") {
+      io.out("CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT     MEM %     NET I/O");
+      const running = s.containers.filter((c) => c.status === "running");
+      if (!running.length) io.out("(nenhum container rodando)");
+      running.forEach((c) => {
+        const seed = parseInt(c.id.slice(0, 4), 16);
+        const cpu = ((seed % 50) + 5).toFixed(1);
+        const memUsed = (seed % 380) + 20;
+        const memMax = c.imageRef.includes("postgres") ? 512 : 256;
+        const memPct = ((memUsed / memMax) * 100).toFixed(1);
+        const net = `${(seed % 50) / 10}MB / ${(seed % 30) / 10}MB`;
+        io.out(`${c.id.slice(0, 12).padEnd(15)}${c.name.padEnd(18)}${cpu}%      ${memUsed}MiB / ${memMax}MiB        ${memPct}%      ${net}`);
+      });
+      return null;
+    }
+
+    // ===== docker system prune [-a] [-f] / df / info =====
+    if (args.startsWith("system prune") || args === "system prune") {
+      const all = /(?:^|\s)(-a|--all)(?:\s|$)/.test(args);
+      // remove containers parados
+      const stoppedIds = s.containers.filter((c) => c.status === "stopped").map((c) => c.id);
+      next.containers = s.containers.filter((c) => c.status === "running");
+      // remove networks não usadas
+      const usedNets = new Set(next.containers.map((c) => c.network).concat(["bridge", "host", "none"]));
+      next.networks = s.networks.filter((nw) => usedNets.has(nw.name));
+      // remove volumes dangling
+      const usedVols = new Set(next.containers.flatMap((c) => c.volumes.map((v) => v.host)));
+      const removedVols = s.volumes.filter((v) => !usedVols.has(v.name));
+      next.volumes = s.volumes.filter((v) => usedVols.has(v.name));
+      // remove imagens dangling (com -a, remove todas que não estão em uso)
+      let removedImgs: Image[] = [];
+      if (all) {
+        const usedImgs = new Set(next.containers.map((c) => c.imageRef));
+        removedImgs = s.images.filter((i) => !usedImgs.has(`${i.name}:${i.tag}`));
+        next.images = s.images.filter((i) => usedImgs.has(`${i.name}:${i.tag}`));
+      }
+      io.out("Deleted Containers:");
+      stoppedIds.forEach((id) => io.out(id));
+      if (removedImgs.length) {
+        io.out("Deleted Images:");
+        removedImgs.forEach((i) => io.out(`untagged: ${i.name}:${i.tag}`));
+      }
+      if (removedVols.length) {
+        io.out("Deleted Volumes:");
+        removedVols.forEach((v) => io.out(v.name));
+      }
+      const reclaim = removedImgs.length * 200 + removedVols.length * 50 + stoppedIds.length * 5;
+      io.out(`Total reclaimed space: ${reclaim}MB`);
+      return next;
+    }
+
+    if (args === "system df") {
+      io.out("TYPE            TOTAL     ACTIVE     SIZE      RECLAIMABLE");
+      io.out(`Images          ${String(s.images.length).padEnd(10)}${String(s.containers.length).padEnd(11)}${s.images.length * 200}MB     ${(s.images.length - s.containers.length) * 200}MB`);
+      io.out(`Containers      ${String(s.containers.length).padEnd(10)}${String(s.containers.filter((c) => c.status === "running").length).padEnd(11)}${s.containers.length * 5}MB       ${s.containers.filter((c) => c.status === "stopped").length * 5}MB`);
+      io.out(`Local Volumes   ${String(s.volumes.length).padEnd(10)}${String(s.volumes.length).padEnd(11)}${s.volumes.length * 50}MB      0MB`);
+      (next as any)._dfSeen = true;
       return next;
     }
 
@@ -478,7 +1480,11 @@ export function DockerSimulator({ onBack }: Props) {
         const id = randId();
         next.containers.push({
           id, name: `proj_${svc}_1`, imageRef: svc === "web" ? "nginx:latest" : svc === "db" ? "postgres:16" : "alpine:latest",
-          command: "(default)", status: "running", ports: svc === "web" ? [{ host: 8080, container: 80 }] : [], volumes: svc === "db" ? [{ host: "dbdata", container: "/var/lib/postgresql/data" }] : [],
+          command: "(default)", status: "running",
+          ports: svc === "web" ? [{ host: 8080, container: 80 }] : [],
+          volumes: svc === "db" ? [{ host: "dbdata", container: "/var/lib/postgresql/data" }] : [],
+          env: svc === "db" ? { POSTGRES_PASSWORD: "secret" } : {},
+          network: "proj_default",
           createdAt: Date.now(), logs: [`Started ${svc}`],
         });
         io.out(`Creating proj_${svc}_1 ... done`);
@@ -523,21 +1529,13 @@ export function DockerSimulator({ onBack }: Props) {
       else { setHistoryIdx(i); setInput(history[i]); }
     } else if (e.key === "Tab") {
       e.preventDefault();
-      const completions = [
-        "docker pull nginx", "docker pull postgres:16", "docker pull node:20",
-        "docker images", "docker ps", "docker ps -a",
-        "docker run -d nginx", "docker run -d -p 8080:80 nginx",
-        "docker run -d --name meu meuapp",
-        "docker stop ", "docker start ", "docker rm ", "docker rmi ",
-        "docker logs ", "docker exec -it ",
-        "docker build -t meuapp .",
-        "docker-compose up -d", "docker-compose down", "docker-compose ps",
-        "curl localhost:8080",
-        "help", "clear", "reset",
-      ];
-      const matches = completions.filter((c) => c.startsWith(input));
+      const matches = computeCompletions(input, state);
       if (matches.length === 1) setInput(matches[0]);
-      else if (matches.length > 1) info("Sugestões: " + matches.join(" | "));
+      else if (matches.length > 1) {
+        const common = longestCommonPrefix(matches);
+        if (common.length > input.length) setInput(common);
+        info("Sugestões: " + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
+      }
     }
   };
 
@@ -562,6 +1560,13 @@ export function DockerSimulator({ onBack }: Props) {
       { border: "border-emerald-500/20", bg: "bg-emerald-500/10", borderInner: "border-emerald-500/30", text: "text-emerald-400" },
       { border: "border-amber-500/20", bg: "bg-amber-500/10", borderInner: "border-amber-500/30", text: "text-amber-400" },
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", borderInner: "border-fuchsia-500/30", text: "text-fuchsia-400" },
+      { border: "border-rose-500/20", bg: "bg-rose-500/10", borderInner: "border-rose-500/30", text: "text-rose-400" },
+      { border: "border-violet-500/20", bg: "bg-violet-500/10", borderInner: "border-violet-500/30", text: "text-violet-400" },
+      { border: "border-teal-500/20", bg: "bg-teal-500/10", borderInner: "border-teal-500/30", text: "text-teal-400" },
+      { border: "border-cyan-500/20", bg: "bg-cyan-500/10", borderInner: "border-cyan-500/30", text: "text-cyan-400" },
+      { border: "border-indigo-500/20", bg: "bg-indigo-500/10", borderInner: "border-indigo-500/30", text: "text-indigo-400" },
+      { border: "border-pink-500/20", bg: "bg-pink-500/10", borderInner: "border-pink-500/30", text: "text-pink-400" },
+      { border: "border-lime-500/20", bg: "bg-lime-500/10", borderInner: "border-lime-500/30", text: "text-lime-400" },
     ];
     const steps: { title: string; content: React.ReactNode }[] = [
       {
@@ -706,7 +1711,7 @@ export function DockerSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Os 4 níveis",
+        title: "Os níveis",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
@@ -830,7 +1835,7 @@ export function DockerSimulator({ onBack }: Props) {
   // ---------- Simulator ----------
   const running = state.containers.filter((c) => c.status === "running");
   const stopped = state.containers.filter((c) => c.status === "stopped");
-  const showDockerfile = level.id === 2;
+  const showDockerfile = !!state.dockerfile.trim();
   const showCompose = level.id === 4;
 
   return (
@@ -992,6 +1997,19 @@ export function DockerSimulator({ onBack }: Props) {
                         {c.volumes.map((v) => `${v.host}→${v.container}`).join(", ")}
                       </div>
                     )}
+                    {Object.keys(c.env).length > 0 && (
+                      <div className="flex items-start gap-1 mt-0.5 text-[10px] text-emerald-300/80">
+                        <span className="font-bold mt-0.5">ENV</span>
+                        <span className="truncate" title={Object.entries(c.env).map(([k, v]) => `${k}=${v}`).join("\n")}>
+                          {Object.keys(c.env).slice(0, 2).join(", ")}{Object.keys(c.env).length > 2 ? ` +${Object.keys(c.env).length - 2}` : ""}
+                        </span>
+                      </div>
+                    )}
+                    {c.network !== "bridge" && (
+                      <div className="flex items-center gap-1 mt-0.5 text-[10px] text-cyan-300/80">
+                        <Network className="w-3 h-3" /> {c.network}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {stopped.map((c) => (
@@ -1009,6 +2027,122 @@ export function DockerSimulator({ onBack }: Props) {
               </div>
             </div>
           </div>
+
+          {/* Row: Volumes + Networks */}
+          <div className="grid lg:grid-cols-2 gap-4">
+
+            {/* Volumes */}
+            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-3 text-violet-400">
+                <HardDrive className="w-4 h-4" />
+                <h5 className="text-xs font-bold uppercase tracking-widest">Volumes ({state.volumes.length})</h5>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">storage persistente</span>
+              </div>
+              <div className="space-y-1 max-h-32 overflow-auto">
+                {state.volumes.length === 0 && (
+                  <p className="text-[11px] text-slate-600 italic">(nenhum volume nomeado — use bind mount com -v ou crie em níveis avançados)</p>
+                )}
+                {state.volumes.map((v) => (
+                  <div key={v.name} className="flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded bg-slate-950/50 border border-violet-500/10">
+                    <span className="text-violet-300">{v.name}</span>
+                    <span className="text-[10px] text-slate-500">{v.driver}</span>
+                  </div>
+                ))}
+                {/* bind mounts in-line para visibilidade */}
+                {state.containers.flatMap((c) => c.volumes.filter((vol) => vol.host.startsWith("/") || vol.host.startsWith(".")).map((vol) => ({ c, vol }))).map(({ c, vol }, i) => (
+                  <div key={`bm-${i}`} className="flex items-center justify-between text-[11px] font-mono px-2 py-1 rounded bg-slate-950/30 border border-white/5">
+                    <span className="text-slate-400 truncate max-w-[60%]" title={vol.host}>{vol.host}</span>
+                    <span className="text-[10px] text-slate-600">→ {c.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Networks */}
+            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-3 text-cyan-400">
+                <Network className="w-4 h-4" />
+                <h5 className="text-xs font-bold uppercase tracking-widest">Networks ({state.networks.length})</h5>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">isolamento de tráfego</span>
+              </div>
+              <div className="space-y-1 max-h-32 overflow-auto">
+                {state.networks.map((n) => {
+                  const attached = state.containers.filter((c) => c.network === n.name);
+                  const isCustom = !["bridge", "host", "none"].includes(n.name);
+                  return (
+                    <div key={n.id} className={`text-xs font-mono px-2 py-1.5 rounded border ${isCustom ? "bg-cyan-500/5 border-cyan-500/20" : "bg-slate-950/50 border-cyan-500/10"}`}>
+                      <div className="flex items-center justify-between">
+                        <span className={isCustom ? "text-cyan-200 font-bold" : "text-cyan-300"}>{n.name}{isCustom && <span className="text-[9px] text-cyan-500 ml-1">★ custom</span>}</span>
+                        <span className="text-[10px] text-slate-500">{n.driver} · {attached.length} ctr</span>
+                      </div>
+                      {attached.length > 0 && (
+                        <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                          {attached.map((c) => c.name).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Topologia visual (renderiza só se houver network custom com 1+ containers) */}
+          {state.networks.some((n) => !["bridge", "host", "none"].includes(n.name) && state.containers.some((c) => c.network === n.name)) && (
+            <div className="bg-slate-900/60 border border-cyan-500/20 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-3 text-cyan-400">
+                <Network className="w-4 h-4" />
+                <h5 className="text-xs font-bold uppercase tracking-widest">Topologia da Rede</h5>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">DNS interno ativo em redes custom</span>
+              </div>
+              <div className="space-y-3">
+                {state.networks
+                  .filter((n) => !["bridge", "host", "none"].includes(n.name) && state.containers.some((c) => c.network === n.name))
+                  .map((n) => {
+                    const attached = state.containers.filter((c) => c.network === n.name);
+                    const W = 700, H = 130, cx = W / 2, cy = H / 2;
+                    return (
+                      <div key={n.id} className="border border-cyan-500/30 rounded-xl bg-cyan-500/5 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-mono text-cyan-300 font-bold">{n.name}</span>
+                          <span className="text-[10px] text-slate-500 font-mono">{n.driver} · 172.18.0.0/16 · DNS: ✓</span>
+                        </div>
+                        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32">
+                          {/* hub central representando o DNS/bridge interno */}
+                          <circle cx={cx} cy={cy} r="22" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.6)" strokeWidth="1.5" />
+                          <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10" fill="#67e8f9" fontFamily="monospace">DNS</text>
+                          {/* containers em arco */}
+                          {attached.map((c, i) => {
+                            const angle = (i / Math.max(attached.length, 1)) * 2 * Math.PI - Math.PI / 2;
+                            const r = 50;
+                            const x = cx + Math.cos(angle) * (W * 0.32);
+                            const y = cy + Math.sin(angle) * 35;
+                            const running = c.status === "running";
+                            return (
+                              <g key={c.id}>
+                                <line x1={cx} y1={cy} x2={x} y2={y} stroke={running ? "rgba(34,197,94,0.4)" : "rgba(100,116,139,0.3)"} strokeWidth="1.5" strokeDasharray={running ? "" : "4 3"} />
+                                <rect x={x - r} y={y - 14} width={r * 2} height={28} rx="6"
+                                  fill={running ? "rgba(34,197,94,0.12)" : "rgba(100,116,139,0.15)"}
+                                  stroke={running ? "rgba(34,197,94,0.5)" : "rgba(100,116,139,0.3)"} strokeWidth="1" />
+                                <circle cx={x - r + 8} cy={y} r="3" fill={running ? "#22c55e" : "#64748b"}>
+                                  {running && <animate attributeName="opacity" values="1;0.4;1" dur="1.6s" repeatCount="indefinite" />}
+                                </circle>
+                                <text x={x - r + 16} y={y + 4} fontSize="11" fill={running ? "#86efac" : "#94a3b8"} fontFamily="monospace">{c.name.length > 12 ? c.name.slice(0, 11) + "…" : c.name}</text>
+                              </g>
+                            );
+                          })}
+                        </svg>
+                        {attached.length >= 2 && (
+                          <p className="text-[10px] text-slate-500 italic mt-1">
+                            Containers nesta rede falam entre si pelo nome — ex: <code className="text-cyan-300">{attached[0].name}</code> alcança <code className="text-cyan-300">{attached[1].name}</code> via <code className="text-cyan-300">ping {attached[1].name}</code>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* Files (Dockerfile / compose) */}
           {(showDockerfile || showCompose) && (
@@ -1066,6 +2200,59 @@ export function DockerSimulator({ onBack }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Build layer animation overlay */}
+      <AnimatePresence>
+        {buildViz && (
+          <motion.div
+            initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 60 }}
+            transition={{ type: "spring", damping: 22, stiffness: 240 }}
+            className="fixed top-24 right-6 z-40 w-80 bg-slate-900/95 backdrop-blur-md border border-amber-500/40 rounded-2xl shadow-[0_0_50px_-10px_rgba(245,158,11,0.5)] overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/30">
+              <Layers className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-300">Construindo Imagem</span>
+              {buildViz.isMultiStage && <span className="ml-auto text-[9px] font-mono text-fuchsia-300 bg-fuchsia-500/10 border border-fuchsia-500/30 px-1.5 py-0.5 rounded">multi-stage</span>}
+            </div>
+            <div className="p-3 space-y-1.5">
+              {buildViz.steps.map((step, i) => {
+                const visible = i < buildViz.revealed;
+                const isFROM = /^FROM\s/i.test(step);
+                const isCOPYfrom = /^COPY\s+--from=/i.test(step);
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: -8, scaleX: 0.7 }}
+                    animate={visible ? { opacity: 1, y: 0, scaleX: 1 } : { opacity: 0, y: -8, scaleX: 0.7 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className={`text-[10px] font-mono px-2 py-1 rounded border origin-left ${
+                      isCOPYfrom ? "bg-fuchsia-500/10 border-fuchsia-500/40 text-fuchsia-200" :
+                      isFROM ? "bg-sky-500/10 border-sky-500/40 text-sky-200" :
+                      "bg-slate-800/60 border-white/10 text-slate-300"
+                    }`}
+                  >
+                    <span className="text-slate-500 mr-1">{i + 1}</span>
+                    {step.length > 36 ? step.slice(0, 35) + "…" : step}
+                  </motion.div>
+                );
+              })}
+              {buildViz.revealed > buildViz.steps.length && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", damping: 14 }}
+                  className="mt-2 p-3 rounded-xl bg-gradient-to-br from-emerald-500/15 to-amber-500/10 border border-emerald-500/40 text-center"
+                >
+                  <p className="text-[9px] uppercase tracking-widest text-emerald-300 font-mono mb-1">imagem final</p>
+                  <p className="text-2xl font-black text-white tabular-nums">{buildViz.finalSize}</p>
+                  {buildViz.isMultiStage && (
+                    <p className="text-[10px] text-emerald-400 font-mono mt-1">↓ stages descartados</p>
+                  )}
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* File editor */}
       <AnimatePresence>
