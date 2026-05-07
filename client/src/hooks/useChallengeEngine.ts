@@ -18,6 +18,7 @@ type EngineState = {
   showCutscene: boolean;
   isRunning: boolean;
   wasAlreadyCompleted: boolean;
+  usedStudyAnswer: boolean;
 };
 
 export function useChallengeEngine(
@@ -38,6 +39,7 @@ export function useChallengeEngine(
     showCutscene: false,
     isRunning: false,
     wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
+    usedStudyAnswer: false,
   });
 
   const lastChallengeIdRef = useRef<string | null>(null);
@@ -59,6 +61,7 @@ export function useChallengeEngine(
         currentHintIdx: 0,
         showCutscene: false,
         wasAlreadyCompleted: isChallengeCompleted(challenge.id),
+        usedStudyAnswer: false,
       }));
     }
   }, [challenge?.id, isChallengeCompleted, challenge?.starterCode]);
@@ -112,6 +115,7 @@ export function useChallengeEngine(
             hintsUsed: state.hintsUsed,
             attempts: state.attempts + 1,
             charCount: state.code.length,
+            usedStudyAnswer: state.usedStudyAnswer,
           });
         }
 
@@ -157,8 +161,10 @@ export function useChallengeEngine(
         showHint: false,
         currentHintIdx: 0,
         hintsUsed: 0,
+        usedStudyAnswer: false,
       })),
     handleHint,
+    setUsedStudyAnswer: (used: boolean) => setState((prev) => ({ ...prev, usedStudyAnswer: used })),
     setShowHint: (show: boolean) => setState((prev) => ({ ...prev, showHint: show })),
     closeCutscene: () => setState((prev) => ({ ...prev, showCutscene: false })),
   };

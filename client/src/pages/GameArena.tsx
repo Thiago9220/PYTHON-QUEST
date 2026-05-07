@@ -71,16 +71,28 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   }, [engine.handleRun]);
 
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const isNewDay = gameState.lastStudyAnswerDate !== today;
+    const currentUses = isNewDay ? 0 : gameState.studyAnswerUses;
+    const remainingUses = Math.max(0, 3 - currentUses);
+
     if (engine.attempts >= 5 && !engine.isCorrect && !hasNotifiedStruggle) {
-      toast("Quer comparar com uma resposta?", {
-        description: "Abra a resposta de estudo e volte para ajustar seu código.",
-        action: { label: "Ver", onClick: () => setShowAnswerModal(true) },
-        duration: 8000,
-      });
+      if (remainingUses > 0) {
+        toast("Quer comparar com uma resposta?", {
+          description: `Você tem ${remainingUses} usos de estudo restantes hoje.`,
+          action: { label: "Ver", onClick: () => setShowAnswerModal(true) },
+          duration: 8000,
+        });
+      } else {
+        toast("Limite de estudos atingido", {
+          description: "Você já usou suas 3 consultas diárias. Tente novamente amanhã ou use as dicas!",
+          duration: 8000,
+        });
+      }
       setHasNotifiedStruggle(true);
     }
     if (engine.attempts === 0) setHasNotifiedStruggle(false);
-  }, [engine.attempts, engine.isCorrect, hasNotifiedStruggle]);
+  }, [engine.attempts, engine.isCorrect, hasNotifiedStruggle, gameState.studyAnswerUses, gameState.lastStudyAnswerDate]);
 
   if (!challenge || !world) return null;
 
@@ -202,7 +214,23 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                     </Button>
                   )}
                   {engine.attempts >= 5 && (
-                    <Button variant="ghost" size="sm" onClick={() => setShowAnswerModal(true)} className="text-sky-400 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-400/10 transition-all">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        const today = new Date().toISOString().split("T")[0];
+                        const isNewDay = gameState.lastStudyAnswerDate !== today;
+                        const currentUses = isNewDay ? 0 : gameState.studyAnswerUses;
+                        if (currentUses >= 3) {
+                          toast.error("Limite diário atingido", {
+                            description: "Você já revelou 3 respostas hoje. Tente resolver sozinho ou use as dicas!"
+                          });
+                          return;
+                        }
+                        setShowAnswerModal(true);
+                      }} 
+                      className="text-sky-400 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-400/10 transition-all"
+                    >
                       <HelpCircle className="w-4 h-4 mr-2" /> Resposta
                     </Button>
                   )}
@@ -275,7 +303,16 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
       </AnimatePresence>
       <AnimatePresence>
         {showAnswerModal && (
-          <AnswerRevealModal isOpen={showAnswerModal} onClose={() => setShowAnswerModal(false)} expectedCode={answerCode} />
+          <AnswerRevealModal 
+            isOpen={showAnswerModal} 
+            onClose={() => setShowAnswerModal(false)} 
+            onConfirm={() => {
+              engine.setUsedStudyAnswer(true);
+              dispatch({ type: "USE_STUDY_ANSWER" });
+            }}
+            expectedCode={answerCode} 
+            remainingUses={Math.max(0, 3 - (gameState.lastStudyAnswerDate === new Date().toISOString().split("T")[0] ? gameState.studyAnswerUses : 0))}
+          />
         )}
       </AnimatePresence>
     </div>

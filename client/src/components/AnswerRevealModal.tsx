@@ -7,10 +7,12 @@ import { toast } from "sonner";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  onConfirm?: () => void;
   expectedCode: string;
+  remainingUses: number;
 };
 
-export function AnswerRevealModal({ isOpen, onClose, expectedCode }: Props) {
+export function AnswerRevealModal({ isOpen, onClose, onConfirm, expectedCode, remainingUses }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -58,9 +60,21 @@ export function AnswerRevealModal({ isOpen, onClose, expectedCode }: Props) {
                 </button>
               </div>
 
-              <p className="text-slate-600 text-sm mb-5 leading-relaxed">
+              <p className="text-slate-600 text-sm mb-2 leading-relaxed">
                 Compare com a sua tentativa e observe a sintaxe usada. Use a resposta como referencia para aprender o padrao.
               </p>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex items-start gap-3">
+                <div className="mt-0.5 text-amber-600">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-amber-800 text-xs font-bold uppercase tracking-wider mb-0.5">Penalidade de XP</p>
+                  <p className="text-amber-700 text-xs leading-relaxed">
+                    Ao revelar a resposta, o ganho de XP para este desafio será reduzido a <strong>0</strong>.
+                  </p>
+                </div>
+              </div>
 
               <pre className="bg-slate-950 text-sky-100 border border-slate-800 rounded-xl p-5 font-mono text-sm whitespace-pre-wrap overflow-auto min-h-[96px]">
                 {expectedCode}
@@ -75,9 +89,21 @@ export function AnswerRevealModal({ isOpen, onClose, expectedCode }: Props) {
                   {copied ? <Check className="w-4 h-4 mr-2 text-emerald-600" /> : <Copy className="w-4 h-4 mr-2" />}
                   {copied ? "Copiado!" : "Copiar Código"}
                 </Button>
-                <Button onClick={onClose} className="flex-1 h-11 bg-sky-600 hover:bg-sky-700">
+                <Button 
+                  onClick={() => {
+                    onConfirm?.();
+                    onClose();
+                  }} 
+                  className="flex-1 h-11 bg-sky-600 hover:bg-sky-700 font-bold"
+                >
                   Entendi
                 </Button>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Usos diários restantes: <span className="text-sky-600">{remainingUses}</span>
+                </span>
               </div>
             </div>
           </motion.div>
