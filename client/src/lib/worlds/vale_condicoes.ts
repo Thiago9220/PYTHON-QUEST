@@ -32,6 +32,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Acesso liberado. Você fez o primeiro bypass estrutural na rede.",
+      solution: "if idade >= 18:\n    print('Acesso Permitido')",
     },
     {
       id: "py-cond-02",
@@ -55,6 +56,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Balanceamento restaurado. Seus scripts agora lidam com ambos os fluxos da matriz.",
+      solution: "if energia > 50:\n    print('Correr')\nelse:\n    print('Descansar')",
     },
     {
       id: "py-cond-03",
@@ -78,6 +80,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Acesso médio garantido. Você agora tem permissão para visualizar os logs dos setores internos.",
+      solution: "if nivel == 1:\n    print('Acesso Baixo')\nelif nivel == 2:\n    print('Acesso Medio')\nelse:\n    print('Acesso Alto')",
     },
     {
       id: "py-cond-04",
@@ -101,6 +104,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Autenticação de dois fatores concluída. O bloqueio do Core foi removido.",
+      solution: "if has_token and has_pass:\n    print('Sistema Desbloqueado')",
     },
     {
       id: "py-cond-05",
@@ -123,6 +127,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Redundância ativada. O tráfego foi redirecionado para o servidor B. A conexão permanece estável.",
+      solution: "if servidor_a or servidor_b:\n    print('Conexão Estável')",
     },
     {
       id: "py-cond-06",
@@ -145,6 +150,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Varredura negativa para ameaças. O sistema está operando em modo seguro.",
+      solution: "if not virus:\n    print('Sistema Limpo')",
     },
     {
       id: "py-cond-07",
@@ -167,6 +173,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Porta identificada como tráfego de aplicação de usuário. Pacotes autorizados para processamento.",
+      solution: "if 1024 <= porta <= 65535:\n    print('Porta de Usuario')",
     },
     {
       id: "py-cond-08",
@@ -189,6 +196,7 @@ export const VALE_CONDICOES_WORLD: World = {
       successNpc: "Proxy-01, Validador de Pacotes",
       successAvatar: "/avatars/golem.webp",
       successStory: "Credenciais de elite confirmadas. Você agora tem acesso total ao Nó de Roteamento.",
+      solution: "if usuario in lista_branca:\n    print('Acesso VIP')",
     },
   ],
 };

@@ -32,6 +32,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Varredura concluída. O loop de processamento estabilizou as portas de entrada do setor.",
+      solution: "for i in range(5):\n    print(i)",
     },
     {
       id: "py-loop-02",
@@ -54,6 +55,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Cronômetro sincronizado. O protocolo de autodestruição foi abortado com sucesso.",
+      solution: "for i in range(5, 0, -1):\n    print(i)",
     },
     {
       id: "py-loop-03",
@@ -76,6 +78,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Soma concluída. O arquivo de 100 bytes foi reconstruído e está pronto para análise.",
+      solution: "total = 0\nfor c in cargas:\n    total += c\nprint(total)",
     },
     {
       id: "py-loop-04",
@@ -99,6 +102,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Criptografia quebrada no último ciclo. O acesso ao setor foi mantido.",
+      solution: "while tentativas > 0:\n    print(tentativas)\n    tentativas -= 1",
     },
     {
       id: "py-loop-05",
@@ -121,6 +125,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Intruso localizado e isolado. O scanner foi interrompido para economizar recursos de defesa.",
+      solution: "for ip in ips:\n    print(ip)\n    if ip == '192.168.1.100':\n        print('ALERTA')\n        break",
     },
     {
       id: "py-loop-06",
@@ -143,6 +148,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Ruído filtrado. Apenas dados úteis foram processados, economizando 40% de banda de rede.",
+      solution: "for d in dados:\n    if d == 0:\n        continue\n    print(d)",
     },
   ],
 };

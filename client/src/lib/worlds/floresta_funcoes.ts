@@ -32,6 +32,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Módulo gravado com sucesso. O sistema agora pode escalar chamadas para a sub-rotina automaticamente.",
+      solution: "def saudar(nome):\n    print(f'Ola, {nome}!')\n\nsaudar('Admin')",
     },
     {
       id: "py-func-02",
@@ -55,6 +56,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Potência calculada. O sinal agora é forte o suficiente para atravessar o firewall do próximo setor.",
+      solution: "def sinal(base, ganho):\n    print(base * ganho)\n\nsinal(10, 5)",
     },
     {
       id: "py-func-03",
@@ -78,6 +80,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Chave mestre 700 gerada. O acesso ao Repositório Central foi totalmente desbloqueado.",
+      solution: "def gerar_chave(cod):\n    return cod * 100\n\nprint(gerar_chave(7))",
     },
     {
       id: "py-func-04",
@@ -100,6 +103,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Módulo de conexão otimizado. O sistema agora assume a porta web padrão automaticamente.",
+      solution: "def conectar(ip, porta=80):\n    print(f'Conectando em {ip}:{porta}')\n\nconectar('192.168.1.1')",
     },
     {
       id: "py-func-05",
@@ -122,6 +126,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Dados extraídos em camadas. A análise de redundância confirmou a integridade do dobro da carga.",
+      solution: "def analisar(n):\n    return n, n * 2\n\nprint(analisar(50))",
     },
     {
       id: "py-func-06",
@@ -144,6 +149,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       successNpc: "SysAdmin, Monitoração de Rede",
       successAvatar: "/avatars/galadriel.webp",
       successStory: "Protocolo documentado. Agora seu código segue os padrões internacionais de desenvolvimento Magitech.",
+      solution: "def meu_protocolo():\n    \"\"\"Este script faz tal coisa\"\"\"\n    print('OK')\n\nmeu_protocolo()",
     },
   ],
 };

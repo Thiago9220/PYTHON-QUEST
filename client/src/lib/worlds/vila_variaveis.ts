@@ -32,6 +32,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Ping recebido. A porta de entrada registrou sua presença na rede. O acesso ao terminal local foi garantido.",
+      solution: "print('Ola, Python!')",
     },
     {
       id: "py-02",
@@ -55,6 +56,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Bloco de memória alocado com sucesso. O sistema agora reconhece o identificador 'Python' no seu escopo local.",
+      solution: "nome = 'Python'\nprint(nome)",
     },
     {
       id: "py-03",
@@ -78,6 +80,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Sincronização concluída! A chave numérica estabilizou a conexão. O Node Primário está online. Você está pronto para avançar na rede.",
+      solution: "a = 5\nb = 10\nprint(a + b)",
     },
     {
       id: "py-04",
@@ -124,6 +127,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Scanner finalizado. Os dados foram identificados como 'int'. O sistema de decodificação está ajustado.",
+      solution: "carga = 1010\nprint(type(carga))",
     },
     {
       id: "py-06",
@@ -147,6 +151,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Identidade confirmada. Bem-vindo à rede, Operador Neo.",
+      solution: "nome = input('Nome: ')\nprint('Ola, ' + nome)",
     },
     {
       id: "py-07",
@@ -170,6 +175,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Credenciais formatadas e injetadas no log central. Visualização otimizada.",
+      solution: "nome = 'Trinity'\nnivel = 7\nprint(f'Operador: {nome}, Nivel: {nivel}')",
     },
     {
       id: "py-08",
@@ -193,6 +199,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Conversão bem-sucedida. O valor agora pode ser processado pela Unidade de Lógica Aritmética.",
+      solution: "texto = '50'\nnumero = int(texto)\nprint(numero + 10)",
     },
     {
       id: "py-09",
@@ -216,6 +223,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Resto identificado. Esse 'bit' extra é essencial para a nossa próxima chave de bypass.",
+      solution: "print(17 % 3)",
     },
     {
       id: "py-10",
@@ -239,6 +247,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Slots de memória preenchidos. O excedente foi descartado para manter a integridade dos blocos.",
+      solution: "print(25 // 4)",
     },
     {
       id: "py-11",
@@ -262,6 +271,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Sinal amplificado! 1024 terahertz atingiram o firewall. A barreira está oscilando.",
+      solution: "print(2 ** 10)",
     },
     {
       id: "py-12",
@@ -285,6 +295,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Bypass concluído! O firewall caiu. Você tem acesso total ao Terminal Alpha e pode prosseguir para o próximo setor da cidade.",
+      solution: "senha = 'admin123'\nprint(senha == 'admin123')",
     },
     {
       id: "py-13",
@@ -307,6 +318,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Portas rotacionadas. O rastreador perdeu seu sinal.",
+      solution: "p1, p2 = p2, p1\nprint(f'p1: {p1}, p2: {p2}')",
     },
     {
       id: "py-14",
@@ -328,6 +340,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Dados normalizados. A telemetria agora está legível.",
+      solution: "fluxo = 3.14159\nprint(round(fluxo, 2))",
     },
     {
       id: "py-15",
@@ -349,6 +362,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Tamanho verificado. É um hash MD5 padrão de 32 caracteres.",
+      solution: "hash_key = 'a8f5f167f44f4964e6c998dee827110c'\nprint(len(hash_key))",
     },
     {
       id: "py-16",
@@ -370,6 +384,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Sinal transmitido em alta frequência.",
+      solution: "comando = 'sudo su'\nprint(comando.upper())",
     },
     {
       id: "py-17",
@@ -391,6 +406,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Credencial normalizada. Banco de dados sincronizado.",
+      solution: "login = 'AdMiN'\nprint(login.lower())",
     },
     {
       id: "py-18",
@@ -412,6 +428,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "IP ofuscado. Identidade preservada nos logs públicos.",
+      solution: "ip = '10.0.0.1'\nprint(ip.replace('.', '[dot]'))",
     },
     {
       id: "py-19",
@@ -433,6 +450,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Buffer purgado. A string agora está sanitizada.",
+      solution: "dado = '   senha_secreta   '\nprint(dado.strip())",
     },
     {
       id: "py-20",
@@ -454,6 +472,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Assinatura MZ detectada. Trata-se de um artefato malicioso em potencial.",
+      solution: "arquivo = 'MZ_executavel.exe'\nprint(arquivo[:2])",
     },
     {
       id: "py-21",
@@ -475,6 +494,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Enganação descoberta! Não é uma imagem, é um executável.",
+      solution: "payload = 'imagem_fofa.jpg.exe'\nprint(payload[-4:])",
     },
     {
       id: "py-22",
@@ -496,6 +516,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Pico de erros detectado. Alerta de intrusão disparado.",
+      solution: "log = 'INFO OK ERROR INFO ERROR OK ERROR'\nprint(log.count('ERROR'))",
     },
     {
       id: "py-23",
@@ -517,6 +538,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Endereço de memória localizado. Ponteiros atualizados.",
+      solution: "memoria = '0x00 0x11 guest user root admin'\nprint(memoria.find('root'))",
     },
     {
       id: "py-24",
@@ -538,6 +560,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Pacote dissecado com sucesso. O IP alvo foi extraído.",
+      solution: "conexao = '192.168.0.1:8080'\nip, porta = conexao.split(':')\nprint(ip)",
     },
     {
       id: "py-25",
@@ -560,6 +583,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "OVERLOAD BEM SUCEDIDO! O Terminal Alpha está totalmente sob o seu controle. O Firewall Primário evaporou. Você está pronto para o próximo nível da rede.",
+      solution: "valor = int(input().strip())\nprint(f'Carga Máxima: {valor * 2}')",
     },
   ],
 };

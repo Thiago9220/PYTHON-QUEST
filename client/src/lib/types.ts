@@ -23,6 +23,7 @@ export type Challenge = {
   successStory?: string;
   successNpc?: string;
   successAvatar?: string;
+  solution?: string;
 };
 
 export type World = {

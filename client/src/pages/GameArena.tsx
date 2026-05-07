@@ -102,7 +102,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const challengeNumber = challengeIndex + 1;
   const totalChallenges = world.challenges.length;
   const themeColor = world.color || "#0ea5e9";
-  const answerCode = challenge.hints[challenge.hints.length - 1]?.text ?? challenge.expectedOutput;
+  const answerCode = challenge.solution ?? challenge.hints[challenge.hints.length - 1]?.text ?? challenge.expectedOutput;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden selection:bg-sky-500/30">

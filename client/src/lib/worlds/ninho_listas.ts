@@ -32,6 +32,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Inventário de servidores registrado. O buffer está pronto para indexação.",
+      solution: "servidores = ['Nginx', 'Apache', 'IIS']\nprint(servidores)",
     },
     {
       id: "li-02",
@@ -55,6 +56,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Extremidades da rede identificadas. O perímetro está mapeado.",
+      solution: "print(ips[0])\nprint(ips[-1])",
     },
     {
       id: "li-03",
@@ -78,6 +80,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Cabeçalho extraído. O tipo de arquivo foi identificado como JPEG criptografado.",
+      solution: "print(dados[:3])",
     },
     {
       id: "li-04",
@@ -100,6 +103,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Carga de rede calculada. 5 sessões ativas detectadas.",
+      solution: "print(len(conexoes))",
     },
     {
       id: "li-05",
@@ -123,6 +127,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "IP bloqueado. O sistema de defesa foi atualizado.",
+      solution: "blacklist.append('10.0.0.1')\nprint(blacklist)",
     },
     {
       id: "li-06",
@@ -145,6 +150,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Evidência removida. Sua presença nesta thread agora é fantasmagórica.",
+      solution: "logs.pop()\nprint(logs)",
     },
     {
       id: "li-07",
@@ -167,6 +173,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Vetor de ataque organizado. Começaremos pela porta FTP (21).",
+      solution: "portas.sort()\nprint(portas)",
     },
     {
       id: "li-08",
@@ -188,6 +195,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Servidor de 5ms selecionado como host primário.",
+      solution: "print(min(pings))\nprint(max(pings))",
     },
     {
       id: "li-09",
@@ -209,6 +217,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "960KB prontos para transferência. Iniciando upload criptografado.",
+      solution: "print(sum(pacotes))",
     },
     {
       id: "li-10",
@@ -231,6 +240,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Acesso negado. O invasor foi redirecionado para um honeypot.",
+      solution: "print('192.168.1.50' in permitidos)",
     },
     {
       id: "li-11",
@@ -254,6 +264,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Núcleo acessado! A grade de segurança foi perfurada exatamente no centro.",
+      solution: "print(grid[1][1])",
     },
     {
       id: "li-12",
@@ -277,6 +288,7 @@ export const NINHO_LISTAS_WORLD: World = {
       successNpc: "AI-7",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Handshake invertido! O firewall foi enganado e você agora tem acesso ao setor de armazenamento em lote. Excelente trabalho, Operador.",
+      solution: "chaves[0], chaves[1] = chaves[1], chaves[0]\nprint(chaves)",
     },
   ],
 };
