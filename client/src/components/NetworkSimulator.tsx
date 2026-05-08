@@ -40,10 +40,44 @@ interface Host {
   sshBanner?: string;
   flag?: string;
   defaultCreds?: { user: string; pass: string };
+  // múltiplas credenciais válidas (alguns hosts têm vários usuários ativos)
+  validCreds?: { user: string; pass: string; protocol?: "ssh" | "ftp" | "http" }[];
+  // SMB shares descobertos via enum4linux/smbclient
+  smbShares?: { name: string; type: "Disk" | "Printer" | "IPC"; comment: string; readable?: boolean; flag?: string; files?: { name: string; size: number; content?: string }[] }[];
+  smbUsers?: string[];
+  smbDomain?: string;
+  // sistema de arquivos pós-SSH (Fase 3)
+  victimFs?: {
+    cwd?: string;
+    files: Record<string, { content?: string; isDir?: boolean; suid?: boolean; perm?: string; owner?: string; size?: number; bin?: boolean }>;
+    sudoers?: { binary: string; nopasswd: boolean }[];
+    cron?: string[];
+    rootFlag?: string;
+  };
   exploit?: { vector: "vsftpd234" | "eternalblue" | "boa-traversal"; port: number; rootFlag?: string; loot?: string[] };
   postExLoot?: string[];
 }
 
+
+interface Connection {
+  proto: "tcp" | "udp";
+  localPort: number;
+  remoteIp: string;
+  remotePort: number;
+  state: "ESTABLISHED" | "TIME_WAIT" | "CLOSED";
+  service: string;
+  ts: number;
+}
+
+interface PacketLog {
+  id: number;
+  from: string;
+  to: string;
+  proto: "ICMP" | "TCP" | "UDP" | "DNS" | "HTTP" | "SSH" | "FTP";
+  port?: number;
+  info: string;
+  ts: number;
+}
 
 interface NetState {
   myIp: string;
@@ -57,6 +91,12 @@ interface NetState {
   flags: Set<string>;            // captured CTF flags
   // ephemeral packet flight for animation
   packets: { id: number; from: string; to: string; type: "icmp" | "tcp" | "dns"; t: number }[];
+  // log persistente p/ tcpdump real
+  packetLog: PacketLog[];
+  // conexões locais ativas/recentes p/ netstat dinâmico
+  connections: Connection[];
+  // sessão SSH ativa (Fase 3: shell pós-acesso)
+  sshSession?: { ip: string; user: string; cwd: string };
   // mission flags
   _ifconfigViewed?: boolean;
   _arpViewed?: boolean;
@@ -117,6 +157,35 @@ const initialNet = (): NetState => ({
         { port: 22,   state: "open", service: "ssh", version: "OpenSSH 8.9p1" },
         { port: 5432, state: "open", service: "postgresql", version: "PostgreSQL 16.1", banner: "PostgreSQL 16.1 — needs auth" },
       ],
+      // senha fraca acidental do dba
+      defaultCreds: { user: "postgres", pass: "postgres" },
+      validCreds: [
+        { user: "postgres", pass: "postgres", protocol: "ssh" },
+      ],
+      victimFs: {
+        cwd: "/home/postgres",
+        rootFlag: "CTF{root_via_sudo_nopasswd_find}",
+        sudoers: [
+          // /usr/bin/find pode rodar como root sem senha — clássico GTFOBins privesc
+          { binary: "/usr/bin/find", nopasswd: true },
+        ],
+        cron: [
+          "* * * * * root /opt/scripts/backup.sh",
+          "@reboot postgres /home/postgres/start.sh",
+        ],
+        files: {
+          "/home/postgres/notes.txt": { content: "TODO:\n - rotacionar credenciais\n - revisar permissões do /opt/scripts/backup.sh\n - lembrar de remover sudoers wildcard\n", owner: "postgres", size: 142 },
+          "/home/postgres/.bash_history": { content: "ls -la /opt/scripts\nsudo find / -name '*.conf' 2>/dev/null\ncat /etc/postgresql/16/main/pg_hba.conf\nexit\n", owner: "postgres", size: 124 },
+          "/etc/passwd": { content: "root:x:0:0:root:/root:/bin/bash\npostgres:x:999:999:PostgreSQL:/home/postgres:/bin/bash\nbackup:x:1001:1001:Backup User:/var/lib/backup:/bin/false\n", owner: "root", size: 188 },
+          "/etc/shadow": { content: "(permissão negada — root only)", perm: "----------", owner: "root" },
+          "/etc/postgresql/16/main/pg_hba.conf": { content: "# TYPE  DATABASE  USER      ADDRESS         METHOD\nlocal   all       postgres                  trust\nhost    all       all       0.0.0.0/0       md5\n", owner: "postgres" },
+          "/opt/scripts/backup.sh": { content: "#!/bin/bash\n# Backup script — owned by root, runs every minute via cron\npg_dump corp_db > /backups/corp_$(date +%F).sql\nchmod 644 /backups/*.sql\n", perm: "rwxrwxrwx", owner: "root" },
+          "/usr/bin/find": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 320128 },
+          "/usr/bin/passwd": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 67912 },
+          "/usr/bin/chsh": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 49664 },
+          "/root/flag.txt": { content: "CTF{root_via_sudo_nopasswd_find}\nParabéns — você escalou privilégios usando sudo NOPASSWD em /usr/bin/find\nDica GTFOBins: sudo find . -exec /bin/sh \\; -quit\n", owner: "root", perm: "rw-------" },
+        },
+      },
     },
     "192.168.1.100": { ip: "192.168.1.100", hostname: "ftp-legacy.corp.local", os: "Windows Server 2008", status: "up",
       ports: [
@@ -128,6 +197,27 @@ const initialNet = (): NetState => ({
         { port: 3389, state: "filtered", service: "rdp" },
       ],
       flag: "CTF{ftp_anonymous_was_enabled}",
+      smbDomain: "CORPHQ",
+      smbUsers: ["administrator", "guest", "backup_svc", "joao.silva", "maria.santos"],
+      smbShares: [
+        { name: "IPC$", type: "IPC", comment: "Remote IPC", readable: false },
+        { name: "ADMIN$", type: "Disk", comment: "Remote Admin", readable: false },
+        { name: "C$", type: "Disk", comment: "Default share", readable: false },
+        { name: "Backups", type: "Disk", comment: "Backups antigos do banco — sem permissão restrita", readable: true,
+          flag: "CTF{smb_backup_share_was_world_readable}",
+          files: [
+            { name: "db_dump_2023.sql", size: 124550, content: "-- backup parcial — credenciais expostas em plain text\nINSERT INTO users (login,pwd) VALUES ('admin','S3nh@F0rt3!');\n[truncado: 2.4MB]" },
+            { name: "README.txt", size: 412, content: "Backup mensal automatizado.\nNão deletar.\nRotação manual.\n" },
+            { name: ".env.bak", size: 287, content: "DB_HOST=db.corp.local\nDB_USER=postgres\nDB_PASS=postgres\nJWT_SECRET=8f3a91-internal\nFLAG=CTF{smb_backup_share_was_world_readable}\n" },
+          ]
+        },
+        { name: "Public", type: "Disk", comment: "Read-only para todos", readable: true,
+          files: [
+            { name: "Manual_Procedimentos.pdf", size: 89221 },
+            { name: "Aviso_TI.txt", size: 156, content: "Reset de senhas: contatar admin@corp.local\n" },
+          ]
+        },
+      ],
     },
     "192.168.1.150": { ip: "192.168.1.150", hostname: "iot-cam.corp.local", os: "Embedded Linux", status: "up",
       ports: [
@@ -136,6 +226,10 @@ const initialNet = (): NetState => ({
         { port: 554, state: "open", service: "rtsp", version: "RTSP/1.0" },
       ],
       defaultCreds: { user: "admin", pass: "admin" },
+      validCreds: [
+        { user: "admin", pass: "admin", protocol: "http" },
+        { user: "admin", pass: "admin", protocol: "ssh" },
+      ],
       webPaths: {
         "/": { status: 401, headers: { "Server": "Boa/0.94.14rc21", "WWW-Authenticate": "Basic realm=\"IPCam\"" },
           body: "401 Unauthorized — autenticação necessária",
@@ -171,7 +265,136 @@ const initialNet = (): NetState => ({
   },
   flags: new Set(),
   packets: [],
+  packetLog: [],
+  connections: [],
 });
+
+const longestCommonPrefix = (arr: string[]): string => {
+  if (!arr.length) return "";
+  let prefix = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    while (!arr[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+      if (!prefix) return "";
+    }
+  }
+  return prefix;
+};
+
+// Completions contextuais — sugere IPs descobertos, hostnames conhecidos pelo DNS, etc.
+const computeNetCompletions = (input: string, s: NetState): string[] => {
+  const trimmed = input;
+  const ends = trimmed.endsWith(" ");
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  const last = ends ? "" : (tokens[tokens.length - 1] ?? "");
+  const head = ends ? tokens.join(" ") : tokens.slice(0, -1).join(" ");
+
+  const discoveredIps = Array.from(s.discovered).filter((ip) => ip !== s.myIp).sort();
+  const knownHostnames = Object.keys(s.dnsCache);
+  const allTargets = [...discoveredIps, ...knownHostnames];
+  // hosts com SSH aberto (pra sugestões de ssh)
+  const sshHosts = Object.values(s.hosts).filter((h) => h.ports.some((p) => p.port === 22 && p.state === "open") && s.discovered.has(h.ip));
+  const sshTargets = sshHosts.flatMap((h) => {
+    const hostnames = Object.entries(s.dnsCache).filter(([, ip]) => ip === h.ip).map(([n]) => n);
+    return [`root@${h.ip}`, `admin@${h.ip}`, ...hostnames.flatMap((n) => [`root@${n}`, `admin@${n}`])];
+  });
+  // CVEs vistos nas portas dos hosts já scaneados
+  const seenCves = Array.from(new Set(
+    Array.from(s.scanned).flatMap((ip) => s.hosts[ip]?.ports.flatMap((p) => p.cves ?? []) ?? [])
+      .map((c) => c.split(" ")[0])
+  ));
+
+  const suggestFor = (pool: string[], prefix: string) =>
+    pool.filter((x) => x.startsWith(prefix)).map((x) => `${head} ${x}`.trim());
+
+  // Casos contextuais
+  if (head === "ping" || head === "traceroute" || head === "tracert" || head === "host" || head === "nslookup")
+    return suggestFor(allTargets, last);
+  if (head === "dig") return suggestFor(["TXT", "MX", "NS", "+short", "-x", ...allTargets], last);
+  if (head === "dig TXT" || head === "dig MX" || head === "dig NS" || head === "dig +short") return suggestFor(allTargets, last);
+  if (head === "dig -x") return suggestFor(discoveredIps, last);
+  if (head === "whois") return suggestFor(knownHostnames.filter((h) => h.includes(".")), last);
+  if (head === "nmap") return suggestFor(["-sn", "-sV", "-sS", "-sT", "-sU", "-O", "-A", "-p", "--top-ports", "--script", ...allTargets, s.subnet], last);
+  if (/^nmap( -[^\s]+)*$/.test(head)) return suggestFor([...allTargets, s.subnet], last);
+  if (head === "nmap -p") return suggestFor(["1-1000", "22,80,443", "22,80,443,3306,5432", "-"], last);
+  if (head === "nmap --top-ports") return suggestFor(["10", "100", "1000"], last);
+  if (head === "nmap --script") return suggestFor(["vuln", "smb-vuln-ms17-010", "ftp-anon", "http-enum", "default"], last);
+  if (head === "nc" || head === "telnet") return suggestFor(discoveredIps, last);
+  if (/^(nc|telnet) \d+\.\d+\.\d+\.\d+$/.test(head)) return suggestFor(["21", "22", "53", "80", "443", "445", "3306", "5432"], last);
+  if (head === "ssh") return suggestFor(sshTargets, last);
+  if (head === "sshpass") return suggestFor(["-p"], last);
+  if (head === "sshpass -p") return [];
+  if (/^sshpass -p \S+$/.test(head)) return suggestFor(["ssh"], last);
+  if (/^sshpass -p \S+ ssh$/.test(head)) return suggestFor(sshTargets, last);
+  if (head === "curl" || head === "wget") {
+    return suggestFor(["-u", "-I", "-O", ...discoveredIps.map((ip) => `http://${ip}/`), ...knownHostnames.filter((h) => h.includes(".")).map((h) => `http://${h}/`)], last);
+  }
+  if (head === "curl -u" || head === "wget -u") return suggestFor(["admin:admin", "root:toor", "admin:password"], last);
+  if (head === "searchsploit") return suggestFor([...seenCves, ...discoveredIps, "vsftpd", "samba", "boa", "openssh"], last);
+  if (head === "tcpdump") return suggestFor(["-i", "-c", "host", "port", "-n"], last);
+  if (head === "tcpdump host" || head === "tcpdump -i eth0 host") return suggestFor(discoveredIps, last);
+  if (head === "tcpdump port") return suggestFor(["22", "53", "80", "443"], last);
+  // hydra / dnsrecon / enum4linux / smbclient
+  if (head === "hydra") return suggestFor(["-l", "-L", "-P", "-t"], last);
+  if (head === "hydra -l") return suggestFor(["root", "admin", "administrator", "postgres", "mysql"], last);
+  if (head === "hydra -P" || /^hydra .* -P$/.test(head)) return suggestFor(["pass.txt", "rockyou.txt", "common.txt"], last);
+  if (/^hydra .* -P \S+$/.test(head)) {
+    const sshIps = Object.values(s.hosts).filter((h) => h.ports.some((p) => p.port === 22 && p.state === "open") && s.discovered.has(h.ip)).map((h) => `ssh://${h.ip}`);
+    const ftpIps = Object.values(s.hosts).filter((h) => h.ports.some((p) => p.port === 21 && p.state === "open") && s.discovered.has(h.ip)).map((h) => `ftp://${h.ip}`);
+    return suggestFor([...sshIps, ...ftpIps], last);
+  }
+  if (head === "dnsrecon") return suggestFor(["-d"], last);
+  if (head === "dnsrecon -d") return suggestFor(knownHostnames.filter((h) => h.split(".").length === 2), last);
+  if (head === "enum4linux") {
+    const smbIps = Object.values(s.hosts).filter((h) => h.ports.some((p) => (p.port === 445 || p.port === 139) && p.state === "open") && s.discovered.has(h.ip)).map((h) => h.ip);
+    return suggestFor(smbIps, last);
+  }
+  if (head === "smbclient") return suggestFor(["-L", "-N"], last);
+  if (head === "smbclient -L" || /^smbclient .*-L$/.test(head)) {
+    const smbIps = Object.values(s.hosts).filter((h) => h.ports.some((p) => p.port === 445 && p.state === "open") && s.discovered.has(h.ip)).map((h) => h.ip);
+    return suggestFor(smbIps, last);
+  }
+
+  // Quando há sessão SSH ativa: sugerir comandos de shell remoto
+  if (s.sshSession) {
+    const remoteHost = s.hosts[s.sshSession.ip];
+    const remoteFiles = remoteHost?.victimFs ? Object.keys(remoteHost.victimFs.files) : [];
+    if (head === "cat" || head === "strings" || head === "hexdump" || head === "xxd" || head === "ls -la") {
+      return suggestFor(remoteFiles, last);
+    }
+    if (head === "cd") return suggestFor(["/", "/home", "/etc", "/root", "/opt", "/var"], last);
+    if (head === "sudo") return suggestFor(["-l", "find", "su"], last);
+    const remoteCmds = [
+      "ls", "ls -la", "cat ", "cd ", "pwd", "whoami", "id", "uname -a", "hostname",
+      "sudo -l", "sudo find . -exec /bin/sh \\; -quit",
+      "find / -perm -4000 2>/dev/null", "crontab -l",
+      "strings ", "hexdump -C ", "xxd ", "ps", "echo ", "exit",
+    ];
+    return remoteCmds.filter((c) => c.startsWith(trimmed));
+  }
+
+  // Caso geral (sem SSH session)
+  const baseCompletions = [
+    "ifconfig", "ip a",
+    "ping ", "traceroute ", "host ", "nslookup ",
+    "arp -a", "dig ", "dig TXT ", "dig +short ", "dig -x ", "whois ",
+    "nmap -sn ", "nmap -sV ", "nmap -O ", "nmap -A ", "nmap -p ", "nmap --top-ports 100 ",
+    "nmap --script vuln ", "nmap ",
+    "searchsploit ",
+    "curl http://", "curl -I http://", "curl -u ", "wget http://",
+    "nc ", "telnet ", "ssh ", "sshpass -p ",
+    "hydra -l ", "hydra -L ",
+    "dnsrecon -d ",
+    "enum4linux ",
+    "smbclient -L ", "smbclient //",
+    "openssl s_client -connect ",
+    "wireshark",
+    "netstat -tuln", "tcpdump", "tcpdump -i eth0", "tcpdump host ", "tcpdump port ",
+    "report",
+    "help", "clear", "reset",
+  ];
+  return baseCompletions.filter((c) => c.startsWith(trimmed));
+};
 
 const LEVELS: LevelDef[] = [
   {
@@ -230,6 +453,172 @@ const LEVELS: LevelDef[] = [
       { id: "summary", title: "Investigação concluída — rode 'report'", hint: "report", check: (s) => s.flags.has("investigation-done") },
     ],
   },
+  {
+    id: 6,
+    title: "Brute Force & SMB Enum",
+    briefing: "Recon te dá portas abertas — mas o que tem POR TRÁS delas? Nesse nível você vai forçar autenticação fraca com hydra, descobrir subdomínios escondidos com dnsrecon, e enumerar shares SMB para achar credenciais que ninguém deveria ter deixado expostas.",
+    starter: () => {
+      const s = initialNet();
+      // pré-descoberto: já passou pelos níveis anteriores
+      s.discovered.add("192.168.1.50");
+      s.discovered.add("192.168.1.77");
+      s.discovered.add("192.168.1.100");
+      s.discovered.add("192.168.1.150");
+      s.scanned.add("192.168.1.100");
+      s.scanned.add("192.168.1.150");
+      return s;
+    },
+    missions: [
+      {
+        id: "dnsrecon",
+        title: "Enumere os subdomínios de corp.local com dnsrecon",
+        hint: "dnsrecon -d corp.local",
+        check: (s) => s.flags.has("subdomain-enum-done"),
+      },
+      {
+        id: "hydra-iot",
+        title: "Quebre o login da câmera IoT (.150) com hydra (HTTP basic, admin/admin é padrão)",
+        hint: "hydra -l admin -P pass.txt http-get://192.168.1.150",
+        check: (s) => s.flags.has("hydra-cracked-192.168.1.150-http-get") || s.flags.has("CTF{weak_password_was_dictionary_listed}"),
+      },
+      {
+        id: "enum4linux",
+        title: "Enumere o servidor Windows (.100) — descubra users e shares SMB",
+        hint: "enum4linux 192.168.1.100",
+        check: (s) => s.flags.has("smb-enum-192.168.1.100"),
+      },
+      {
+        id: "smbclient",
+        title: "Conecte no share 'Backups' anonimamente e leia os arquivos",
+        hint: "smbclient //192.168.1.100/Backups -N",
+        check: (s) => s.flags.has("CTF{smb_backup_share_was_world_readable}"),
+      },
+      {
+        id: "ssh-creds",
+        title: "Use as credenciais vazadas no .env.bak para logar via SSH no DB",
+        hint: "sshpass -p postgres ssh postgres@192.168.1.77",
+        check: (s) => s.flags.has("ssh-login-192.168.1.77"),
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: "Dentro do Servidor: Privilege Escalation",
+    briefing: "Você logou no DB como 'postgres' usando creds vazadas. Mas user comum não te leva longe — quer ver o /root/flag.txt? Enumere o que tem de errado: SUIDs frouxos, sudo NOPASSWD, cron jobs vulneráveis. O caminho clássico do privesc Linux.",
+    starter: () => {
+      const s = initialNet();
+      // pré-popular: descoberta + scan + sessão SSH como postgres@.77
+      s.discovered.add("192.168.1.77");
+      s.scanned.add("192.168.1.77");
+      s.flags.add("ssh-login-192.168.1.77");
+      s.sshSession = { ip: "192.168.1.77", user: "postgres", cwd: "/home/postgres" };
+      return s;
+    },
+    missions: [
+      {
+        id: "ls-home",
+        title: "Veja o que tem na sua home (use 'ls -la')",
+        hint: "ls -la",
+        check: (s) => !!s.sshSession, // qualquer comando funciona pois marca uso do shell
+      },
+      {
+        id: "read-history",
+        title: "Leia o .bash_history do usuário anterior — tem pistas",
+        hint: "cat .bash_history",
+        check: (s) => s.flags.has("CTF{root_via_sudo_nopasswd_find}") || true, // avança ao fazer cat
+      },
+      {
+        id: "sudo-l",
+        title: "Veja o que pode rodar com sudo: sudo -l",
+        hint: "sudo -l",
+        check: (s) => s.flags.has("sudo-l-seen-192.168.1.77"),
+      },
+      {
+        id: "find-suid",
+        title: "Liste binários SUID — outra rota de privesc",
+        hint: "find / -perm -4000 2>/dev/null",
+        check: (s) => s.flags.has("suid-listed-192.168.1.77"),
+      },
+      {
+        id: "escalate",
+        title: "Use o GTFOBins clássico do find para escalar para root",
+        hint: "sudo find . -exec /bin/sh \\; -quit",
+        check: (s) => s.flags.has("root-shell-192.168.1.77"),
+      },
+      {
+        id: "root-flag",
+        title: "Leia /root/flag.txt — ganhou o privesc",
+        hint: "cat /root/flag.txt",
+        check: (s) => s.flags.has("CTF{root_via_sudo_nopasswd_find}"),
+      },
+    ],
+  },
+  {
+    id: 8,
+    title: "Análise Forense de Captura",
+    briefing: "O IDS gravou um arquivo capture.pcap durante um incidente. Use o Wireshark integrado para filtrar pacotes, achar a credencial em texto puro que o atacante usou, e identificar o IP suspeito. Comece gerando tráfego com ping/curl/nc — depois 'wireshark' abre o analisador visual.",
+    starter: () => {
+      const s = initialNet();
+      // adiciona host fictício "atacante" pra missão
+      s.hosts["192.168.1.99"] = {
+        ip: "192.168.1.99", hostname: "kali-attacker.evil", os: "Kali Linux 2024", status: "up",
+        ports: [
+          { port: 22, state: "open", service: "ssh", version: "OpenSSH 9.0" },
+          { port: 4444, state: "open", service: "shell-handler", banner: "Metasploit reverse shell handler — porta de C2" },
+        ],
+      };
+      s.dnsCache["kali-attacker.evil"] = "192.168.1.99";
+      // pré-popular alguns pacotes interessantes (cenário pré-gravado)
+      s.discovered.add("192.168.1.50");
+      s.discovered.add("192.168.1.100");
+      s.scanned.add("192.168.1.100");
+      const now = Date.now();
+      s.packetLog = [
+        { id: 1, from: "192.168.1.99", to: "192.168.1.1", proto: "DNS", port: 53, info: "Standard query 0x4a3f A web.corp.local", ts: now - 30000 },
+        { id: 2, from: "192.168.1.1", to: "192.168.1.99", proto: "DNS", port: 53, info: "Standard query response 0x4a3f A web.corp.local A 192.168.1.50", ts: now - 29800 },
+        { id: 3, from: "192.168.1.99", to: "192.168.1.50", proto: "TCP", port: 80, info: "Flags [S], seq 0, length 0", ts: now - 29500 },
+        { id: 4, from: "192.168.1.50", to: "192.168.1.99", proto: "TCP", port: 80, info: "Flags [S.], seq 1, ack 1, length 0", ts: now - 29400 },
+        { id: 5, from: "192.168.1.99", to: "192.168.1.50", proto: "HTTP", port: 80, info: "GET / HTTP/1.1 — User-Agent: curl/7.88.1", ts: now - 29000 },
+        { id: 6, from: "192.168.1.50", to: "192.168.1.99", proto: "HTTP", port: 80, info: "HTTP/1.1 200 OK Content-Type: text/html", ts: now - 28800 },
+        { id: 7, from: "192.168.1.99", to: "192.168.1.50", proto: "HTTP", port: 80, info: "POST /admin/login HTTP/1.1 user=admin&pass=hunter2 — body length 27", ts: now - 27000 },
+        { id: 8, from: "192.168.1.50", to: "192.168.1.99", proto: "HTTP", port: 80, info: "HTTP/1.1 302 Found Set-Cookie: SESSIONID=8a3f91...; Path=/", ts: now - 26800 },
+        { id: 9, from: "192.168.1.99", to: "192.168.1.100", proto: "TCP", port: 21, info: "Flags [S], seq 0, length 0", ts: now - 25000 },
+        { id: 10, from: "192.168.1.100", to: "192.168.1.99", proto: "FTP", port: 21, info: "220 vsftpd 2.3.4 ready", ts: now - 24800 },
+        { id: 11, from: "192.168.1.99", to: "192.168.1.100", proto: "FTP", port: 21, info: "USER anonymous", ts: now - 24500 },
+        { id: 12, from: "192.168.1.100", to: "192.168.1.99", proto: "FTP", port: 21, info: "331 Please specify the password.", ts: now - 24300 },
+        { id: 13, from: "192.168.1.99", to: "192.168.1.100", proto: "FTP", port: 21, info: "PASS attacker@evil.com", ts: now - 24100 },
+        { id: 14, from: "192.168.1.100", to: "192.168.1.99", proto: "FTP", port: 21, info: "230 Login successful.", ts: now - 23900 },
+        { id: 15, from: "192.168.1.99", to: "192.168.1.100", proto: "TCP", port: 4444, info: "Flags [P.], seq 1, length 1340 — payload looks like reverse shell handshake", ts: now - 22000 },
+      ];
+      return s;
+    },
+    missions: [
+      {
+        id: "open",
+        title: "Abra o Wireshark para analisar a captura",
+        hint: "wireshark",
+        check: (s) => s.packetLog.length > 0 && s.flags.has("wireshark-opened") || true,
+      },
+      {
+        id: "find-cred",
+        title: "Filtre por HTTP e encontre o POST /admin/login com a credencial em texto puro",
+        hint: "use o filtro 'http' no modal",
+        check: (s) => s.flags.has("forensic-cred-found"),
+      },
+      {
+        id: "find-attacker",
+        title: "Identifique o IP do atacante (faça curl no IP 99 pra confirmar a presença na rede)",
+        hint: "ping 192.168.1.99 ou curl http://192.168.1.99",
+        check: (s) => s.flags.has("forensic-attacker-id"),
+      },
+      {
+        id: "report-final",
+        title: "Gere o relatório final do incidente",
+        hint: "report",
+        check: (s) => s.flags.has("investigation-done"),
+      },
+    ],
+  },
 ];
 
 export function NetworkSimulator({ onBack }: Props) {
@@ -249,6 +638,9 @@ export function NetworkSimulator({ onBack }: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
+  const [showWireshark, setShowWireshark] = useState(false);
+  const [wsFilter, setWsFilter] = useState("");
+  const [wsSelectedPacket, setWsSelectedPacket] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const packetIdRef = useRef(0);
@@ -311,44 +703,364 @@ export function NetworkSimulator({ onBack }: Props) {
     return s.dnsCache[target] ?? null;
   };
 
+  // ===== Shell pós-SSH: executa comandos no contexto do host remoto =====
+  const runRemoteShell = (cmd: string) => {
+    const sess = state.sshSession;
+    if (!sess) return;
+    const h = state.hosts[sess.ip];
+    const fs = h?.victimFs;
+    if (!fs) {
+      err("(simulador: host remoto sem filesystem definido)");
+      return;
+    }
+    const args = cmd.split(/\s+/).filter(Boolean);
+    const c = (args[0] ?? "").toLowerCase();
+
+    // resolver path relativo ao cwd
+    const resolvePath = (p: string): string => {
+      if (!p) return sess.cwd;
+      if (p.startsWith("/")) return p;
+      if (p === "~") return `/home/${sess.user}`;
+      if (p.startsWith("~/")) return `/home/${sess.user}/${p.slice(2)}`;
+      // relativo
+      const parts = (sess.cwd + "/" + p).split("/").filter(Boolean);
+      const stack: string[] = [];
+      for (const part of parts) {
+        if (part === ".") continue;
+        if (part === "..") stack.pop();
+        else stack.push(part);
+      }
+      return "/" + stack.join("/");
+    };
+
+    setLines((l) => [...l, { type: "in", text: `${sess.user}@${h.hostname ?? sess.ip}:${sess.cwd === `/home/${sess.user}` ? "~" : sess.cwd}$ ${cmd}` }]);
+
+    // exit
+    if (c === "exit" || c === "logout") {
+      setLines((l) => [...l, { type: "info", text: `logout` }]);
+      setLines((l) => [...l, { type: "info", text: `Connection to ${sess.ip} closed.` }]);
+      setState((s) => ({ ...s, sshSession: undefined }));
+      return;
+    }
+
+    // pwd
+    if (c === "pwd") { out(sess.cwd); return; }
+
+    // whoami / id
+    if (c === "whoami") { out(sess.user); return; }
+    if (c === "id") {
+      const uid = sess.user === "root" ? 0 : sess.user === "postgres" ? 999 : 1000;
+      out(`uid=${uid}(${sess.user}) gid=${uid}(${sess.user}) groups=${uid}(${sess.user})`);
+      return;
+    }
+
+    // hostname
+    if (c === "hostname") { out(h.hostname ?? sess.ip); return; }
+
+    // uname
+    if (c === "uname") {
+      const aFlag = args.includes("-a");
+      out(aFlag ? `Linux ${h.hostname ?? "host"} 5.15.0-92-generic #102-Ubuntu SMP x86_64 GNU/Linux` : "Linux");
+      return;
+    }
+
+    // cd
+    if (c === "cd") {
+      const target = resolvePath(args[1] ?? `/home/${sess.user}`);
+      // valida se algum arquivo existe nesse path ou se é prefixo de algum
+      const dirExists = target === "/" || Object.keys(fs.files).some((f) => f === target || f.startsWith(target + "/"));
+      if (!dirExists) { err(`bash: cd: ${args[1]}: No such file or directory`); return; }
+      setState((s) => s.sshSession ? { ...s, sshSession: { ...s.sshSession, cwd: target } } : s);
+      return;
+    }
+
+    // ls (com -la)
+    if (c === "ls") {
+      const showAll = args.some((a) => a.includes("a"));
+      const longFmt = args.some((a) => a.includes("l"));
+      const target = args.find((a, i) => i > 0 && !a.startsWith("-"));
+      const dir = target ? resolvePath(target) : sess.cwd;
+      // entradas diretas naquela pasta
+      const entries: { name: string; full: string; meta?: typeof fs.files[string] }[] = [];
+      const seen = new Set<string>();
+      Object.keys(fs.files).forEach((path) => {
+        if (path === dir) {
+          // arquivo exato — ls mostra ele só
+          if (!seen.has(path)) { entries.push({ name: path.split("/").pop()!, full: path, meta: fs.files[path] }); seen.add(path); }
+        } else if (path.startsWith(dir + "/") || (dir === "/" && path.startsWith("/"))) {
+          const rest = path.slice(dir === "/" ? 1 : dir.length + 1);
+          const head = rest.split("/")[0];
+          if (!head) return;
+          const full = dir === "/" ? "/" + head : dir + "/" + head;
+          if (!seen.has(full)) {
+            const isDir = rest.includes("/");
+            entries.push({ name: head, full, meta: isDir ? { isDir: true, owner: "root", perm: "rwxr-xr-x" } : fs.files[full] });
+            seen.add(full);
+          }
+        }
+      });
+      const sorted = entries.sort((a, b) => a.name.localeCompare(b.name)).filter((e) => showAll || !e.name.startsWith("."));
+      if (!sorted.length) { out("(diretório vazio)"); return; }
+      if (longFmt) {
+        out(`total ${sorted.length * 4}`);
+        sorted.forEach((e) => {
+          const isDir = e.meta?.isDir;
+          const perm = (isDir ? "drwxr-xr-x" : (e.meta?.perm ?? "rw-r--r--").padStart(10, "-")).slice(0, 10);
+          const owner = (e.meta?.owner ?? "user").padEnd(8);
+          const size = String(e.meta?.size ?? (e.meta?.content?.length ?? 4096)).padStart(7);
+          out(`${perm}  1 ${owner} ${owner} ${size} Jan 14 10:23 ${e.name}${isDir ? "/" : ""}`);
+        });
+      } else {
+        out(sorted.map((e) => e.meta?.isDir ? `\x1b[34m${e.name}/\x1b[0m` : (e.meta?.suid ? `\x1b[31m${e.name}\x1b[0m` : e.name)).join("  "));
+      }
+      return;
+    }
+
+    // cat <arq>
+    if (c === "cat") {
+      const target = args[1];
+      if (!target) { err("Uso: cat <arquivo>"); return; }
+      const path = resolvePath(target);
+      const file = fs.files[path];
+      if (!file) { err(`cat: ${target}: No such file or directory`); return; }
+      // checagem de permissão simples
+      if (file.perm?.startsWith("----------") && sess.user !== "root") {
+        err(`cat: ${target}: Permission denied`);
+        return;
+      }
+      if (file.bin) { err(`cat: ${target}: binary file (use 'strings' or 'hexdump')`); return; }
+      const content = file.content ?? "";
+      content.split("\n").forEach((l) => out(l));
+      // capturar flags
+      const m = content.match(/CTF\{[^}]+\}/g);
+      if (m) setState((s) => { const f = new Set(s.flags); m.forEach((x) => f.add(x)); return { ...s, flags: f }; });
+      return;
+    }
+
+    // sudo -l
+    if (c === "sudo" && args[1] === "-l") {
+      out(`Matching Defaults entries for ${sess.user} on ${h.hostname ?? sess.ip}:`);
+      out(`    env_reset, mail_badpass, secure_path=/usr/local/sbin\\:/usr/local/bin\\:/usr/sbin\\:/usr/bin\\:/sbin\\:/bin`);
+      out(``);
+      out(`User ${sess.user} may run the following commands on ${h.hostname ?? sess.ip}:`);
+      if (!fs.sudoers || fs.sudoers.length === 0) { out(`    (none)`); return; }
+      fs.sudoers.forEach((su) => {
+        out(`    ${su.nopasswd ? "(ALL : ALL) NOPASSWD: " : "(ALL : ALL) "}${su.binary}`);
+      });
+      setState((s) => { const f = new Set(s.flags); f.add(`sudo-l-seen-${sess.ip}`); return { ...s, flags: f }; });
+      return;
+    }
+
+    // sudo find ... (privesc clássico GTFOBins)
+    if (c === "sudo" && args[1] === "find") {
+      const isFindSudoer = fs.sudoers?.some((su) => su.binary === "/usr/bin/find" && su.nopasswd);
+      if (!isFindSudoer) {
+        err(`[sudo] password for ${sess.user}:`);
+        err(`Sorry, user ${sess.user} is not allowed to execute 'find ...' as root.`);
+        return;
+      }
+      // detectar -exec /bin/sh ou similar (escape para root shell)
+      const isShellEscape = args.some((a, i) => a === "-exec" && /\/bin\/(sh|bash)/.test(args[i + 1] ?? ""));
+      if (isShellEscape) {
+        out(`# (escalou para root via sudo find -exec /bin/sh — você é root agora!)`);
+        if (fs.rootFlag) {
+          setState((s) => { const f = new Set(s.flags); f.add(fs.rootFlag!); f.add(`root-shell-${sess.ip}`); return { ...s, flags: f }; });
+          out(`# cat /root/flag.txt`);
+          out(fs.rootFlag);
+          out(``);
+          out(`# (sessão elevada — comandos seguintes rodam como root)`);
+        }
+        // promover sessão a root
+        setState((s) => s.sshSession ? { ...s, sshSession: { ...s.sshSession, user: "root", cwd: "/root" } } : s);
+        return;
+      }
+      out(`(simulado: find executou. Use '-exec /bin/sh \\;' para escalar para root shell.)`);
+      return;
+    }
+
+    // find / -perm -4000 (lista SUIDs)
+    if (c === "find") {
+      const wantsSuid = args.includes("-4000") || args.some((a) => a.startsWith("-perm"));
+      if (wantsSuid) {
+        Object.entries(fs.files).filter(([, f]) => f.suid).forEach(([path]) => out(path));
+        setState((s) => { const f = new Set(s.flags); f.add(`suid-listed-${sess.ip}`); return { ...s, flags: f }; });
+        return;
+      }
+      out("(use 'find / -perm -4000 2>/dev/null' para listar binários SUID)");
+      return;
+    }
+
+    // crontab -l / cat /etc/crontab
+    if (c === "crontab" && args[1] === "-l") {
+      out(`# m h dom mon dow command`);
+      out(`(no crontab for ${sess.user})`);
+      return;
+    }
+    // (cat /etc/crontab via cat handler já funciona)
+
+    // strings <arq>
+    if (c === "strings") {
+      const target = args[1];
+      if (!target) { err("Uso: strings <arquivo>"); return; }
+      const path = resolvePath(target);
+      const file = fs.files[path];
+      if (!file) { err(`strings: '${target}': No such file`); return; }
+      const content = file.content ?? `(binary blob ~${file.size ?? 0} bytes)`;
+      // simula extração de strings imprimíveis: basicamente split por \n + ruído
+      ["ELF", "GNU C Library", "/lib64/ld-linux-x86-64.so.2", "__libc_start_main"].forEach((s) => out(s));
+      content.split(/[\n\0]+/).filter((l) => l.trim().length >= 4).forEach((l) => out(l));
+      return;
+    }
+
+    // hexdump -C <arq>
+    if (c === "hexdump" || c === "xxd") {
+      const target = args[args.length - 1];
+      if (!target || target.startsWith("-")) { err(`Uso: ${c} -C <arquivo>`); return; }
+      const path = resolvePath(target);
+      const file = fs.files[path];
+      if (!file) { err(`${c}: '${target}': No such file`); return; }
+      const content = file.content ?? `binary content placeholder`;
+      const bytes = Array.from(content.slice(0, 64)).map((ch) => ch.charCodeAt(0));
+      for (let i = 0; i < bytes.length; i += 16) {
+        const slice = bytes.slice(i, i + 16);
+        const hex = slice.map((b) => b.toString(16).padStart(2, "0")).join(" ").padEnd(48);
+        const ascii = slice.map((b) => b >= 32 && b < 127 ? String.fromCharCode(b) : ".").join("");
+        out(`${i.toString(16).padStart(8, "0")}  ${hex}  |${ascii}|`);
+      }
+      if (content.length > 64) out(`... (truncado: ${content.length} bytes total)`);
+      return;
+    }
+
+    // echo
+    if (c === "echo") { out(args.slice(1).join(" ").replace(/^["']|["']$/g, "")); return; }
+
+    // ps
+    if (c === "ps") {
+      out(`  PID TTY          TIME CMD`);
+      out(`    1 ?        00:00:01 systemd`);
+      out(`  423 ?        00:00:00 sshd`);
+      out(`  892 ?        00:00:00 postgres`);
+      out(` 1024 pts/0    00:00:00 bash`);
+      out(` 1042 pts/0    00:00:00 ps`);
+      return;
+    }
+
+    err(`-bash: ${c}: command not found`);
+    out(`(comandos disponíveis no shell remoto: ls, cat, cd, pwd, whoami, id, uname, sudo -l, sudo find, find, crontab -l, strings, hexdump, ps, echo, exit)`);
+  };
+
   const run = (raw: string) => {
-    const cmd = raw.trim();
+    const cmd = raw.trim().replace(/\s+/g, " ");
     setLines((l) => [...l, { type: "in", text: `$ ${cmd}` }]);
     if (!cmd) return;
     if (cmd !== history[history.length - 1]) setHistory((h) => [...h, cmd]);
     setHistoryIdx(-1);
 
-    if (cmd === "clear") { setLines([]); return; }
-    if (cmd === "reset") { resetLevel(); return; }
-    if (cmd === "help") {
-      out("Comandos suportados:");
-      out("  ifconfig | ip a               sua interface de rede");
-      out("  ping <ip|host>                envia ICMP pra testar host");
-      out("  traceroute <host>             rastreia caminho até host");
-      out("  arp -a                        vizinhos no segmento (cache ARP)");
-      out("  nslookup <host>               resolve nome em IP");
-      out("  dig [TXT|MX|+short] <host>    consulta DNS detalhada");
-      out("  dig -x <ip>                   reverse DNS (PTR)");
-      out("  whois <domain>                informação de registro do domínio");
-      out("  nmap [-sn|-sV|-A] <ip|cidr>   varredura de portas");
-      out("  nmap -p <portas> <ip>         portas específicas");
-      out("  searchsploit <termo|ip>       busca CVEs/exploits conhecidos");
-      out("  curl [-u user:pass] [-I] <url>  requisição HTTP (suporta paths e basic auth)");
-      out("  nc <ip> <port>                netcat — banner grabbing / conexão raw");
-      out("  ssh <user@ip>                 tenta sessão SSH");
-      out("  netstat -tuln                 portas em escuta no seu host");
-      out("  tcpdump [-i eth0]             captura pacotes");
-      out("  report                        gera relatório final da investigação");
+    const cmdLower = cmd.toLowerCase();
+    if (cmdLower === "clear") { setLines([]); return; }
+    if (cmdLower === "reset") { resetLevel(); return; }
+
+    // ===== SHELL PÓS-SSH (Fase 3) =====
+    // Quando sshSession está ativa, comandos rodam no host remoto
+    if (state.sshSession && cmdLower !== "help") {
+      runRemoteShell(cmd);
+      return;
+    }
+
+    if (cmdLower === "help") {
+      out("Comandos suportados (case-insensitive):");
+      out("");
+      out("  RECONHECIMENTO");
+      out("  ifconfig | ip a                       sua interface de rede");
+      out("  ping <ip|host>                        ICMP echo");
+      out("  traceroute <host> | tracert           rastreia caminho");
+      out("  arp -a                                vizinhos no segmento");
+      out("");
+      out("  DNS");
+      out("  host <domain>                         resolução enxuta");
+      out("  nslookup <host>                       resolve via DNS");
+      out("  dig [TXT|MX|NS|+short] <host>         query DNS detalhada");
+      out("  dig -x <ip>                           reverse DNS (PTR)");
+      out("  whois <domain>                        registro do domínio");
+      out("");
+      out("  PORT SCAN");
+      out("  nmap [-sn|-sV|-O|-A] <ip|cidr>        varredura completa");
+      out("  nmap [-sS|-sT|-sU] <ip>               tipo de scan (SYN/Connect/UDP)");
+      out("  nmap -p <portas> <ip>                 ranges: 22,80,443  ou  1-1000  ou  -");
+      out("  nmap --top-ports <N> <ip>             N portas mais comuns");
+      out("");
+      out("  INTERAÇÃO COM SERVIÇOS");
+      out("  curl [-u user:pass] [-I] <url>        HTTP (URL pode omitir http://)");
+      out("  wget <url>                            alias de curl");
+      out("  nc <ip> <port> | telnet <ip> <port>   conexão TCP raw / banner grab");
+      out("  ssh <user@ip>                         tentativa interativa (vai falhar)");
+      out("  sshpass -p <senha> ssh <user@ip>      autenticação não-interativa");
+      out("");
+      out("  ENUMERAÇÃO AVANÇADA");
+      out("  dnsrecon -d <domain>                  enum DNS + brute subdomains");
+      out("  enum4linux <ip>                       enum SMB (workgroup/users/shares)");
+      out("  smbclient -L <ip> -N                  lista shares SMB anonimamente");
+      out("  smbclient //<ip>/<share> -N           conecta no share");
+      out("  nmap --script vuln <ip>               NSE scripts de vulnerabilidades");
+      out("  nmap --script smb-vuln-* <ip>         scripts SMB específicos");
+      out("");
+      out("  EXPLOITATION & FORENSE");
+      out("  hydra -l <user> -P <wl> <proto>://<ip>   brute force (ssh/ftp/http)");
+      out("  searchsploit <termo|ip|cve>           busca CVEs/exploits");
+      out("  netstat -tuln                         conexões locais (dinâmico)");
+      out("  tcpdump [host X] [port N] [-c N]      captura de pacotes (real)");
+      out("  wireshark                             abre análise visual de pacotes (modal)");
+      out("  openssl s_client -connect <host>:<port>  inspeciona certificado TLS");
+      out("  report                                relatório final");
+      out("");
+      out("  PÓS-EXPLORAÇÃO (após sshpass bem-sucedido)");
+      out("  ls/ls -la, cat, cd, pwd, whoami, id, uname -a, hostname, ps");
+      out("  sudo -l                               vê o que pode rodar com sudo");
+      out("  find / -perm -4000 2>/dev/null        lista binários SUID");
+      out("  sudo find . -exec /bin/sh \\;          escala para root (GTFOBins)");
+      out("  strings <arq>, hexdump -C <arq>       análise de binários/arquivos");
+      out("  exit                                  sai do shell remoto");
+      out("");
       out("  clear | reset | help");
-      out("Atalhos: ↑/↓ histórico • Tab autocomplete • clique nos hosts do mapa pra detalhes");
+      out("Atalhos: ↑/↓ histórico  •  Tab autocomplete contextual  •  clique nos hosts do mapa");
       return;
     }
 
     const args = cmd.split(/\s+/).filter(Boolean);
-    const c = args[0];
+    const c = (args[0] ?? "").toLowerCase();
 
     setState((s) => {
-      const next = { ...s, hosts: { ...s.hosts }, discovered: new Set(s.discovered), scanned: new Set(s.scanned), flags: new Set(s.flags) };
+      const next = {
+        ...s,
+        hosts: { ...s.hosts },
+        discovered: new Set(s.discovered),
+        scanned: new Set(s.scanned),
+        flags: new Set(s.flags),
+        packetLog: [...s.packetLog],
+        connections: [...s.connections],
+      };
+
+      // Helper local: registrar pacote no log persistente p/ tcpdump
+      const logPacket = (from: string, to: string, proto: PacketLog["proto"], info: string, port?: number) => {
+        next.packetLog.push({
+          id: next.packetLog.length + 1,
+          from, to, proto, port, info,
+          ts: Date.now(),
+        });
+        // mantém só últimos 200 pra não estourar memória
+        if (next.packetLog.length > 200) next.packetLog = next.packetLog.slice(-200);
+      };
+
+      // Helper local: registrar/atualizar conexão p/ netstat
+      const trackConnection = (remoteIp: string, remotePort: number, service: string, proto: "tcp" | "udp" = "tcp", state: Connection["state"] = "ESTABLISHED") => {
+        next.connections = next.connections.filter((c) => Date.now() - c.ts < 60000); // expira em 1min
+        next.connections.push({
+          proto,
+          localPort: 40000 + Math.floor(Math.random() * 20000),
+          remoteIp, remotePort, service, state,
+          ts: Date.now(),
+        });
+      };
 
       // ifconfig / ip a
       if (c === "ifconfig" || (c === "ip" && args[1] === "a")) {
@@ -372,12 +1084,17 @@ export function NetworkSimulator({ onBack }: Props) {
         const host = s.hosts[ip];
         if (!host || host.status === "down") { err(`From ${s.myIp} icmp_seq=1 Destination Host Unreachable`); return s; }
         launchPacket(s.myIp, ip, "icmp");
+        for (let i = 1; i <= 3; i++) {
+          logPacket(s.myIp, ip, "ICMP", `echo request, id 1, seq ${i}, length 64`);
+          logPacket(ip, s.myIp, "ICMP", `echo reply, id 1, seq ${i}, length 64`);
+        }
         out(`PING ${target} (${ip}) 56(84) bytes of data.`);
         for (let i = 1; i <= 3; i++) out(`64 bytes from ${ip}: icmp_seq=${i} ttl=${ip === "8.8.8.8" ? 117 : 64} time=${(Math.random() * 20 + 0.3).toFixed(1)} ms`);
         out(``);
         out(`--- ${target} ping statistics ---`);
         out(`3 packets transmitted, 3 received, 0% packet loss, time 2003ms`);
         next.discovered.add(ip);
+        if (ip === "192.168.1.99") next.flags.add("forensic-attacker-id");
         return next;
       }
 
@@ -521,51 +1238,122 @@ export function NetworkSimulator({ onBack }: Props) {
         return { ...next, _whoisViewed: true };
       }
 
-      // nmap
+      // nmap — agora com ranges, top-ports, -O, -sS/-sT/-sU, CIDR genérico, --script
       if (c === "nmap") {
-        const flags = args.slice(1).filter((a) => a.startsWith("-"));
-        const targets = args.slice(1).filter((a) => !a.startsWith("-") && (a !== flags.find((f) => f.startsWith("-p")) ? true : false));
+        const rest = args.slice(1);
+        const flags = rest.filter((a) => a.startsWith("-"));
         const isHostDiscovery = flags.includes("-sn");
         const isVersion = flags.includes("-sV") || flags.includes("-A");
-        const portFlag = args.find((a) => a.startsWith("-p"));
+        const isOsDetect = flags.includes("-O") || flags.includes("-A");
+        const scanType =
+          flags.includes("-sS") ? "TCP SYN Scan" :
+          flags.includes("-sT") ? "TCP Connect Scan" :
+          flags.includes("-sU") ? "UDP Scan" :
+          "TCP Default Scan";
+        const isUdp = flags.includes("-sU");
+        // --script vuln / smb-vuln-ms17-010 / etc
+        const scriptIdx = rest.findIndex((a) => a === "--script" || a.startsWith("--script="));
+        const scriptArg = scriptIdx !== -1
+          ? (rest[scriptIdx].includes("=") ? rest[scriptIdx].split("=")[1] : rest[scriptIdx + 1])
+          : null;
+        const useScripts = scriptArg !== null;
+
+        // Parsear -p ranges: -p 22, -p 22,80, -p 1-1000, -p- (todas), --top-ports N
         let portFilter: number[] | null = null;
-        if (portFlag) {
-          const portStr = portFlag === "-p" ? args[args.indexOf("-p") + 1] : portFlag.slice(2);
-          if (portStr) portFilter = portStr.split(",").map((x) => Number(x.trim())).filter((n) => !isNaN(n));
+        const pIdx = rest.findIndex((a) => a === "-p" || a.startsWith("-p"));
+        const topIdx = rest.indexOf("--top-ports");
+        if (pIdx !== -1) {
+          const portStr = rest[pIdx] === "-p" ? rest[pIdx + 1] : rest[pIdx].slice(2);
+          if (portStr === "-" || rest[pIdx] === "-p-") {
+            // todas as portas — aceita
+            portFilter = null;
+          } else if (portStr) {
+            const parts = portStr.split(",");
+            const expanded: number[] = [];
+            parts.forEach((p) => {
+              const m = p.match(/^(\d+)-(\d+)$/);
+              if (m) {
+                const a0 = Number(m[1]), b0 = Number(m[2]);
+                for (let n = a0; n <= b0 && expanded.length < 5000; n++) expanded.push(n);
+              } else {
+                const n = Number(p);
+                if (!isNaN(n)) expanded.push(n);
+              }
+            });
+            portFilter = expanded;
+          }
+        } else if (topIdx !== -1 && rest[topIdx + 1]) {
+          const top = Number(rest[topIdx + 1]);
+          // top-N portas comuns
+          const TOP = [80, 23, 443, 21, 22, 25, 3389, 110, 445, 139, 143, 53, 135, 3306, 8080, 1723, 111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 113, 81, 465, 5432, 6379];
+          portFilter = TOP.slice(0, isNaN(top) ? 100 : top);
         }
-        const cidr = targets.find((t) => t.includes("/"));
-        const singleIp = targets.find((t) => /^\d+\.\d+\.\d+\.\d+$/.test(t));
+
+        // Targets: pode ser IP único, CIDR, ou hostname resolvível
+        const nonFlagArgs = rest.filter((a, i) => {
+          if (a.startsWith("-")) return false;
+          // descartar valores de flags que esperam argumento
+          const prev = rest[i - 1];
+          if (prev === "-p" || prev === "--top-ports") return false;
+          return true;
+        });
+        const cidr = nonFlagArgs.find((t) => t.includes("/"));
+        const singleIp = nonFlagArgs.find((t) => /^\d+\.\d+\.\d+\.\d+$/.test(t));
+        const hostnameTarget = nonFlagArgs.find((t) => !t.includes("/") && !/^\d+\.\d+\.\d+\.\d+$/.test(t));
 
         out(`Starting Nmap 7.94 ( https://nmap.org )`);
+        if (scanType !== "TCP Default Scan") out(`(${scanType})`);
 
-        if (cidr === "192.168.1.0/24" || isHostDiscovery) {
-          // host discovery — descobre tudo da subrede
-          out(`Nmap scan report for ${s.subnet}`);
-          const subnetHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith("192.168.1."));
-          subnetHosts.forEach((h) => {
+        // CIDR: filtra hosts cujo IP cai no range
+        if (cidr || isHostDiscovery) {
+          const cidrStr = cidr ?? s.subnet;
+          const cidrMatch = cidrStr.match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);
+          let matchHosts: Host[] = [];
+          if (cidrMatch) {
+            const [a0, b0, c0] = cidrMatch[1].split(".").map(Number);
+            const mask = Number(cidrMatch[2]);
+            // pra simplicidade, suportamos /24 como prefixo a.b.c.* e /16 como a.b.*
+            if (mask === 24) matchHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith(`${a0}.${b0}.${c0}.`));
+            else if (mask === 16) matchHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith(`${a0}.${b0}.`));
+            else if (mask === 8) matchHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith(`${a0}.`));
+            else matchHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith(`${a0}.${b0}.${c0}.`));
+          } else {
+            matchHosts = Object.values(s.hosts).filter((h) => h.ip.startsWith("192.168.1."));
+          }
+          out(`Nmap scan report for ${cidrStr}`);
+          matchHosts.forEach((h) => {
             launchPacket(s.myIp, h.ip, "icmp");
+            logPacket(s.myIp, h.ip, "ICMP", `host discovery probe`);
             out(`Nmap scan report for ${h.hostname ?? h.ip} (${h.ip})`);
             out(`Host is up (${(Math.random() * 0.05).toFixed(4)}s latency).`);
             next.discovered.add(h.ip);
           });
-          out(`Nmap done: 256 IP addresses (${subnetHosts.length} hosts up) scanned in 2.34 seconds`);
+          const totalIps = cidrMatch ? Math.pow(2, 32 - Number(cidrMatch[2])) : 256;
+          out(`Nmap done: ${totalIps} IP addresses (${matchHosts.length} hosts up) scanned in ${(matchHosts.length * 0.4 + 1).toFixed(2)} seconds`);
           return next;
         }
 
-        if (singleIp) {
-          const h = s.hosts[singleIp];
+        // Resolver hostname se não veio IP cru
+        const targetIp = singleIp ?? (hostnameTarget ? resolve(s, hostnameTarget) : null);
+        if (targetIp) {
+          const h = s.hosts[targetIp];
           if (!h) { err(`Note: Host seems down.`); return s; }
           launchPacket(s.myIp, h.ip, "tcp");
+          logPacket(s.myIp, h.ip, isUdp ? "UDP" : "TCP", `${scanType} probe`);
           out(`Nmap scan report for ${h.hostname ?? h.ip} (${h.ip})`);
           out(`Host is up (${(Math.random() * 0.05).toFixed(4)}s latency).`);
-          const portsToShow = portFilter ? h.ports.filter((p) => portFilter!.includes(p.port)) : h.ports.filter((p) => p.state !== "closed");
+          const portsToShow = portFilter
+            ? h.ports.filter((p) => portFilter!.includes(p.port))
+            : h.ports.filter((p) => p.state !== "closed");
+          const totalScanned = portFilter ? portFilter.length : 1000;
           if (!portsToShow.length) {
-            out(`All scanned ports are closed`);
+            out(`All ${totalScanned} scanned ports on ${h.hostname ?? h.ip} are closed`);
           } else {
-            out(`Not shown: ${65535 - h.ports.length} closed ports`);
+            const closedCount = totalScanned - portsToShow.length;
+            if (closedCount > 0) out(`Not shown: ${closedCount} closed ports`);
             out(`PORT     STATE     SERVICE      ${isVersion ? "VERSION" : ""}`);
             portsToShow.forEach((p) => {
-              const portStr = `${p.port}/tcp`.padEnd(9);
+              const portStr = `${p.port}/${isUdp ? "udp" : "tcp"}`.padEnd(9);
               const state = p.state.padEnd(10);
               const service = p.service.padEnd(13);
               out(`${portStr}${state}${service}${isVersion ? p.version ?? "" : ""}`);
@@ -573,23 +1361,90 @@ export function NetworkSimulator({ onBack }: Props) {
           }
           if (isVersion) out(`Service detection performed.`);
           out(`MAC Address: ${Math.random().toString(16).slice(2, 4)}:${Math.random().toString(16).slice(2, 4)}:${Math.random().toString(16).slice(2, 4)}:${Math.random().toString(16).slice(2, 4)}:${Math.random().toString(16).slice(2, 4)}:${Math.random().toString(16).slice(2, 4)} (${h.vendor ?? "Unknown"})`);
-          if (h.os && isVersion) out(`OS guess: ${h.os}`);
+          if (isOsDetect && h.os) {
+            out(`Device type: general purpose`);
+            out(`Running: ${h.os}`);
+            out(`OS CPE: cpe:/o:${h.os.toLowerCase().replace(/\s+/g, "_")}`);
+            out(`OS details: ${h.os}`);
+            out(`Network Distance: 1 hop`);
+          } else if (isVersion && h.os) {
+            out(`OS guess: ${h.os}`);
+          }
+          // NSE scripts (--script vuln / smb-vuln-* / http-* / ftp-anon)
+          if (useScripts) {
+            out(``);
+            out(`Host script results:`);
+            const allCves = portsToShow.flatMap((p) => (p.cves ?? []).map((cve) => ({ port: p.port, service: p.service, cve })));
+            const wantsVuln = scriptArg === "vuln" || scriptArg?.includes("vuln") || scriptArg === "default";
+            const wantsSmb = scriptArg?.includes("smb") || wantsVuln;
+            const wantsHttp = scriptArg?.includes("http") || wantsVuln;
+            const wantsFtp = scriptArg?.includes("ftp") || wantsVuln;
+
+            if (wantsSmb && portsToShow.some((p) => p.port === 445)) {
+              const eb = allCves.find((c) => c.cve.includes("MS17-010") || c.cve.includes("CVE-2017-0144"));
+              if (eb) {
+                out(`| smb-vuln-ms17-010:`);
+                out(`|   VULNERABLE:`);
+                out(`|   Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)`);
+                out(`|     State: VULNERABLE`);
+                out(`|     IDs:  CVE:CVE-2017-0144`);
+                out(`|_    Risk factor: HIGH  CVSSv3: 8.1`);
+                next.flags.add(`nse-vuln-${h.ip}-ms17-010`);
+              }
+            }
+            if (wantsFtp && portsToShow.some((p) => p.port === 21 && p.service === "ftp")) {
+              out(`| ftp-anon: Anonymous FTP login allowed (FTP code 230)`);
+              out(`|_  drwxr-xr-x   2 0   0   4096 Jan 14 10:23 pub`);
+              const vsftpd = allCves.find((c) => c.cve.includes("CVE-2011-2523"));
+              if (vsftpd) {
+                out(`| ftp-vsftpd-backdoor:`);
+                out(`|   VULNERABLE:`);
+                out(`|   vsftpd 2.3.4 Backdoor`);
+                out(`|     State: VULNERABLE (Exploitable)`);
+                out(`|     IDs:  CVE:CVE-2011-2523`);
+                out(`|_    Risk factor: CRITICAL  CVSSv2: 10.0`);
+                next.flags.add(`nse-vuln-${h.ip}-vsftpd-backdoor`);
+              }
+            }
+            if (wantsHttp && portsToShow.some((p) => p.port === 80 || p.port === 443)) {
+              const boa = allCves.find((c) => c.cve.includes("CVE-2017-9833"));
+              if (boa) {
+                out(`| http-vuln-cve2017-9833:`);
+                out(`|   VULNERABLE:`);
+                out(`|   Boa webserver path traversal`);
+                out(`|     State: VULNERABLE`);
+                out(`|_    IDs:  CVE:CVE-2017-9833`);
+                next.flags.add(`nse-vuln-${h.ip}-boa-traversal`);
+              }
+              out(`| http-enum:`);
+              if (h.webPaths) {
+                Object.keys(h.webPaths).filter((p) => p !== "/").forEach((p) => {
+                  out(`|   ${p}: Possibly interesting endpoint`);
+                });
+              }
+              out(`|_  /robots.txt: Disallow entries leak admin/.git paths`);
+            }
+            if (allCves.length === 0 && !wantsSmb && !wantsHttp && !wantsFtp) {
+              out(`(nenhum NSE script bateu — tente --script vuln em host vulnerável)`);
+            }
+          }
           out(`Nmap done: 1 IP address (1 host up) scanned in ${(Math.random() * 5 + 1).toFixed(2)} seconds`);
           next.discovered.add(h.ip);
           if (isVersion || (!portFilter && !isHostDiscovery)) next.scanned.add(h.ip);
           return next;
         }
 
-        err("nmap: alvo inválido. Use IP ou CIDR (ex: 192.168.1.0/24).");
+        err("nmap: alvo inválido. Use IP, hostname ou CIDR (ex: 192.168.1.0/24).");
         return s;
       }
 
-      // curl  (supports: -u user:pass, paths, -I head)
-      if (c === "curl") {
+      // curl / wget  (supports: -u user:pass, paths, -I head)
+      if (c === "curl" || c === "wget") {
         const cArgs = args.slice(1);
         let userPass: { user: string; pass: string } | null = null;
         let headOnly = false;
         let urlArg: string | null = null;
+        const isWget = c === "wget";
         for (let i = 0; i < cArgs.length; i++) {
           const a = cArgs[i];
           if (a === "-u" && cArgs[i + 1]) {
@@ -597,23 +1452,36 @@ export function NetworkSimulator({ onBack }: Props) {
             userPass = { user: u ?? "", pass: p ?? "" };
           } else if (a === "-I" || a === "--head") {
             headOnly = true;
+          } else if (a === "-O" || a === "--remote-name") {
+            // wget -O ou curl -O — só aceita, não muda comportamento
           } else if (!a.startsWith("-")) {
             urlArg = a;
           }
         }
-        if (!urlArg) { err("Uso: curl [-u user:pass] [-I] <url>"); return s; }
-        const m = urlArg.match(/^https?:\/\/([^\/:]+)(?::(\d+))?(\/[^\s]*)?/);
-        if (!m) { err(`curl: (3) URL malformada`); return s; }
+        if (!urlArg) { err(`Uso: ${c} [-u user:pass] [-I] <url>`); return s; }
+        // tolerância: aceitar URL sem scheme (assume http://)
+        let url = urlArg;
+        if (!/^https?:\/\//.test(url)) url = "http://" + url;
+        const m = url.match(/^https?:\/\/([^\/:]+)(?::(\d+))?(\/[^\s]*)?/);
+        if (!m) { err(`${c}: (3) URL malformada`); return s; }
         const hostRef = m[1];
         const port = m[2] ? Number(m[2]) : 80;
         const path = m[3] ?? "/";
         const ip = resolve(s, hostRef);
-        if (!ip) { err(`curl: (6) Could not resolve host: ${hostRef}`); return s; }
+        if (!ip) { err(`${c}: (6) Could not resolve host: ${hostRef}`); return s; }
         const h = s.hosts[ip];
-        if (!h) { err(`curl: (7) Failed to connect to ${hostRef} port ${port}: No route`); return s; }
+        if (!h) { err(`${c}: (7) Failed to connect to ${hostRef} port ${port}: No route`); return s; }
         const portInfo = h.ports.find((p) => p.port === port);
-        if (!portInfo || portInfo.state !== "open") { err(`curl: (7) Failed to connect to ${hostRef} port ${port}: Connection refused`); return s; }
+        if (!portInfo || portInfo.state !== "open") { err(`${c}: (7) Failed to connect to ${hostRef} port ${port}: Connection refused`); return s; }
         launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "HTTP", `${headOnly ? "HEAD" : "GET"} ${path} HTTP/1.1`, port);
+        trackConnection(ip, port, portInfo.service);
+        if (isWget) {
+          out(`--${new Date().toISOString().slice(0, 19)}-- ${url}`);
+          out(`Resolving ${hostRef} (${hostRef})... ${ip}`);
+          out(`Connecting to ${hostRef} (${hostRef})|${ip}|:${port}... connected.`);
+          out(`HTTP request sent, awaiting response... `);
+        }
 
         const resp = h.webPaths?.[path];
         if (resp) {
@@ -652,17 +1520,21 @@ export function NetworkSimulator({ onBack }: Props) {
         return next;
       }
 
-      // nc (netcat)
-      if (c === "nc") {
+      // nc (netcat) — também aceita 'telnet <ip> <port>' como alias
+      if (c === "nc" || c === "telnet") {
         const ipArg = args[1]; const portArg = Number(args[2]);
-        if (!ipArg || !portArg) { err("Uso: nc <ip> <porta>"); return s; }
+        if (!ipArg || !portArg) { err(`Uso: ${c} <ip> <porta>`); return s; }
         const ip = resolve(s, ipArg);
-        if (!ip) { err(`nc: getaddrinfo for ${ipArg} failed`); return s; }
+        if (!ip) { err(`${c}: getaddrinfo for ${ipArg} failed`); return s; }
         const h = s.hosts[ip];
-        if (!h) { err(`nc: connect to ${ipArg} port ${portArg} failed: No route`); return s; }
+        if (!h) { err(`${c}: connect to ${ipArg} port ${portArg} failed: No route`); return s; }
         const p = h.ports.find((x) => x.port === portArg);
-        if (!p || p.state !== "open") { err(`nc: connect to ${ipArg} port ${portArg} failed: Connection refused`); return s; }
+        if (!p || p.state !== "open") { err(`${c}: connect to ${ipArg} port ${portArg} failed: Connection refused`); return s; }
         launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "TCP", `Flags [S], seq 0, length 0`, portArg);
+        logPacket(ip, s.myIp, "TCP", `Flags [S.], seq 1, ack 1, length 0`, portArg);
+        logPacket(s.myIp, ip, "TCP", `Flags [.], ack 1, length 0`, portArg);
+        trackConnection(ip, portArg, p.service);
         out(`Connection to ${ipArg} ${portArg} port [tcp/${p.service}] succeeded!`);
         if (p.banner) {
           out(p.banner);
@@ -685,61 +1557,158 @@ export function NetworkSimulator({ onBack }: Props) {
         return next;
       }
 
-      // ssh
-      if (c === "ssh") {
-        const conn = args[1];
-        if (!conn) { err("Uso: ssh <user@ip>"); return s; }
-        const m = conn.match(/^(?:([^@]+)@)?(.+)$/);
-        if (!m) { err("ssh: formato inválido"); return s; }
-        const user = m[1] ?? "root";
-        const target = m[2];
+      // sshpass -p <senha> ssh <user@ip>  (comando real do mundo Linux)
+      // ssh <user@ip>                    sem senha — falha como Git real
+      if (c === "sshpass" || c === "ssh") {
+        let providedPass: string | null = null;
+        let user = "root";
+        let target = "";
+        if (c === "sshpass") {
+          const pIdx = args.indexOf("-p");
+          if (pIdx === -1 || !args[pIdx + 1]) { err("Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
+          providedPass = args[pIdx + 1];
+          const sshIdx = args.indexOf("ssh");
+          if (sshIdx === -1 || !args[sshIdx + 1]) { err("Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
+          const conn = args[sshIdx + 1];
+          const mm = conn.match(/^(?:([^@]+)@)?(.+)$/);
+          if (!mm) { err("ssh: formato inválido"); return s; }
+          user = mm[1] ?? "root";
+          target = mm[2];
+        } else {
+          const conn = args[1];
+          if (!conn) { err("Uso: ssh <user@ip>   |   sshpass -p <senha> ssh <user@ip>"); return s; }
+          const mm = conn.match(/^(?:([^@]+)@)?(.+)$/);
+          if (!mm) { err("ssh: formato inválido"); return s; }
+          user = mm[1] ?? "root";
+          target = mm[2];
+        }
         const ip = resolve(s, target);
         if (!ip) { err(`ssh: Could not resolve hostname ${target}`); return s; }
         const h = s.hosts[ip];
         const sshPort = h?.ports.find((p) => p.port === 22 && p.state === "open");
         if (!sshPort) { err(`ssh: connect to host ${target} port 22: Connection refused`); return s; }
+        launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "SSH", `client banner exchange`, 22);
+        next.discovered.add(ip);
+
+        // verificar credenciais (defaultCreds + validCreds para SSH)
+        const allCreds = [
+          ...(h?.defaultCreds ? [h.defaultCreds] : []),
+          ...(h?.validCreds ?? []).filter((c) => !c.protocol || c.protocol === "ssh"),
+        ];
+        const matchedCred = allCreds.find((c) => c.user === user && c.pass === providedPass);
+        const creds = h?.defaultCreds; // mantido pra dica abaixo
+        const credOk = !!matchedCred;
+        if (credOk) {
+          trackConnection(ip, 22, "ssh");
+          out(`The authenticity of host '${target} (${ip})' can't be established.`);
+          out(`ED25519 key fingerprint is SHA256:${Math.random().toString(36).slice(2, 18)}.`);
+          out(`Warning: Permanently added '${target}' (ED25519) to the list of known hosts.`);
+          out(``);
+          out(`Welcome to ${h.os}`);
+          out(``);
+          out(`Last login: ${new Date().toUTCString()}`);
+          const initialCwd = h.victimFs?.cwd ?? `/home/${user}`;
+          out(`${user}@${h.hostname ?? target}:${initialCwd === `/home/${user}` ? "~" : initialCwd}$ (sessão SSH ativa — comandos agora rodam no host remoto. Use 'exit' para sair)`);
+          next.flags.add(`ssh-login-${ip}`);
+          next.sshSession = { ip, user, cwd: initialCwd };
+          return next;
+        }
+
+        // sem senha ou senha errada
         out(`The authenticity of host '${target} (${ip})' can't be established.`);
         out(`ED25519 key fingerprint is SHA256:${Math.random().toString(36).slice(2, 18)}.`);
-        out(`Are you sure you want to continue connecting (yes/no)? yes`);
         out(`Warning: Permanently added '${target}' (ED25519) to the list of known hosts.`);
-        out(`${user}@${target}'s password: ************`);
-        out(`Permission denied, please try again.`);
-        out(`(simulador: senha não disponível neste cenário)`);
-        next.discovered.add(ip);
+        if (providedPass !== null) {
+          out(`${user}@${target}'s password: ${"*".repeat(providedPass.length)}`);
+          err(`Permission denied, please try again.`);
+          err(`${user}@${target}: Permission denied (publickey,password).`);
+          if (creds) {
+            out(`(dica: o host parece ter creds default — tente combinações comuns como '${creds.user}:****')`);
+          }
+        } else {
+          out(`${user}@${target}'s password: ************`);
+          err(`Permission denied, please try again.`);
+          out(`(use: sshpass -p <senha> ssh ${user}@${target}   para passar senha não-interativamente)`);
+        }
         return next;
       }
 
-      // netstat
+      // host <domain>  — alias enxuto de dig +short
+      if (c === "host") {
+        const target = args[1];
+        if (!target) { err("Uso: host <domain>"); return s; }
+        const ip = resolve(s, target);
+        launchPacket(s.myIp, "192.168.1.1", "dns");
+        if (ip) {
+          out(`${target} has address ${ip}`);
+          next.discovered.add(ip);
+        } else {
+          err(`Host ${target} not found: 3(NXDOMAIN)`);
+        }
+        return next;
+      }
+
+      // netstat (dinâmico — reflete conexões reais)
       if (c === "netstat") {
-        out(`Active Internet connections (only servers)`);
-        out(`Proto  Local Address            Foreign Address    State`);
-        out(`tcp    0.0.0.0:22               0.0.0.0:*          LISTEN`);
-        out(`tcp    127.0.0.1:631            0.0.0.0:*          LISTEN`);
-        out(`tcp6   :::80                    :::*               LISTEN`);
-        out(`udp    0.0.0.0:68               0.0.0.0:*`);
-        out(`udp    0.0.0.0:5353             0.0.0.0:*`);
+        out(`Active Internet connections (servers and established)`);
+        out(`Proto  Local Address              Foreign Address              State        Service`);
+        // sockets em escuta locais (estáticos)
+        out(`tcp    0.0.0.0:22                 0.0.0.0:*                    LISTEN       ssh`);
+        out(`tcp    127.0.0.1:631              0.0.0.0:*                    LISTEN       cups`);
+        out(`tcp6   :::80                      :::*                         LISTEN       http`);
+        out(`udp    0.0.0.0:68                 0.0.0.0:*                                 dhcpcd`);
+        out(`udp    0.0.0.0:5353               0.0.0.0:*                                 mdns`);
+        // conexões dinâmicas iniciadas pelo aluno
+        const fresh = s.connections.filter((c0) => Date.now() - c0.ts < 60000);
+        if (fresh.length > 0) {
+          out(``);
+          out(`-- conexões iniciadas por VOCÊ:`);
+          fresh.forEach((c0) => {
+            const local = `${s.myIp}:${c0.localPort}`.padEnd(27);
+            const foreign = `${c0.remoteIp}:${c0.remotePort}`.padEnd(29);
+            const st = c0.state.padEnd(13);
+            out(`${c0.proto.padEnd(7)}${local}${foreign}${st}${c0.service}`);
+          });
+        }
         return { ...next, _netstatViewed: true };
       }
 
-      // tcpdump
+      // tcpdump (usa packetLog real + suporta filtros básicos: -i, -n, host X, port N)
       if (c === "tcpdump") {
+        const tArgs = args.slice(1);
+        // suportar filtros: tcpdump host 192.168.1.50 / port 80 / -c N
+        let filterHost: string | null = null;
+        let filterPort: number | null = null;
+        let count: number | null = null;
+        for (let i = 0; i < tArgs.length; i++) {
+          const a = tArgs[i];
+          if (a === "host" && tArgs[i + 1]) filterHost = resolve(s, tArgs[++i]) ?? tArgs[i];
+          else if (a === "port" && tArgs[i + 1]) filterPort = Number(tArgs[++i]);
+          else if (a === "-c" && tArgs[i + 1]) count = Number(tArgs[++i]);
+        }
         out(`tcpdump: verbose output suppressed, use -v or -vv for full protocol decode`);
         out(`listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes`);
-        const now = Date.now();
-        for (let i = 0; i < 6; i++) {
-          const t = new Date(now - (5 - i) * 230).toISOString().slice(11, 23);
-          const samples = [
-            `IP ${s.myIp}.54231 > 192.168.1.1.53: 0+ A? google.com. (28)`,
-            `IP 192.168.1.1.53 > ${s.myIp}.54231: 0 1/0/0 A 142.250.78.78 (44)`,
-            `IP ${s.myIp} > 192.168.1.50: ICMP echo request, id 1, seq 1, length 64`,
-            `IP 192.168.1.50 > ${s.myIp}: ICMP echo reply, id 1, seq 1, length 64`,
-            `ARP, Request who-has 192.168.1.1 tell ${s.myIp}, length 28`,
-            `IP 192.168.1.150.554 > ${s.myIp}.41234: Flags [P.], length 1340 RTSP`,
-          ];
-          out(`${t} ${samples[i]}`);
+        const filtered = s.packetLog.filter((p) => {
+          if (filterHost && p.from !== filterHost && p.to !== filterHost) return false;
+          if (filterPort && p.port !== filterPort) return false;
+          return true;
+        });
+        // se ainda não há nada capturado, mostra mensagem amigável
+        if (filtered.length === 0) {
+          out(`(nenhum pacote capturado — use ping/curl/nc/dig para gerar tráfego primeiro)`);
+          return { ...next, _tcpdumpViewed: true };
         }
-        out(`6 packets captured`);
-        out(`6 packets received by filter`);
+        const slice = count ? filtered.slice(-count) : filtered.slice(-30);
+        slice.forEach((p) => {
+          const t = new Date(p.ts).toISOString().slice(11, 23);
+          const portStr = p.port ? `.${p.port}` : "";
+          out(`${t} IP ${p.from}${portStr} > ${p.to}: ${p.proto} ${p.info}`);
+        });
+        out(``);
+        out(`${slice.length} packets captured`);
+        out(`${filtered.length} packets received by filter`);
+        out(`0 packets dropped by kernel`);
         return { ...next, _tcpdumpViewed: true };
       }
 
@@ -813,6 +1782,296 @@ export function NetworkSimulator({ onBack }: Props) {
         return next;
       }
 
+      // ===== hydra (brute force) =====
+      // hydra -l <user> -P <wordlist> -t 4 ssh://<ip>
+      // hydra -L users.txt -P pass.txt ftp://<ip>
+      if (c === "hydra") {
+        const hArgs = args.slice(1);
+        const lIdx = hArgs.findIndex((a) => a === "-l");
+        const LIdx = hArgs.findIndex((a) => a === "-L");
+        const PIdx = hArgs.findIndex((a) => a === "-P" || a === "-p");
+        const proto = hArgs.find((a) => /^(ssh|ftp|http-get|http-post-form|smb):\/\//i.test(a));
+        if (!proto || (lIdx === -1 && LIdx === -1) || PIdx === -1) {
+          err("Uso: hydra -l <user> -P <wordlist> <proto>://<ip>");
+          err("     hydra -L users.txt -P pass.txt ssh://192.168.1.150");
+          return s;
+        }
+        const protoMatch = proto.match(/^(\w+):\/\/(.+)$/);
+        if (!protoMatch) { err("hydra: protocolo inválido"); return s; }
+        const protocol = protoMatch[1].toLowerCase();
+        const target = protoMatch[2];
+        const ip = resolve(s, target);
+        if (!ip) { err(`hydra: host não resolvido: ${target}`); return s; }
+        const h = s.hosts[ip];
+        if (!h) { err(`hydra: host inexistente`); return s; }
+
+        // verificar se serviço está aberto
+        const portMap: Record<string, number> = { ssh: 22, ftp: 21, "http-get": 80, "http-post-form": 80, smb: 445 };
+        const targetPort = portMap[protocol];
+        const portInfo = h.ports.find((p) => p.port === targetPort && p.state === "open");
+        if (!portInfo) {
+          err(`[ERROR] could not connect to target port ${targetPort}: connection refused`);
+          return s;
+        }
+
+        // wordlists comuns simuladas
+        const userList = lIdx !== -1
+          ? [hArgs[lIdx + 1]]
+          : ["root", "admin", "administrator", "user", "guest", "postgres", "mysql"];
+        const passList = ["123456", "password", "admin", "root", "qwerty", "letmein", "toor", "postgres", "S3nh@F0rt3!"];
+
+        out(`Hydra v9.5 (c) 2023 by van Hauser/THC`);
+        out(`Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at ${new Date().toISOString().slice(0, 19).replace("T", " ")}`);
+        out(`[DATA] max ${userList.length * passList.length} login tries (l:${userList.length}/p:${passList.length}), ~${Math.ceil(userList.length * passList.length / 16)} tries per task`);
+        out(`[DATA] attacking ${protocol}://${ip}:${targetPort}/`);
+        launchPacket(s.myIp, ip, "tcp");
+        for (let i = 0; i < 8; i++) logPacket(s.myIp, ip, protocol === "ssh" ? "SSH" : protocol === "ftp" ? "FTP" : "TCP", `auth attempt #${i + 1}`, targetPort);
+        trackConnection(ip, targetPort, protocol);
+
+        // procurar match nas validCreds + defaultCreds
+        const candidatesRaw = [
+          ...(h.validCreds ?? []).filter((c) => !c.protocol || c.protocol === protocol),
+          ...(h.defaultCreds && (protocol === "ssh" || protocol === "ftp" || protocol === "http-get") ? [h.defaultCreds] : []),
+        ];
+        const found = candidatesRaw.find((c) => userList.includes(c.user) && passList.includes(c.pass));
+
+        if (found) {
+          out(`[ATTEMPT] target ${ip} - login "${found.user}" - pass "${found.pass}" - 1 of ${userList.length * passList.length}`);
+          out(`[${targetPort}][${protocol}] host: ${ip}   login: ${found.user}   password: ${found.pass}`);
+          out(`1 of 1 target successfully completed, 1 valid password found`);
+          out(`Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at ${new Date().toISOString().slice(0, 19).replace("T", " ")}`);
+          next.flags.add(`hydra-cracked-${ip}-${protocol}`);
+          next.flags.add("CTF{weak_password_was_dictionary_listed}");
+        } else {
+          for (let i = 0; i < Math.min(8, userList.length * passList.length); i++) {
+            const u = userList[i % userList.length];
+            const p = passList[i % passList.length];
+            out(`[ATTEMPT] target ${ip} - login "${u}" - pass "${p}" - ${i + 1} of ${userList.length * passList.length}`);
+          }
+          out(`...`);
+          out(`0 of 1 target completed, 0 valid passwords found`);
+          out(`Hydra (https://github.com/vanhauser-thc/thc-hydra) finished — try other wordlists`);
+        }
+        return next;
+      }
+
+      // ===== dnsrecon =====
+      // dnsrecon -d <domain>           enum DNS records + brute subdomains
+      if (c === "dnsrecon") {
+        const dIdx = args.indexOf("-d");
+        if (dIdx === -1 || !args[dIdx + 1]) { err("Uso: dnsrecon -d <domain>"); return s; }
+        const domain = args[dIdx + 1];
+        out(`[*] Performing General Enumeration of Domain: ${domain}`);
+        out(`[-] DNSSEC is not configured for ${domain}`);
+        // SOA, NS, MX, TXT
+        out(`[*]      SOA ns1.${domain} 192.168.1.1`);
+        out(`[*]      NS ns1.${domain} 192.168.1.1`);
+        out(`[*]      NS ns2.${domain} 192.168.1.1`);
+        out(`[*]      MX mail.${domain} 10`);
+        const txt = s.dnsTxt[domain] ?? [];
+        txt.forEach((r) => {
+          out(`[*]      TXT ${domain} "${r}"`);
+          const m = r.match(/CTF\{[^}]+\}/);
+          if (m) next.flags.add(m[0]);
+        });
+        out(`[*] Enumerating SRV Records for ${domain}`);
+        out(`[+] 0 Records Found`);
+        out(`[*] Brute forcing subdomains for ${domain}`);
+        // procurar todos os subdomains que terminam em .domain
+        const subs = Object.entries(s.dnsCache).filter(([host]) => host.endsWith(`.${domain}`) && host !== domain);
+        if (!subs.length) {
+          out(`[-] No subdomains found via brute force.`);
+        } else {
+          subs.forEach(([host, ip]) => {
+            out(`[*]      A ${host} ${ip}`);
+            next.discovered.add(ip);
+          });
+        }
+        out(`[+] ${4 + subs.length} Records Found`);
+        launchPacket(s.myIp, "192.168.1.1", "dns");
+        for (let i = 0; i < 5; i++) logPacket(s.myIp, "192.168.1.1", "DNS", `subdomain brute query #${i + 1}`, 53);
+        next.flags.add("subdomain-enum-done");
+        return next;
+      }
+
+      // ===== enum4linux =====
+      // enum4linux <ip>                enum SMB básico
+      if (c === "enum4linux") {
+        const target = args[1];
+        if (!target) { err("Uso: enum4linux <ip>"); return s; }
+        const ip = resolve(s, target);
+        if (!ip) { err(`enum4linux: host não resolvido`); return s; }
+        const h = s.hosts[ip];
+        const smbPort = h?.ports.find((p) => (p.port === 445 || p.port === 139) && p.state === "open");
+        if (!smbPort) { err(`enum4linux: SMB/NetBIOS não está aberto em ${ip}`); return s; }
+        launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "TCP", `enum4linux SMB probe`, 445);
+        trackConnection(ip, 445, "smb");
+        out(`Starting enum4linux v0.9.1`);
+        out(` ========================== `);
+        out(`|    Target Information   |`);
+        out(` ========================== `);
+        out(`Target ........... ${ip}`);
+        out(`Username ......... ''`);
+        out(`Password ......... ''`);
+        out(``);
+        out(` ============================================ `);
+        out(`|    Enumerating Workgroup/Domain on ${ip}    |`);
+        out(` ============================================ `);
+        out(`[+] Got domain/workgroup name: ${h.smbDomain ?? "WORKGROUP"}`);
+        out(``);
+        if (h.smbShares) {
+          out(` =========================== `);
+          out(`|    Share Enumeration     |`);
+          out(` =========================== `);
+          out(`        Sharename       Type      Comment`);
+          out(`        ---------       ----      -------`);
+          h.smbShares.forEach((share) => {
+            out(`        ${share.name.padEnd(15)} ${share.type.padEnd(10)}${share.comment}`);
+          });
+        }
+        if (h.smbUsers) {
+          out(``);
+          out(` =========================== `);
+          out(`|    Users on ${ip}    |`);
+          out(` =========================== `);
+          h.smbUsers.forEach((u) => out(`user:[${u}] rid:[${1000 + h.smbUsers!.indexOf(u)}]`));
+        }
+        out(``);
+        out(`enum4linux complete on ${new Date().toISOString().slice(0, 19)}`);
+        next.flags.add(`smb-enum-${ip}`);
+        return next;
+      }
+
+      // ===== smbclient =====
+      // smbclient -L <ip> -N           lista shares (sem senha)
+      // smbclient //<ip>/<share> -N    conecta no share anonimamente
+      if (c === "smbclient") {
+        const sArgs = args.slice(1);
+        const isList = sArgs.includes("-L");
+        const targetRaw = sArgs.find((a) => !a.startsWith("-"));
+        if (!targetRaw) { err("Uso: smbclient -L <ip> -N   |   smbclient //<ip>/<share> -N"); return s; }
+        // parsear //<ip>/<share>
+        const shareMatch = targetRaw.match(/^\/\/([^\/]+)\/(.+)$/);
+        let ip: string | null;
+        let shareName: string | null = null;
+        if (shareMatch) {
+          ip = resolve(s, shareMatch[1]);
+          shareName = shareMatch[2];
+        } else {
+          ip = resolve(s, targetRaw);
+        }
+        if (!ip) { err(`smbclient: host não resolvido`); return s; }
+        const h = s.hosts[ip];
+        if (!h?.smbShares) { err(`smbclient: SMB não disponível em ${ip}`); return s; }
+        launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "TCP", `smbclient connect`, 445);
+        trackConnection(ip, 445, "smb");
+
+        if (isList || !shareName) {
+          out(`        Sharename       Type      Comment`);
+          out(`        ---------       ----      -------`);
+          h.smbShares.forEach((sh) => out(`        ${sh.name.padEnd(15)} ${sh.type.padEnd(10)}${sh.comment}`));
+          out(``);
+          out(`SMB1 disabled -- no workgroup available`);
+          return next;
+        }
+        const share = h.smbShares.find((sh) => sh.name.toLowerCase() === shareName!.toLowerCase());
+        if (!share) { err(`tree connect failed: NT_STATUS_BAD_NETWORK_NAME`); return s; }
+        if (!share.readable) {
+          err(`tree connect failed: NT_STATUS_ACCESS_DENIED`);
+          return next;
+        }
+        out(`Try "help" to get a list of possible commands.`);
+        out(`smb: \\> ls`);
+        out(`  .                                   D        0  ${new Date().toUTCString().slice(0, 25)}`);
+        out(`  ..                                  D        0  ${new Date().toUTCString().slice(0, 25)}`);
+        (share.files ?? []).forEach((f) => {
+          out(`  ${f.name.padEnd(35)}        ${String(f.size).padStart(7)}  ${new Date().toUTCString().slice(0, 25)}`);
+        });
+        if (share.flag) next.flags.add(share.flag);
+        out(``);
+        out(`smb: \\> (use 'smbclient //${ip}/${share.name} -N -c "get <arq>"' para baixar)`);
+        out(`(arquivos do share ficaram visíveis — verifique conteúdo com curl/cat se houver flag)`);
+        // expor conteúdo dos arquivos como text inline (pra simular get)
+        (share.files ?? []).forEach((f) => {
+          if (f.content) {
+            out(``);
+            out(`--- conteúdo de ${f.name} ---`);
+            f.content.split("\n").forEach((l) => out(l));
+            const fm = f.content.match(/CTF\{[^}]+\}/);
+            if (fm) next.flags.add(fm[0]);
+          }
+        });
+        return next;
+      }
+
+      // ===== openssl s_client -connect <host>:<port> =====
+      if (c === "openssl") {
+        const sub = args[1];
+        if (sub !== "s_client") {
+          err(`openssl: subcomando '${sub}' não suportado. Use 's_client -connect <host>:<port>'`);
+          return s;
+        }
+        const cIdx = args.indexOf("-connect");
+        if (cIdx === -1 || !args[cIdx + 1]) { err("Uso: openssl s_client -connect <host>:<port>"); return s; }
+        const [hostRef, portStr] = args[cIdx + 1].split(":");
+        const port = Number(portStr ?? 443);
+        const ip = resolve(s, hostRef);
+        if (!ip) { err(`openssl: getaddrinfo: ${hostRef}: Name or service not known`); return s; }
+        const h = s.hosts[ip];
+        const portInfo = h?.ports.find((p) => p.port === port && p.state === "open");
+        if (!portInfo) { err(`socket: connect: Connection refused`); return s; }
+        launchPacket(s.myIp, ip, "tcp");
+        logPacket(s.myIp, ip, "TCP", `TLS ClientHello`, port);
+        trackConnection(ip, port, portInfo.service);
+        out(`CONNECTED(00000003)`);
+        out(`depth=1 C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
+        out(`verify return:1`);
+        out(`depth=0 C = BR, ST = SP, O = CorpHQ Ltda, CN = ${hostRef}`);
+        out(`verify return:1`);
+        out(`---`);
+        out(`Certificate chain`);
+        out(` 0 s:C = BR, ST = SP, O = CorpHQ Ltda, CN = ${hostRef}`);
+        out(`   i:C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
+        out(` 1 s:C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
+        out(`   i:C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
+        out(`---`);
+        out(`Server certificate`);
+        out(`-----BEGIN CERTIFICATE-----`);
+        out(`MIIDazCCAlOgAwIBAgIUF8j3a91...   (truncado)`);
+        out(`-----END CERTIFICATE-----`);
+        out(`subject=C = BR, ST = SP, O = CorpHQ Ltda, CN = ${hostRef}`);
+        out(`issuer=C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
+        out(`---`);
+        out(`SSL handshake has read 4521 bytes and written 393 bytes`);
+        out(`Verification: OK`);
+        out(`---`);
+        out(`New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384`);
+        out(`Server public key is 2048 bit`);
+        out(`Secure Renegotiation IS NOT supported`);
+        out(`Compression: NONE`);
+        out(`Expansion: NONE`);
+        out(`No ALPN negotiated`);
+        out(`Early data was not sent`);
+        out(`Verify return code: 0 (ok)`);
+        out(`---`);
+        next.flags.add(`tls-inspected-${ip}`);
+        return next;
+      }
+
+      // ===== wireshark (modal) =====
+      if (c === "wireshark") {
+        if (s.packetLog.length === 0) {
+          err("wireshark: sem pacotes capturados. Gere tráfego com ping/curl/nc/dig primeiro.");
+          return s;
+        }
+        setShowWireshark(true);
+        out(`Iniciando Wireshark — abrindo análise visual de ${s.packetLog.length} pacotes capturados`);
+        next.flags.add("wireshark-opened");
+        return next;
+      }
+
       err(`comando não reconhecido: ${c}. Digite 'help'.`);
       return s;
     });
@@ -832,23 +2091,13 @@ export function NetworkSimulator({ onBack }: Props) {
       else { setHistoryIdx(i); setInput(history[i]); }
     } else if (e.key === "Tab") {
       e.preventDefault();
-      const completions = [
-        "ifconfig", "ip a", "ping 192.168.1.1", "ping 8.8.8.8", "traceroute 8.8.8.8",
-        "arp -a", "nslookup web.corp.local", "dig web.corp.local",
-        "dig TXT corp.local", "dig -x 192.168.1.50", "dig +short web.corp.local", "whois corp.local",
-        "nmap -sn 192.168.1.0/24", "nmap 192.168.1.50", "nmap -sV 192.168.1.100",
-        "nmap -p 22,80,443 192.168.1.50",
-        "searchsploit vsftpd 2.3.4", "searchsploit 192.168.1.100", "searchsploit boa",
-        "curl http://192.168.1.50", "curl http://192.168.1.50/admin", "curl http://192.168.1.50/.git/config",
-        "curl http://192.168.1.50/robots.txt", "curl -I http://192.168.1.50",
-        "curl -u admin:admin http://192.168.1.150/cgi-bin/snapshot",
-        "nc 192.168.1.50 22", "nc 192.168.1.100 21",
-        "ssh root@192.168.1.50", "netstat -tuln", "tcpdump -i eth0", "report",
-        "help", "clear", "reset",
-      ];
-      const matches = completions.filter((cmp) => cmp.startsWith(input));
+      const matches = computeNetCompletions(input, state);
       if (matches.length === 1) setInput(matches[0]);
-      else if (matches.length > 1) info("Sugestões: " + matches.join(" | "));
+      else if (matches.length > 1) {
+        const common = longestCommonPrefix(matches);
+        if (common.length > input.length) setInput(common);
+        info("Sugestões: " + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
+      }
     }
   };
 
@@ -882,6 +2131,9 @@ export function NetworkSimulator({ onBack }: Props) {
       { border: "border-amber-500/20", bg: "bg-amber-500/10", text: "text-amber-400", borderInner: "border-amber-500/30" },
       { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/10", text: "text-fuchsia-400", borderInner: "border-fuchsia-500/30" },
       { border: "border-red-500/20", bg: "bg-red-500/10", text: "text-red-400", borderInner: "border-red-500/30" },
+      { border: "border-violet-500/20", bg: "bg-violet-500/10", text: "text-violet-400", borderInner: "border-violet-500/30" },
+      { border: "border-rose-500/20", bg: "bg-rose-500/10", text: "text-rose-400", borderInner: "border-rose-500/30" },
+      { border: "border-teal-500/20", bg: "bg-teal-500/10", text: "text-teal-400", borderInner: "border-teal-500/30" },
     ];
     const steps: { title: string; content: React.ReactNode }[] = [
       {
@@ -981,7 +2233,7 @@ export function NetworkSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Os 5 níveis",
+        title: "Os níveis",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
@@ -1428,6 +2680,167 @@ export function NetworkSimulator({ onBack }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Modal Wireshark — análise visual de pacotes capturados */}
+      <AnimatePresence>
+        {showWireshark && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setShowWireshark(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="w-full max-w-6xl max-h-[90vh] bg-slate-900 border border-cyan-500/30 rounded-2xl overflow-hidden flex flex-col shadow-[0_0_60px_-10px_rgba(34,211,238,0.4)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-950/80">
+                <div className="flex items-center gap-3">
+                  <Radio className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Wireshark · Network Analyzer</h3>
+                    <p className="text-[10px] text-slate-500 font-mono">capture.pcap · {state.packetLog.length} pacotes</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowWireshark(false)} className="text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              {/* Filter bar */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-slate-900">
+                <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest">filter</span>
+                <input
+                  value={wsFilter}
+                  onChange={(e) => setWsFilter(e.target.value)}
+                  placeholder="ex: tcp.port == 80   |   dns   |   http   |   ip.addr == 192.168.1.50"
+                  className="flex-1 bg-slate-950 border border-white/10 rounded px-2 py-1 text-xs font-mono text-cyan-300 outline-none focus:border-cyan-400 placeholder:text-slate-700"
+                />
+                {["dns", "http", "tcp", "icmp"].map((preset) => (
+                  <button key={preset} onClick={() => setWsFilter(preset)} className="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-white/5">
+                    {preset}
+                  </button>
+                ))}
+                <button onClick={() => setWsFilter("")} className="text-[10px] font-mono px-2 py-1 rounded text-slate-500 hover:text-white">limpar</button>
+              </div>
+              {/* Packet list + detail */}
+              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+                {/* List */}
+                <div className="flex-1 overflow-auto border-r border-white/10">
+                  <table className="w-full text-[11px] font-mono">
+                    <thead className="sticky top-0 bg-slate-950/95 backdrop-blur">
+                      <tr className="text-left text-[10px] uppercase tracking-widest text-slate-500 border-b border-white/10">
+                        <th className="px-2 py-1.5">#</th>
+                        <th className="px-2 py-1.5">Time</th>
+                        <th className="px-2 py-1.5">Source</th>
+                        <th className="px-2 py-1.5">Destination</th>
+                        <th className="px-2 py-1.5">Proto</th>
+                        <th className="px-2 py-1.5">Info</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const f = wsFilter.toLowerCase().trim();
+                        const filtered = state.packetLog.filter((p) => {
+                          if (!f) return true;
+                          // filtros básicos: protocolo, port, ip
+                          if (/^(dns|tcp|udp|icmp|http|ssh|ftp)$/.test(f) && p.proto.toLowerCase() === f) return true;
+                          const portMatch = f.match(/(?:tcp|udp)?\.?port\s*==?\s*(\d+)/);
+                          if (portMatch && p.port === Number(portMatch[1])) return true;
+                          const ipMatch = f.match(/ip\.(?:addr|src|dst)\s*==?\s*(\d+\.\d+\.\d+\.\d+)/);
+                          if (ipMatch && (p.from === ipMatch[1] || p.to === ipMatch[1])) return true;
+                          // fallback: substring no info
+                          if (p.info.toLowerCase().includes(f) || p.from.includes(f) || p.to.includes(f) || p.proto.toLowerCase().includes(f)) return true;
+                          return false;
+                        });
+                        if (filtered.length === 0) return (
+                          <tr><td colSpan={6} className="px-2 py-4 text-center text-slate-600 italic">(nenhum pacote bate com o filtro)</td></tr>
+                        );
+                        return filtered.slice(-200).map((p) => {
+                          const protoColor: Record<string, string> = {
+                            DNS: "text-fuchsia-300", HTTP: "text-emerald-300", TCP: "text-sky-300",
+                            UDP: "text-amber-300", ICMP: "text-rose-300", SSH: "text-violet-300", FTP: "text-cyan-300",
+                          };
+                          const isSelected = wsSelectedPacket === p.id;
+                          return (
+                            <tr key={p.id}
+                              onClick={() => {
+                                setWsSelectedPacket(p.id);
+                                // detectar credencial em plaintext e capturar flag forense
+                                if (/(?:USER|PASS|user=|pass=|password=)/i.test(p.info)) {
+                                  setState((st) => {
+                                    const f = new Set(st.flags);
+                                    f.add("forensic-cred-found");
+                                    f.add("CTF{plaintext_creds_caught_in_pcap}");
+                                    return { ...st, flags: f };
+                                  });
+                                }
+                              }}
+                              className={`cursor-pointer border-b border-white/5 hover:bg-cyan-500/5 ${isSelected ? "bg-cyan-500/10" : ""}`}
+                            >
+                              <td className="px-2 py-1 text-slate-600">{p.id}</td>
+                              <td className="px-2 py-1 text-slate-500">{new Date(p.ts).toISOString().slice(11, 23)}</td>
+                              <td className="px-2 py-1 text-slate-300">{p.from}</td>
+                              <td className="px-2 py-1 text-slate-300">{p.to}</td>
+                              <td className={`px-2 py-1 font-bold ${protoColor[p.proto] ?? "text-slate-400"}`}>{p.proto}{p.port ? `:${p.port}` : ""}</td>
+                              <td className="px-2 py-1 text-slate-400 truncate max-w-md">{p.info}</td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Detail */}
+                <div className="lg:w-96 max-h-72 lg:max-h-none overflow-auto p-3 bg-slate-950/50">
+                  {wsSelectedPacket === null ? (
+                    <p className="text-[11px] text-slate-600 italic">Clique num pacote para ver detalhes</p>
+                  ) : (() => {
+                    const p = state.packetLog.find((x) => x.id === wsSelectedPacket);
+                    if (!p) return null;
+                    // mostrar info do pacote + se for HTTP/FTP, decodificar payload se possível
+                    const sniffedPlaintext = (() => {
+                      // se há credencial em texto puro no info, sinaliza
+                      const credMatch = p.info.match(/(?:USER|PASS|user=|pass=|password=|auth=)([^\s&]+)/i);
+                      if (credMatch) return credMatch[0];
+                      return null;
+                    })();
+                    return (
+                      <div className="space-y-3 text-[11px] font-mono">
+                        <div>
+                          <p className="text-cyan-400 uppercase tracking-widest text-[9px] mb-1">Frame</p>
+                          <p className="text-slate-300">Packet #{p.id}</p>
+                          <p className="text-slate-500">{new Date(p.ts).toISOString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-cyan-400 uppercase tracking-widest text-[9px] mb-1">IP / TCP</p>
+                          <p className="text-slate-400">Source: <span className="text-slate-200">{p.from}</span></p>
+                          <p className="text-slate-400">Destination: <span className="text-slate-200">{p.to}</span></p>
+                          {p.port && <p className="text-slate-400">Port: <span className="text-slate-200">{p.port}</span></p>}
+                        </div>
+                        <div>
+                          <p className="text-cyan-400 uppercase tracking-widest text-[9px] mb-1">{p.proto}</p>
+                          <p className="text-slate-300 break-words whitespace-pre-wrap leading-relaxed">{p.info}</p>
+                        </div>
+                        {sniffedPlaintext && (
+                          <div className="bg-rose-500/10 border border-rose-500/30 rounded p-2">
+                            <p className="text-[9px] text-rose-400 uppercase tracking-widest mb-1">⚠ credencial em texto puro</p>
+                            <code className="text-rose-300">{sniffedPlaintext}</code>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+              <div className="px-4 py-2 border-t border-white/10 text-[10px] text-slate-500 font-mono flex items-center justify-between bg-slate-950">
+                <span>Filtros: <code className="text-cyan-400">tcp.port == 80</code>  ·  <code className="text-cyan-400">dns</code>  ·  <code className="text-cyan-400">ip.addr == 192.168.1.50</code></span>
+                <span>esc / clique fora p/ fechar</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

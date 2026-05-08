@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Terminal, FileCode, Github, CheckCircle2, Folder, GitCommit,
   ChevronDown, GitBranch, Save, X, Edit3, Lock, Trophy, AlertTriangle,
-  Shield, Cloud, Users, Clock, BookOpen, Lightbulb, RotateCcw,
+  Shield, Cloud, Users, Clock, BookOpen, Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,11 +32,16 @@ interface Repo {
   HEAD: { type: "branch"; name: string } | { type: "detached"; hash: string };
   remote: {
     enabled: boolean;
+    url?: string;
     branches: Record<string, string>;
     commits: Record<string, Commit>;
   };
   conflicts: Set<string>;                 // files in conflict
   stash: Record<string, string>[];        // stack of working dir snapshots
+  config: {
+    userName?: string;
+    userEmail?: string;
+  };
 }
 
 interface LevelDef {
@@ -101,6 +106,132 @@ const findMergeBase = (r: Repo, a: string, b: string): string | null => {
   return null;
 };
 
+/**
+ * Resolve uma ref para um hash de commit. Aceita:
+ *  - HEAD / head / Head (case-insensitive)
+ *  - HEAD~N (N gerações pelo primeiro pai)
+ *  - HEAD^ (= HEAD~1) e HEAD^N (N-ésimo pai)
+ *  - <branch>~N / <branch>^
+ *  - hash completo (7 chars) ou prefixo (4-6) que case unicamente
+ *  - nome de branch
+ * Retorna null se não conseguir resolver.
+ */
+const resolveRef = (r: Repo, refRaw: string): string | null => {
+  if (!refRaw) return null;
+  const ref = refRaw.trim();
+  // separar base de modificadores (~N, ^, ^N)
+  const match = ref.match(/^(.+?)((?:~\d+|\^\d*)*)$/);
+  if (!match) return null;
+  const base = match[1];
+  const mods = match[2] ?? "";
+
+  // resolver a base
+  let hash: string | null = null;
+  // HEAD (case-insensitive)
+  if (/^head$/i.test(base)) {
+    hash = r.HEAD.type === "branch" ? r.branches[r.HEAD.name] ?? null : r.HEAD.hash;
+  } else if (r.branches[base] !== undefined) {
+    hash = r.branches[base];
+  } else if (r.commits[base]) {
+    hash = base;
+  } else {
+    // prefixo de hash (mínimo 4 chars)
+    if (base.length >= 4) {
+      const candidates = Object.keys(r.commits).filter((h) => h.startsWith(base));
+      if (candidates.length === 1) hash = candidates[0];
+      else if (candidates.length > 1) return null; // ambiguo
+    }
+  }
+  if (!hash) return null;
+
+  // aplicar modificadores em sequência: ~N pula N gerações pelo primeiro pai; ^N pega o N-ésimo pai
+  let cursor: string = hash;
+  const tokens = mods.match(/(~\d+|\^\d*)/g) ?? [];
+  for (const tok of tokens) {
+    const cur: Commit | undefined = r.commits[cursor];
+    if (!cur) return null;
+    if (tok.startsWith("~")) {
+      const n = parseInt(tok.slice(1), 10);
+      for (let i = 0; i < n; i++) {
+        const parent: Commit | undefined = r.commits[cursor];
+        const next: string | undefined = parent?.parents[0];
+        if (!next) return null;
+        cursor = next;
+      }
+    } else if (tok.startsWith("^")) {
+      const n = tok === "^" ? 1 : parseInt(tok.slice(1), 10);
+      const next: string | undefined = cur.parents[n - 1];
+      if (!next) return null;
+      cursor = next;
+    }
+  }
+  return cursor;
+};
+
+
+const longestCommonPrefix = (arr: string[]): string => {
+  if (!arr.length) return "";
+  let prefix = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    while (!arr[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+      if (!prefix) return "";
+    }
+  }
+  return prefix;
+};
+
+// Completions contextuais: o que sugerir depende do comando atual + estado do repo.
+const computeGitCompletions = (input: string, r: Repo): string[] => {
+  const trimmed = input;
+  const ends = trimmed.endsWith(" ");
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  const last = ends ? "" : (tokens[tokens.length - 1] ?? "");
+  const head = ends ? tokens.join(" ") : tokens.slice(0, -1).join(" ");
+
+  const branches = Object.keys(r.branches);
+  const otherBranches = branches.filter((b) => headBranchName(r) !== b);
+  const files = Object.keys(r.files);
+  const recentHashes = Object.values(r.commits)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5)
+    .map((c) => c.hash);
+
+  const suggestFor = (pool: string[], prefix: string) =>
+    pool.filter((x) => x.startsWith(prefix)).map((x) => `${head} ${x}`.trim());
+
+  // Casos contextuais
+  if (head === "git checkout" || head === "git switch") return suggestFor([...otherBranches, ...recentHashes], last);
+  if (head === "git checkout -b" || head === "git switch -c") return [];
+  if (head === "git merge" || head === "git rebase") return suggestFor(otherBranches, last);
+  if (head === "git branch -d" || head === "git branch -D") return suggestFor(otherBranches, last);
+  if (head === "git revert" || head === "git show" || head === "git cherry-pick") return suggestFor([...recentHashes, "HEAD", "HEAD~1", "HEAD~2"], last);
+  if (head === "git restore" || head === "git rm" || head === "git add") return suggestFor(files, last);
+  if (head === "git diff") return suggestFor(["--staged", ...recentHashes, ...files], last);
+  if (head === "git push origin" || head === "git pull origin" || head === "git fetch origin") return suggestFor(branches, last);
+  if (head === "git config" || head === "git config --global") return suggestFor(["user.name", "user.email", "--list"], last);
+  if (head === "git stash") return suggestFor(["pop", "list", "drop", "show", "apply"], last);
+  if (head === "git remote") return suggestFor(["add", "remove", "-v", "rename"], last);
+  if (head === "git reset") return suggestFor(["--soft", "--mixed", "--hard", "HEAD~1", ...recentHashes], last);
+  if (head === "git tag") return suggestFor(["-a", "-d", "-l"], last);
+
+  // Caso geral
+  const baseCompletions = [
+    "git init", "git status", "git add .", "git add ", 'git commit -m "', "git commit --amend",
+    "git log", "git log --oneline", "git log --graph", "git log --all",
+    "git diff", "git diff --staged",
+    "git branch", "git branch -d ", "git checkout ", "git checkout -b ", "git switch ", "git switch -c ",
+    "git merge ", "git restore ", "git revert ", "git reset --hard", "git reset --soft HEAD~1",
+    'git config user.name "', 'git config user.email "', "git config --list",
+    "git remote add origin ", "git remote -v",
+    "git push origin main", "git pull origin main", "git pull --rebase", "git fetch",
+    "git stash", "git stash pop", "git stash list",
+    "git tag ", "git show HEAD",
+    "help", "clear", "reset",
+  ];
+  return baseCompletions.filter((c) => c.startsWith(trimmed));
+};
+
 // ---------- Initial states per level ----------
 const baseRepo = (): Repo => ({
   initialized: false,
@@ -112,6 +243,7 @@ const baseRepo = (): Repo => ({
   remote: { enabled: false, branches: {}, commits: {} },
   conflicts: new Set(),
   stash: [],
+  config: {},
 });
 
 const LEVELS: LevelDef[] = [
@@ -126,6 +258,7 @@ const LEVELS: LevelDef[] = [
     },
     missions: [
       { id: "init", title: "Inicialize o repositório", hint: "git init", check: (r) => r.initialized },
+      { id: "config", title: "Configure sua identidade (nome e email) — Git exige antes do primeiro commit", hint: 'git config user.name "Seu Nome" e depois git config user.email "voce@exemplo.com"', check: (r) => !!r.config.userName && !!r.config.userEmail },
       { id: "add", title: "Adicione todos os arquivos ao stage", hint: "git add .", check: (r) => !!r.staged && Object.keys(r.staged).length === Object.keys(r.files).length },
       { id: "commit", title: "Faça o primeiro commit", hint: 'git commit -m "primeiro commit"', check: (r) => Object.keys(r.commits).length >= 1 },
       { id: "remote", title: "Conecte ao GitHub remoto", hint: "git remote add origin <url>", check: (r) => r.remote.enabled },
@@ -139,6 +272,7 @@ const LEVELS: LevelDef[] = [
     starter: () => {
       const r = baseRepo();
       r.initialized = true;
+      r.config = { userName: "Operador", userEmail: "operador@exemplo.com" };
       r.files = { "main.py": "print('app v1')\n", "README.md": "# Projeto\n" };
       const hash = randHash();
       const c: Commit = { hash, parents: [], message: "initial commit", files: { ...r.files }, branch: "main", timestamp: Date.now() };
@@ -170,6 +304,7 @@ const LEVELS: LevelDef[] = [
     starter: () => {
       const r = baseRepo();
       r.initialized = true;
+      r.config = { userName: "Operador", userEmail: "operador@exemplo.com" };
       r.files = { "config.py": "VERSION = '1.0'\n" };
       const c0Hash = randHash();
       r.commits[c0Hash] = { hash: c0Hash, parents: [], message: "init", files: { "config.py": "VERSION = '1.0'\n" }, branch: "main", timestamp: Date.now() - 3000 };
@@ -205,6 +340,7 @@ const LEVELS: LevelDef[] = [
     starter: () => {
       const r = baseRepo();
       r.initialized = true;
+      r.config = { userName: "Operador", userEmail: "operador@exemplo.com" };
       r.files = { "app.js": "console.log('v1')\n" };
       const c0 = randHash();
       r.commits[c0] = { hash: c0, parents: [], message: "initial", files: { "app.js": "console.log('v1')\n" }, branch: "main", timestamp: Date.now() - 3000 };
@@ -242,6 +378,7 @@ const LEVELS: LevelDef[] = [
     starter: () => {
       const r = baseRepo();
       r.initialized = true;
+      r.config = { userName: "Operador", userEmail: "operador@exemplo.com" };
       r.files = { "app.js": "console.log('v1')\n" };
       const c0 = randHash();
       r.commits[c0] = { hash: c0, parents: [], message: "initial", files: { "app.js": "console.log('v1')\n" }, branch: "main", timestamp: Date.now() - 3000 };
@@ -341,14 +478,30 @@ export function GitSimulator({ onBack }: Props) {
 
     if (cmd === "help") {
       out("Comandos suportados:");
-      out("  git init | git status | git add <arq>|. | git commit -m \"msg\"");
-      out("  git log [--oneline] | git diff | git restore <arq> | git revert <ref>");
-      out("  git branch [name] | git checkout [-b] <name> | git switch [-c] <name>");
-      out("  git merge <branch> | git reset --hard");
-      out("  git remote add origin <url> | git push [origin <branch>] | git pull [origin <branch>] | git fetch");
-      out("  git stash | git stash pop");
+      out("  git init                              inicializa o repositório");
+      out("  git config [--global] user.name|user.email \"valor\"");
+      out("  git config --list                     mostra a configuração atual");
+      out("  git status                            mostra o estado das 3 áreas");
+      out("  git add <arq>|.                       prepara arquivo para commit");
+      out("  git commit -m <msg>                   aspas duplas, simples ou sem aspas");
+      out("  git log [--oneline|--graph|--all]");
+      out("  git diff                              compara workdir vs último commit");
+      out("  git restore <arq>                     descarta mudanças locais");
+      out("  git revert <ref>                      cria commit que desfaz outro");
+      out("  git branch [name]                     lista ou cria branch");
+      out("  git checkout [-b]|switch [-c] <name>  troca/cria branch");
+      out("  git merge <branch>                    junta branch atual com outra");
+      out("  git reset --hard                      restaura workdir para o HEAD");
+      out("  git remote add origin <url>           conecta ao GitHub");
+      out("  git push|pull [origin <branch>]       sincroniza com o remote");
+      out("  git fetch                             baixa commits sem aplicar");
+      out("  git stash | git stash pop             guarda/recupera trabalho não commitado");
+      out("");
+      out("Refs aceitas em qualquer comando: HEAD/head/Head, HEAD~N, HEAD^,");
+      out("                                  hash completo (7 chars) ou prefixo (4+)");
+      out("");
       out("  clear | reset | help");
-      out("Atalhos: ↑/↓ histórico  •  Tab autocomplete  •  Clique em arquivo para editar");
+      out("Atalhos: ↑/↓ histórico  •  Tab autocomplete contextual  •  Clique em arquivo para editar");
       return;
     }
     if (cmd === "clear") { setLines([]); return; }
@@ -375,6 +528,30 @@ export function GitSimulator({ onBack }: Props) {
       next.HEAD = { type: "branch", name: "main" };
       io.out("Initialized empty Git repository in /projeto/.git/");
       return next;
+    }
+
+    // git config user.name "X" / user.email "X" / --list / --global
+    const configMatch = args.match(/^config(?:\s+--global)?\s+(user\.name|user\.email)\s+(?:["'](.+)["']|(\S.*))$/);
+    if (configMatch) {
+      const key = configMatch[1];
+      const val = (configMatch[2] ?? configMatch[3] ?? "").trim();
+      if (!val) { io.err(`error: missing value for '${key}'`); return null; }
+      if (key === "user.name") next.config.userName = val;
+      else next.config.userEmail = val;
+      return next;
+    }
+    if (args === "config --list" || args === "config -l") {
+      if (r.config.userName) io.out(`user.name=${r.config.userName}`);
+      if (r.config.userEmail) io.out(`user.email=${r.config.userEmail}`);
+      if (!r.config.userName && !r.config.userEmail) io.out("(nenhuma configuração definida — use 'git config user.name \"...\"')");
+      return null;
+    }
+    const configGetMatch = args.match(/^config(?:\s+--global)?\s+(user\.name|user\.email)$/);
+    if (configGetMatch) {
+      const key = configGetMatch[1];
+      const val = key === "user.name" ? r.config.userName : r.config.userEmail;
+      if (val) io.out(val); else io.err("");
+      return null;
     }
 
     if (!r.initialized) { io.err("fatal: not a git repository (use 'git init')"); return null; }
@@ -439,9 +616,18 @@ export function GitSimulator({ onBack }: Props) {
       return next;
     }
 
-    // commit
-    const commitMatch = args.match(/^commit\s+-m\s+["'](.+)["']$/);
+    // commit (aceita aspas duplas, simples, ou sem aspas)
+    const commitMatch = args.match(/^commit\s+-m\s+(?:["'](.+)["']|(.+))$/);
     if (commitMatch) {
+      const msg = commitMatch[1] ?? commitMatch[2];
+      // verifica config user.name/email (Git real exige)
+      if (!r.config.userName || !r.config.userEmail) {
+        io.err("*** Please tell me who you are.");
+        io.err("Run:");
+        io.err('  git config user.email "voce@exemplo.com"');
+        io.err('  git config user.name "Seu Nome"');
+        return null;
+      }
       if (r.conflicts.size > 0) { io.err("error: conflitos não resolvidos. Edite os arquivos e use 'git add'."); return null; }
       const branch = headBranchName(r);
       if (!branch) { io.err("HEAD desanexado — não suportado neste simulador."); return null; }
@@ -454,7 +640,6 @@ export function GitSimulator({ onBack }: Props) {
       const changed = JSON.stringify(merged) !== JSON.stringify(baseFiles);
       if (!changed && r.HEAD.type === "branch") { io.err("nothing to commit, working tree clean"); return null; }
 
-      const msg = commitMatch[1];
       const hash = randHash();
       // Detect merge commit: if there's a pending merge marker in stash-like state? We use commits with two parents only via merge; commit() always single-parent unless we're finishing a merge.
       const pendingMerge = (r as any)._mergeParent as string | undefined;
@@ -524,14 +709,15 @@ export function GitSimulator({ onBack }: Props) {
       return next;
     }
 
-    // revert <ref>  (ref = HEAD ou hash)
+    // revert <ref>  (HEAD/head/hash curto/HEAD~N tudo aceito via resolveRef)
     const revertMatch = args.match(/^revert\s+(\S+)$/);
     if (revertMatch) {
       const ref = revertMatch[1];
       const branch = headBranchName(r);
       if (!branch) { io.err("HEAD desanexado"); return null; }
       const headHash = r.branches[branch];
-      const target = ref === "HEAD" ? headHash : ref;
+      const target = resolveRef(r, ref);
+      if (!target) { io.err(`commit '${ref}' não encontrado`); return null; }
       const targetCommit = r.commits[target];
       if (!targetCommit) { io.err(`commit '${ref}' não encontrado`); return null; }
       if (!targetCommit.parents.length) { io.err("não dá pra reverter o commit inicial neste simulador"); return null; }
@@ -809,10 +995,13 @@ export function GitSimulator({ onBack }: Props) {
       else { setHistoryIdx(i); setInput(history[i]); }
     } else if (e.key === "Tab") {
       e.preventDefault();
-      const completions = ["git init", "git status", "git add .", "git commit -m \"\"", "git log --oneline", "git diff", "git branch", "git checkout ", "git checkout -b ", "git switch ", "git merge ", "git restore ", "git revert HEAD", "git remote add origin url", "git push origin main", "git pull origin main", "git fetch", "git stash", "git stash pop", "git reset --hard", "help", "clear", "reset"];
-      const matches = completions.filter((c) => c.startsWith(input));
+      const matches = computeGitCompletions(input, repo);
       if (matches.length === 1) setInput(matches[0]);
-      else if (matches.length > 1) info("Sugestões: " + matches.join(" | "));
+      else if (matches.length > 1) {
+        const common = longestCommonPrefix(matches);
+        if (common.length > input.length) setInput(common);
+        info("Sugestões: " + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
+      }
     }
   };
 
@@ -1247,41 +1436,79 @@ export function GitSimulator({ onBack }: Props) {
         )}
 
         <div className="space-y-4">
-          {/* Top: files + graph side by side */}
-          <div className="grid lg:grid-cols-2 gap-4">
-            {/* Files */}
+          {/* Identidade Git (visível só se já configurada) */}
+          {(repo.config.userName || repo.config.userEmail) && (
+            <div className="bg-slate-900/40 border border-white/5 rounded-xl px-3 py-2 flex items-center gap-3 text-[11px] font-mono">
+              <span className="text-emerald-400 uppercase tracking-widest text-[9px]">git config</span>
+              <span className="text-slate-300">{repo.config.userName ?? "(sem nome)"}</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-400">{repo.config.userEmail ?? "(sem email)"}</span>
+            </div>
+          )}
+
+          {/* Row 1: Working Directory | Staging Area | Grafo */}
+          <div className="grid lg:grid-cols-3 gap-4">
+            {/* Working Directory — só untracked + modified + clean */}
             <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3 text-amber-400">
                 <Folder className="w-4 h-4" />
                 <h5 className="text-xs font-bold uppercase tracking-widest">Working Directory</h5>
                 <span className="text-[10px] text-slate-500 font-mono ml-auto">clique p/ editar</span>
               </div>
-              <div className="grid sm:grid-cols-2 gap-2">
-                {Object.keys(repo.files).length === 0 && <p className="text-[11px] text-slate-600 italic col-span-2">(vazio)</p>}
+              <div className="space-y-1.5">
+                {Object.keys(repo.files).length === 0 && <p className="text-[11px] text-slate-600 italic">(vazio)</p>}
                 {Object.keys(repo.files).sort().map((f) => {
                   const st = fileStatus(repo, f);
                   const color =
                     st === "conflict" ? "text-red-400 border-red-500/40 bg-red-500/5" :
-                    st === "staged" ? "text-sky-300 border-sky-500/30 bg-sky-500/5" :
+                    st === "staged" ? "text-emerald-300 border-emerald-500/30 bg-emerald-500/5 opacity-60" :
                     st === "modified" ? "text-amber-300 border-amber-500/30 bg-amber-500/5" :
                     st === "untracked" ? "text-slate-300 border-slate-500/30 bg-slate-700/20" :
                     "text-slate-400 border-white/10 bg-slate-950/40";
                   return (
                     <button key={f} onClick={() => openEditor(f)}
-                      className={`flex items-center gap-2 text-xs rounded-md px-2 py-2 font-mono border transition-all hover:scale-[1.02] ${color}`}>
-                      <FileCode className="w-3 h-3" />
+                      className={`w-full flex items-center gap-2 text-xs rounded-md px-2 py-2 font-mono border transition-all hover:scale-[1.01] ${color}`}>
+                      <FileCode className="w-3 h-3 shrink-0" />
                       <span className="truncate flex-1 text-left">{f}</span>
-                      <Edit3 className="w-3 h-3 opacity-50" />
-                      <span className="text-[9px] uppercase">{st === "clean" ? "" : st}</span>
+                      <span className="text-[9px] uppercase shrink-0 opacity-70">{st === "clean" ? "" : st}</span>
+                      <Edit3 className="w-3 h-3 opacity-50 shrink-0" />
                     </button>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Staging Area */}
+            <div className="bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-3 text-emerald-400">
+                <CheckCircle2 className="w-4 h-4" />
+                <h5 className="text-xs font-bold uppercase tracking-widest">Staging Area</h5>
+                <span className="text-[10px] text-slate-500 font-mono ml-auto">{repo.staged ? Object.keys(repo.staged).length : 0} preparado(s)</span>
+              </div>
+              <div className="space-y-1.5">
+                {(!repo.staged || Object.keys(repo.staged).length === 0) ? (
+                  <div className="text-[11px] text-slate-600 italic space-y-1">
+                    <p>(nada preparado)</p>
+                    <p className="text-slate-700">Use <code className="text-emerald-400">git add &lt;arq&gt;</code> para preparar.</p>
+                  </div>
+                ) : (
+                  Object.keys(repo.staged).sort().map((f) => {
+                    const headFiles = headCommit(repo)?.files ?? {};
+                    const isNew = headFiles[f] === undefined;
+                    return (
+                      <div key={f} className="flex items-center gap-2 text-xs rounded-md px-2 py-2 font-mono border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+                        <span className="text-emerald-500 text-[9px]">●</span>
+                        <span className="truncate flex-1">{f}</span>
+                        <span className="text-[9px] uppercase opacity-70">{isNew ? "new" : "mod"}</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
               {repo.staged && Object.keys(repo.staged).length > 0 && (
-                <div className="mt-3 pt-3 border-t border-white/5">
-                  <p className="text-[10px] uppercase tracking-widest text-sky-400 font-mono mb-1">Staged ({Object.keys(repo.staged).length})</p>
-                  <p className="text-[11px] text-slate-400 font-mono">{Object.keys(repo.staged).join(", ")}</p>
-                </div>
+                <p className="text-[10px] text-slate-500 mt-3 pt-3 border-t border-white/5 font-mono">
+                  Próximo passo: <code className="text-emerald-400">git commit -m "..."</code>
+                </p>
               )}
             </div>
 
@@ -1335,6 +1562,86 @@ export function GitSimulator({ onBack }: Props) {
               )}
             </div>
           </div>
+
+          {/* Remote panel (origin) */}
+          {repo.remote.enabled && (() => {
+            const localBranch = headBranchName(repo);
+            const localHead = localBranch ? repo.branches[localBranch] : null;
+            const remoteHead = localBranch ? repo.remote.branches[localBranch] : null;
+            // calcula ahead/behind
+            let ahead = 0, behind = 0;
+            if (localHead && remoteHead && localHead !== remoteHead) {
+              const localAnc = ancestors(repo, localHead);
+              const remoteAnc = new Set<string>();
+              const stack = [remoteHead];
+              while (stack.length) {
+                const h = stack.pop()!;
+                if (remoteAnc.has(h)) continue;
+                remoteAnc.add(h);
+                const c = repo.remote.commits[h] ?? repo.commits[h];
+                if (c) stack.push(...c.parents);
+              }
+              localAnc.forEach((h) => { if (!remoteAnc.has(h)) ahead++; });
+              remoteAnc.forEach((h) => { if (!localAnc.has(h)) behind++; });
+            } else if (localHead && !remoteHead) ahead = 1;
+            const inSync = ahead === 0 && behind === 0 && localHead === remoteHead;
+            const remoteBranches = Object.keys(repo.remote.branches);
+            return (
+              <div className="bg-slate-900/60 border border-fuchsia-500/20 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Cloud className="w-4 h-4 text-fuchsia-400" />
+                  <h5 className="text-xs font-bold uppercase tracking-widest text-fuchsia-400">Remote · origin</h5>
+                  <span className="text-[10px] text-slate-500 font-mono">github.com (simulado)</span>
+                  <div className="ml-auto flex items-center gap-2 text-[10px] font-mono">
+                    {inSync ? (
+                      <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> em sincronia</span>
+                    ) : (
+                      <>
+                        {ahead > 0 && <span className="text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-1.5 rounded">↑ {ahead} ahead</span>}
+                        {behind > 0 && <span className="text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 rounded">↓ {behind} behind</span>}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Branches no remote</p>
+                    <div className="space-y-1">
+                      {remoteBranches.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhuma branch publicada)</p>}
+                      {remoteBranches.map((b) => {
+                        const rh = repo.remote.branches[b];
+                        const lh = repo.branches[b];
+                        const same = rh === lh;
+                        return (
+                          <div key={b} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded bg-slate-950/50 border border-white/5">
+                            <GitBranch className="w-3 h-3 text-fuchsia-400" />
+                            <span className="text-fuchsia-300">origin/{b}</span>
+                            <span className="text-slate-600 ml-auto">{rh.slice(0, 7)}</span>
+                            {same && <span className="text-emerald-400 text-[9px]">✓</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Sugestão</p>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      {inSync && <>Tudo sincronizado. Continue trabalhando localmente.</>}
+                      {!inSync && ahead > 0 && behind === 0 && (
+                        <>Você tem <span className="text-emerald-300">{ahead}</span> commit(s) à frente. Use <code className="text-emerald-300">git push</code> pra publicar.</>
+                      )}
+                      {!inSync && ahead === 0 && behind > 0 && (
+                        <>O remote tem <span className="text-amber-300">{behind}</span> commit(s) novo(s). Use <code className="text-amber-300">git pull</code> pra sincronizar.</>
+                      )}
+                      {!inSync && ahead > 0 && behind > 0 && (
+                        <>Histórico divergente: <span className="text-emerald-300">{ahead}↑</span> e <span className="text-amber-300">{behind}↓</span>. <code className="text-amber-300">git pull</code> primeiro, depois <code className="text-emerald-300">git push</code>.</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Right column: terminal */}
           <div
