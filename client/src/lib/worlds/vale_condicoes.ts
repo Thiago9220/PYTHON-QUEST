@@ -62,7 +62,7 @@ export const VALE_CONDICOES_WORLD: World = {
       id: "py-cond-03",
       worldId: "vale-condicoes",
       title: "Níveis de Acesso Multi-Layer",
-      description: "Use if, elif e else. Se 'nivel' for 1, printe 'Acesso Baixo'. Se for 2, 'Acesso Medio'. Se for 3, 'Acesso Alto'.",
+      description: "Use if e elif. Se 'nivel' for 1, printe 'Acesso Baixo'. Se for 2, 'Acesso Medio'. Se for 3, 'Acesso Alto'.",
       narrative: "O sistema de segurança possui várias camadas. Você deve identificar em qual camada seu token de acesso se encaixa para abrir as portas corretas.",
       difficulty: "intermediario",
       setupCode: "nivel = 2",

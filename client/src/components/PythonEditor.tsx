@@ -27,6 +27,21 @@ export default function PythonEditor({ code, onChange, isRunning, pythonReady }:
         <textarea
           value={code}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Tab") {
+              e.preventDefault();
+              const start = e.currentTarget.selectionStart;
+              const end = e.currentTarget.selectionEnd;
+              const newCode = code.substring(0, start) + "    " + code.substring(end);
+              onChange(newCode);
+              
+              // Set cursor position after the next render
+              setTimeout(() => {
+                const target = e.target as HTMLTextAreaElement;
+                target.selectionStart = target.selectionEnd = start + 4;
+              }, 0);
+            }
+          }}
           spellCheck={false}
           className="w-full h-full p-6 bg-transparent text-sky-100 font-mono text-sm resize-none focus:outline-none selection:bg-sky-500/30 placeholder:text-slate-600 transition-colors"
           placeholder="# Invoque seus comandos aqui..."

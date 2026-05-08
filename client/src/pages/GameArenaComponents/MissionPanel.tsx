@@ -91,8 +91,12 @@ function HintCarousel({ hints }: { hints: { text: string }[] }) {
 
   // Update index when new hint arrives
   useEffect(() => {
-    setCurrentIndex(hints.length - 1);
+    if (hints.length > 0) {
+      setCurrentIndex(hints.length - 1);
+    }
   }, [hints.length]);
+
+  if (!hints || hints.length === 0) return null;
 
   const currentHint = hints[currentIndex];
 
