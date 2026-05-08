@@ -21,6 +21,7 @@ import { useGame } from "@/contexts/GameContext";
 import { getChallengeById, getWorldById } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
 import { AnswerRevealModal } from "@/components/AnswerRevealModal";
+import { WorldCompletionModal } from "@/components/WorldCompletionModal";
 import { toast } from "sonner";
 import { soundManager } from "@/lib/sounds";
 import { useChallengeEngine } from "@/hooks/useChallengeEngine";
@@ -53,6 +54,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const [showCodex, setShowCodex] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [hasNotifiedStruggle, setHasNotifiedStruggle] = useState(false);
 
   useEffect(() => {
@@ -103,6 +105,17 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const totalChallenges = world.challenges.length;
   const themeColor = world.color || "#0ea5e9";
   const answerCode = challenge.solution ?? challenge.hints[challenge.hints.length - 1]?.text ?? challenge.expectedOutput;
+
+  // Trigger completion modal on correct answer if it's the last challenge
+  useEffect(() => {
+    if (engine.isCorrect && challengeNumber === totalChallenges) {
+      const timer = setTimeout(() => {
+        setShowCompletionModal(true);
+        soundManager.playSuccess();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [engine.isCorrect, challengeNumber, totalChallenges]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden selection:bg-sky-500/30">
@@ -315,6 +328,14 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
           />
         )}
       </AnimatePresence>
+      <WorldCompletionModal 
+        isOpen={showCompletionModal} 
+        onClose={() => {
+          setShowCompletionModal(false);
+          onBack();
+        }}
+        world={world}
+      />
     </div>
   );
 }

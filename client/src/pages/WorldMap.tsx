@@ -11,7 +11,7 @@ import TutorialTour, { TourStep } from "@/components/TutorialTour";
 import { useState } from "react";
 
 const WORLD_TAGS: Record<string, string> = {
-  "vila-variaveis": "print, variáveis",
+  "vila-variaveis": "print, variáveis, strings",
   "vale-condicoes": "if, else",
   "montanha-loops": "for, range",
   "floresta-funcoes": "def, parâmetros",
