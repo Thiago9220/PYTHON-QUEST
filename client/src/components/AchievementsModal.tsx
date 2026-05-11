@@ -23,6 +23,13 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
+  const getFallbackIcon = (id: string) => {
+    if (id.includes("xp")) return <Zap className="h-8 w-8 text-amber-400" />;
+    if (id.includes("world")) return <Award className="h-8 w-8 text-sky-400" />;
+    if (id.includes("hint")) return <BookOpen className="h-8 w-8 text-emerald-400" />;
+    return <Trophy className="h-8 w-8 text-slate-400" />;
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -30,7 +37,7 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-sky-950/25 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div
@@ -102,7 +109,16 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                             : "border-white/5 bg-slate-950"
                         }`}>
                           {ach.icon.startsWith("/") ? (
-                            <img src={ach.icon} alt={ach.title} className="h-full w-full object-cover p-2" loading="lazy" />
+                            <img 
+                              src={ach.icon} 
+                              alt={ach.title} 
+                              className="h-full w-full object-cover p-2" 
+                              loading="lazy" 
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).parentElement!.innerHTML = `<div class="flex items-center justify-center h-full w-full">${ach.id.includes('xp') ? '⚡' : ach.id.includes('world') ? '🌎' : '🏆'}</div>`;
+                              }}
+                            />
                           ) : (
                             <span className="text-3xl">{ach.icon}</span>
                           )}

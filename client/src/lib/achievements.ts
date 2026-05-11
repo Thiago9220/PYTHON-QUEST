@@ -29,7 +29,8 @@ export const ACHIEVEMENTS_ROOT: Achievement[] = [
   { id: "two_worlds_complete", title: "Explorador Duplo", description: "Complete 2 mundos inteiros", icon: "/achievements/double_explorer.png", unlocked: false, titleReward: "Navegador Aurora" },
   { id: "all_worlds_started", title: "Passaporte Carimbado", description: "Complete pelo menos 1 desafio em cada mundo", icon: "/achievements/passport.png", unlocked: false, titleReward: "Viajante Python" },
   { id: "all_complete", title: "Mestre do Protocolo", description: "Complete todos os desafios do jogo", icon: "/achievements/master.png", unlocked: false, titleReward: "Mestre do Protocolo" },
-
+  { id: "streak_3", title: "Hacker Persistente", description: "Mantenha uma sequência de 3 dias ativos", icon: "/achievements/streak.png", unlocked: false, titleReward: "Infiltrador" },
+  { id: "streak_7", title: "Fantasma do Sistema", description: "Mantenha uma sequência de 7 dias ativos", icon: "/achievements/ghost.png", unlocked: false, titleReward: "Sombra do Core" },
 ];
 
 export function getAchievementConditions(state: any) {
@@ -55,6 +56,8 @@ export function getAchievementConditions(state: any) {
     first_try_1: firstTryCompleted.length >= 3,
     two_worlds_complete: worldsCompleted >= 2,
     all_complete: completed.length === totalInGame && totalInGame > 0,
+    streak_3: state.streak >= 3,
+    streak_7: state.streak >= 7,
     all_worlds_started: WORLDS.every((world) =>
       world.challenges.some((c) => completedIds.includes(c.id))
     ),
