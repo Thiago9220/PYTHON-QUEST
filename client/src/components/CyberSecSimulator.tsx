@@ -115,6 +115,15 @@ interface AttackStep {
   defense: string;
 }
 
+interface IntroSlide {
+  title: string;
+  eyebrow: string;
+  body: string;
+  icon: LucideIcon;
+  items: { label: string; text: string }[];
+  command?: string;
+}
+
 const severityWeight: Record<Weakness["severity"], number> = {
   low: 4,
   medium: 8,
@@ -261,6 +270,80 @@ const ATTACK_STEPS: AttackStep[] = [
     objective: "Fechar a cadeia com causa, evidência, impacto, risco e recomendações defensivas.",
     safety: "O relatório descreve o caminho em linguagem didática, sem payloads ou procedimentos abusáveis.",
     defense: "A correção prioriza controles que quebram a cadeia de ataque.",
+  },
+];
+
+const INTRO_SLIDES: IntroSlide[] = [
+  {
+    eyebrow: "Visão geral",
+    title: "O que é este laboratório",
+    icon: ShieldAlert,
+    body: "Este módulo ensina cibersegurança como um ciclo completo: você entende o ataque, observa evidências, toma decisões de defesa e mede se o risco caiu.",
+    items: [
+      { label: "Tudo é simulado", text: "Os alvos, logs, alertas e ataques são fictícios. Nenhum comando toca sistemas reais." },
+      { label: "Aprendizado guiado", text: "Cada etapa mostra o motivo técnico e a defesa relacionada." },
+      { label: "Objetivo", text: "Sair sabendo conectar ameaça, evidência, impacto e controle." },
+    ],
+  },
+  {
+    eyebrow: "Modos",
+    title: "Como escolher o modo certo",
+    icon: BookOpen,
+    body: "O laboratório tem três formas de estudar. Você pode alternar entre elas a qualquer momento sem perder o progresso do nível atual.",
+    items: [
+      { label: "Modo guiado", text: "Mostra uma missão por vez, com conceito, comando recomendado e painéis abertos sob demanda." },
+      { label: "Modo SOC", text: "Mostra terminal, mapa, alertas, base de conhecimento e controles ao mesmo tempo." },
+      { label: "Modo Ataque", text: "Abre a AttackBox didática para entender a cadeia ofensiva sem payload real." },
+    ],
+  },
+  {
+    eyebrow: "Terminal",
+    title: "O que é o terminal",
+    icon: TerminalSquare,
+    body: "O terminal é a área de interação do simulador. Você digita comandos curtos para revelar evidências, concluir missões e aplicar controles.",
+    command: "help",
+    items: [
+      { label: "Prompt", text: "`analyst@soc` indica investigação defensiva; `student@attackbox` indica simulação ofensiva." },
+      { label: "Comandos", text: "Use `help` para ver a lista completa. Exemplos: `inventario`, `logs portal-web`, `ambiente ataque`." },
+      { label: "Histórico", text: "Use as setas do teclado para recuperar comandos já digitados." },
+    ],
+  },
+  {
+    eyebrow: "Métricas",
+    title: "Como ler o topo da tela",
+    icon: Activity,
+    body: "As métricas resumem o estado do laboratório e ajudam você a entender se está melhorando a postura de segurança.",
+    items: [
+      { label: "Risco", text: "Pontuação de 0 a 100 calculada com exposição, fraquezas abertas e controles fracos." },
+      { label: "Alertas", text: "Mostra quantos alertas foram contidos em relação ao total existente." },
+      { label: "Controles fortes", text: "Conta quantos controles já foram reforçados nos ativos." },
+      { label: "Nível ou Ataque", text: "No modo normal mostra o nível; no modo ataque mostra etapas ofensivas concluídas." },
+    ],
+  },
+  {
+    eyebrow: "Painéis",
+    title: "O que cada painel representa",
+    icon: Radar,
+    body: "Os painéis transformam o terminal em uma investigação visual. Eles mostram onde estão os ativos, quais alertas existem e quais defesas ainda estão fracas.",
+    items: [
+      { label: "Ambiente", text: "Mapa dos ativos, zonas e sinais de risco no cenário." },
+      { label: "Alertas", text: "Fila de eventos suspeitos que precisam ser investigados, contidos ou fechados." },
+      { label: "Ativos e Controles", text: "Lista de sistemas, fraquezas abertas e estado dos controles defensivos." },
+      { label: "Base de Conhecimento", text: "Resumo rápido de princípios, ataques e defesas para consultar durante o exercício." },
+    ],
+  },
+  {
+    eyebrow: "Fluxo de estudo",
+    title: "Como avançar sem se perder",
+    icon: Crosshair,
+    body: "Siga a missão atual primeiro. Quando quiser explorar, use a Base de Conhecimento e o Modo Ataque para entender o outro lado do mesmo problema.",
+    command: "inventario",
+    items: [
+      { label: "1. Leia a missão", text: "Ela indica o comando principal e o motivo de segurança daquela etapa." },
+      { label: "2. Execute no terminal", text: "O simulador responde com evidência, risco ou correção." },
+      { label: "3. Veja os painéis", text: "Confirme se alertas, controles e risco mudaram." },
+      { label: "4. Conecte ataque e defesa", text: "Use o Modo Ataque para entender como a falha seria explorada de forma conceitual." },
+    ],
   },
 ];
 
@@ -911,6 +994,7 @@ export function CyberSecSimulator({ onBack }: Props) {
   const [phase, setPhase] = useState<"intro" | "playing">(() =>
     localStorage.getItem("cyber_sim_intro") ? "playing" : "intro"
   );
+  const [introStep, setIntroStep] = useState(0);
   const [levelIdx, setLevelIdx] = useState(0);
   const [missionIdx, setMissionIdx] = useState(0);
   const [state, setState] = useState<LabState>(() => LEVELS[0].starter());
@@ -943,6 +1027,14 @@ export function CyberSecSimulator({ onBack }: Props) {
     0
   );
   const totalControls = assets.reduce((sum, asset) => sum + Object.values(asset.controls).length, 0);
+  const introSlide = INTRO_SLIDES[introStep];
+  const IntroIcon = introSlide.icon;
+  const introDone = introStep === INTRO_SLIDES.length - 1;
+
+  const startLab = () => {
+    localStorage.setItem("cyber_sim_intro", "true");
+    setPhase("playing");
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -1729,8 +1821,8 @@ export function CyberSecSimulator({ onBack }: Props) {
         />
         <div className="absolute inset-0 bg-slate-950/75" />
 
-        <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center">
-          <div className="w-full border border-white/10 bg-slate-950/80 p-6 shadow-2xl backdrop-blur-md rounded-lg">
+        <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl items-center">
+          <div className="w-full rounded-lg border border-white/10 bg-slate-950/80 p-6 shadow-2xl backdrop-blur-md">
             <div className="mb-6 flex items-center justify-between gap-4">
               <Button variant="ghost" onClick={onBack} className="text-slate-300 hover:text-white">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1741,50 +1833,104 @@ export function CyberSecSimulator({ onBack }: Props) {
               </div>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="mb-6 grid gap-2 sm:grid-cols-6">
+              {INTRO_SLIDES.map((slide, index) => (
+                <button
+                  key={slide.title}
+                  onClick={() => setIntroStep(index)}
+                  className={`h-2 rounded-full transition ${
+                    index <= introStep ? "bg-sky-300" : "bg-white/10 hover:bg-white/20"
+                  }`}
+                  aria-label={`Abrir introdução ${index + 1}: ${slide.title}`}
+                />
+              ))}
+            </div>
+
+            <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
                 <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300">
-                  <ShieldAlert className="h-7 w-7" />
+                  <IntroIcon className="h-7 w-7" />
+                </div>
+                <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-sky-300">
+                  {introSlide.eyebrow}
                 </div>
                 <h1 className="mb-4 text-4xl font-black leading-tight text-white md:text-5xl">
-                  Cyber Security Lab
+                  {introSlide.title}
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                  Treine cibersegurança em um laboratório completo: use uma AttackBox fictícia para entender a cadeia
-                  ofensiva, investigue evidências no SOC e aplique controles para reduzir risco.
+                  {introSlide.body}
                 </p>
+
+                {introSlide.command && (
+                  <div className="mt-5 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 font-mono text-sm text-emerald-100">
+                    <span className="text-emerald-300">Comando exemplo:</span> {introSlide.command}
+                  </div>
+                )}
+
                 <div className="mt-7 flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                    onClick={() => setIntroStep((current) => Math.max(0, current - 1))}
+                    disabled={introStep === 0}
+                  >
+                    Voltar etapa
+                  </Button>
                   <Button
                     className="bg-rose-600 text-white hover:bg-rose-700"
                     onClick={() => {
-                      localStorage.setItem("cyber_sim_intro", "true");
-                      setPhase("playing");
+                      if (introDone) startLab();
+                      else setIntroStep((current) => Math.min(INTRO_SLIDES.length - 1, current + 1));
                     }}
                   >
-                    <TerminalSquare className="mr-2 h-4 w-4" />
-                    Iniciar Laboratório
+                    {introDone ? <TerminalSquare className="mr-2 h-4 w-4" /> : <ChevronDown className="-rotate-90 mr-2 h-4 w-4" />}
+                    {introDone ? "Entrar no Laboratório" : "Próxima explicação"}
                   </Button>
-                  <Button variant="outline" className="border-white/15 bg-white/5 text-white hover:bg-white/10" onClick={onBack}>
-                    Sair
+                  <Button variant="ghost" className="text-slate-300 hover:text-white" onClick={startLab}>
+                    Pular introdução
                   </Button>
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                {[
-                  { icon: BookOpen, title: "Princípios", text: "CIA, menor privilégio, zero trust e defesa em profundidade." },
-                  { icon: Bug, title: "AttackBox", text: "Reconhecimento, enumeração, exploração simulada, impacto e relatório." },
-                  { icon: ShieldCheck, title: "Defesas", text: "MFA, segmentação, hardening, logs, EDR, backups e resposta." },
-                  { icon: FileSearch, title: "Investigação", text: "Análise de logs, triagem de alertas, contenção e relatório final." },
-                ].map((item) => (
-                  <div key={item.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-                    <div className="mb-3 flex items-center gap-3">
-                      <item.icon className="h-5 w-5 text-sky-300" />
-                      <h2 className="font-black text-white">{item.title}</h2>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                      O que observar
                     </div>
-                    <p className="text-sm leading-6 text-slate-400">{item.text}</p>
+                    <div className="text-xs font-bold text-slate-500">
+                      {introStep + 1}/{INTRO_SLIDES.length}
+                    </div>
                   </div>
-                ))}
+                  <div className="space-y-3">
+                    {introSlide.items.map((item) => (
+                      <div key={item.label} className="rounded-md border border-white/10 bg-black/20 p-3">
+                        <div className="mb-1 flex items-center gap-2 text-sm font-black text-white">
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-sky-300" />
+                          {item.label}
+                        </div>
+                        <p className="text-xs leading-5 text-slate-400">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { label: "Defesa", icon: ShieldCheck, text: "Investigar, conter e corrigir." },
+                    { label: "Ataque", icon: Bug, text: "Entender a cadeia sem risco real." },
+                    { label: "Evidência", icon: FileSearch, text: "Decidir com logs e alertas." },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.label} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
+                        <Icon className="mb-2 h-4 w-4 text-emerald-300" />
+                        <div className="text-xs font-black uppercase tracking-[0.14em] text-white">{item.label}</div>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-500">{item.text}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -2257,21 +2403,21 @@ function KnowledgePanel({ tab, onChange }: { tab: KnowledgeTab; onChange: (tab: 
 
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="mb-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
           <Icon className="h-4 w-4 text-emerald-300" />
           Base de Conhecimento
         </div>
-        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-white/10 bg-white/[0.04] p-1 md:w-auto">
+        <div className="grid w-full grid-cols-3 rounded-md border border-white/10 bg-white/[0.04] p-1">
           {(["principios", "ataques", "defesas"] as KnowledgeTab[]).map((item) => (
             <button
               key={item}
               onClick={() => onChange(item)}
-              className={`shrink-0 rounded py-0.5 text-center text-[9px] font-black uppercase sm:text-[10px] ${
+              className={`min-w-0 rounded px-1 py-1 text-center text-[8px] font-black uppercase transition focus:outline-none focus-visible:outline-none sm:text-[10px] ${
                 tab === item ? "text-white" : "text-slate-500 hover:text-slate-200"
               }`}
             >
-              <span className={`inline-block py-1 ${tab === item ? "border-b-2 border-sky-300" : "border-b-2 border-transparent"}`}>
+              <span className={`inline-block whitespace-nowrap border-b-2 py-1 ${tab === item ? "border-sky-300" : "border-transparent"}`}>
                 {tabLabels[item]}
               </span>
             </button>
