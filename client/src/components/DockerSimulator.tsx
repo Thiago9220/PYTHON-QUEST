@@ -651,6 +651,7 @@ export function DockerSimulator({ onBack }: Props) {
   const [missionIdx, setMissionIdx] = useState(0);
   const [lines, setLines] = useState<Line[]>([
     { type: "info", text: "Docker Simulator iniciado. Digite 'help' para ver os comandos." },
+    { type: "info", text: "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar o Docker Desktop (docker.com)." },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -817,6 +818,9 @@ export function DockerSimulator({ onBack }: Props) {
       out("  docker-compose up [-d] | down | ps");
       out("  curl localhost:<porta>               testa porta mapeada");
       out("  clear | reset | help");
+      out("");
+      out("⚠️ Estes comandos funcionam apenas neste ambiente simulado.");
+      out("Para usá-los no seu PC, instale o Docker Desktop em docker.com.");
       out("Atalhos: ↑/↓ histórico • Tab autocomplete contextual • clique no Dockerfile/compose para editar");
       return;
     }

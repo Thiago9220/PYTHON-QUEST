@@ -418,6 +418,7 @@ export function GitSimulator({ onBack }: Props) {
   const [missionIdx, setMissionIdx] = useState(0);
   const [lines, setLines] = useState<Line[]>([
     { type: "info", text: "Bem-vindo ao Git Simulator. Digite 'help' para ver os comandos." },
+    { type: "info", text: "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar o Git (git-scm.com)." },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -502,6 +503,9 @@ export function GitSimulator({ onBack }: Props) {
       out("");
       out("  clear | reset | help");
       out("Atalhos: ↑/↓ histórico  •  Tab autocomplete contextual  •  Clique em arquivo para editar");
+      out("");
+      out("⚠️ Estes comandos funcionam apenas neste ambiente simulado.");
+      out("Para usá-los no seu PC, instale o Git real em git-scm.com.");
       return;
     }
     if (cmd === "clear") { setLines([]); return; }

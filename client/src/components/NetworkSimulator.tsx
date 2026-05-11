@@ -633,6 +633,7 @@ export function NetworkSimulator({ onBack }: Props) {
   const [missionIdx, setMissionIdx] = useState(0);
   const [lines, setLines] = useState<Line[]>([
     { type: "info", text: "NetSim v2.0 inicializado. Digite 'help' para comandos." },
+    { type: "info", text: "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar as ferramentas (ex: Nmap, Wireshark)." },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -1023,6 +1024,9 @@ export function NetworkSimulator({ onBack }: Props) {
       out("");
       out("  clear | reset | help");
       out("Atalhos: ↑/↓ histórico  •  Tab autocomplete contextual  •  clique nos hosts do mapa");
+      out("");
+      out("⚠️ Estes comandos funcionam apenas neste ambiente simulado.");
+      out("Para usá-los no seu PC, instale as ferramentas reais (nmap.org, wireshark.org, etc).");
       return;
     }
 
