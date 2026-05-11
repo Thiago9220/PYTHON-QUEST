@@ -54,7 +54,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           newStreak = 0;
         }
       }
-      return { ...action.state, streak: newStreak };
+
+      // Sync achievements with ROOT list (important for adding new ones)
+      const syncedAchievements = ACHIEVEMENTS_ROOT.map(rootAch => {
+        const existing = action.state.achievements?.find(a => a.id === rootAch.id);
+        if (existing) {
+          return { ...rootAch, unlocked: existing.unlocked, unlockedAt: existing.unlockedAt };
+        }
+        return rootAch;
+      });
+
+      return { 
+        ...action.state, 
+        streak: newStreak,
+        achievements: syncedAchievements
+      };
     }
 
     case "RESET_STATE":

@@ -38,98 +38,140 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 18, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-2xl shadow-sky-950/10"
+            className="flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-slate-950 shadow-2xl shadow-black/50"
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-sky-100 bg-gradient-to-r from-sky-50 to-emerald-50 p-5 md:p-7">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-sky-200 bg-white text-sky-700">
-                  <Trophy className="h-6 w-6" />
+            <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-gradient-to-r from-slate-900/50 via-slate-950 to-slate-900/50 p-6 md:p-8">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/20">
+                  <Trophy className="h-7 w-7" />
+                  <div className="absolute -inset-1 animate-pulse rounded-2xl bg-amber-400/20 blur-sm" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="truncate text-xl font-black text-slate-950 md:text-2xl">Conquistas</h2>
-                  <p className="mt-1 truncate font-mono text-xs uppercase tracking-widest text-slate-500">
-                    {unlockedAchievements.length} de {state.achievements.length} desbloqueadas
-                  </p>
+                  <h2 className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-2xl font-black tracking-tight text-transparent md:text-3xl">Conquistas</h2>
+                  <div className="mt-1 flex items-center gap-3">
+                    <div className="h-1.5 w-32 overflow-hidden rounded-full bg-slate-900 border border-white/5">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(unlockedAchievements.length / state.achievements.length) * 100}%` }}
+                        className="h-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_0_10px_rgba(251,191,36,0.3)]"
+                      />
+                    </div>
+                    <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      {unlockedAchievements.length} / {state.achievements.length} Desbloqueadas
+                    </p>
+                  </div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl text-slate-500 hover:text-slate-950">
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10 rounded-full bg-white/5 text-slate-400 transition-all hover:bg-white/10 hover:text-white">
                 <X className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {unlockedAchievements.map((ach) => (
-                  <motion.div
-                    key={ach.id}
-                    layoutId={ach.id}
-                    className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-emerald-200 bg-white text-2xl text-emerald-700">
-                        {ach.icon.startsWith("/") ? (
-                          <img src={ach.icon} alt={ach.title} className="h-full w-full object-cover p-1" loading="lazy" decoding="async" />
-                        ) : (
-                          ach.icon
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="truncate font-bold text-slate-950">{ach.title}</h4>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">{ach.description}</p>
-                      </div>
-                    </div>
+            <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-8">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {state.achievements.map((ach) => {
+                  const isUnlocked = ach.unlocked;
+                  return (
+                    <motion.div
+                      key={ach.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      className={`group relative flex flex-col gap-4 rounded-3xl border p-5 transition-all duration-300 ${
+                        isUnlocked 
+                          ? "border-emerald-500/30 bg-slate-900/40 shadow-lg shadow-emerald-500/5 hover:border-emerald-500/50 hover:bg-slate-900/60" 
+                          : "border-white/5 bg-slate-900/20 opacity-40 grayscale"
+                      }`}
+                    >
+                      {!isUnlocked && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-slate-950/20 backdrop-blur-[1px]">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 shadow-xl border border-white/10">
+                            <Lock className="h-4 w-4 text-slate-500" />
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="mt-auto flex items-center justify-between border-t border-emerald-100 pt-3">
-                      {ach.titleReward ? (
+                      {isUnlocked && (
+                         <div className="absolute -inset-0.5 bg-gradient-to-br from-emerald-500/20 to-sky-500/20 rounded-3xl blur opacity-0 group-hover:opacity-100 transition duration-500" />
+                      )}
+
+                      <div className="relative z-20 flex items-start gap-4">
+                        <div className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border transition-transform duration-500 group-hover:scale-110 ${
+                          isUnlocked 
+                            ? "border-emerald-500/20 bg-slate-950" 
+                            : "border-white/5 bg-slate-950"
+                        }`}>
+                          {ach.icon.startsWith("/") ? (
+                            <img src={ach.icon} alt={ach.title} className="h-full w-full object-cover p-2" loading="lazy" />
+                          ) : (
+                            <span className="text-3xl">{ach.icon}</span>
+                          )}
+                        </div>
                         <div className="min-w-0">
-                          <span className="block font-mono text-[10px] uppercase tracking-widest text-slate-500">Titulo</span>
-                          <span className="block truncate text-xs font-semibold text-emerald-800">{ach.titleReward}</span>
+                          <h4 className={`truncate font-bold tracking-tight ${isUnlocked ? "text-white" : "text-slate-500"}`}>
+                            {ach.title}
+                          </h4>
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-400">
+                            {ach.description}
+                          </p>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                          <Check className="h-3 w-3" />
-                          Concluido
+                      </div>
+
+                      {isUnlocked && (
+                        <div className="relative z-20 mt-auto flex items-center justify-between border-t border-white/5 pt-4">
+                          {ach.titleReward ? (
+                            <div className="min-w-0">
+                              <span className="block font-mono text-[9px] font-bold uppercase tracking-widest text-slate-600">Recompensa</span>
+                              <span className="block truncate text-xs font-black text-emerald-400">{ach.titleReward}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
+                              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/10">
+                                <Check className="h-2.5 w-2.5" />
+                              </div>
+                              Concluído
+                            </div>
+                          )}
+
+                          {ach.titleReward && (
+                            state.equippedTitle === ach.titleReward ? (
+                              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase text-emerald-400">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Ativo
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => dispatch({ type: "SET_TITLE", title: ach.titleReward! })}
+                                className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] font-black uppercase text-sky-400 transition-all hover:bg-sky-500 hover:text-white"
+                              >
+                                Equipar
+                              </button>
+                            )
+                          )}
                         </div>
                       )}
-
-                      {ach.titleReward && (
-                        state.equippedTitle === ach.titleReward ? (
-                          <span className="rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-bold uppercase text-white">Ativo</span>
-                        ) : (
-                          <button
-                            onClick={() => dispatch({ type: "SET_TITLE", title: ach.titleReward! })}
-                            className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-bold uppercase text-sky-700 hover:border-sky-400"
-                          >
-                            Equipar
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-
-                {lockedAchievements.map((ach) => (
-                  <div key={ach.id} className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 opacity-75">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400">
-                      <Lock className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="truncate font-bold text-slate-600">{ach.title}</h4>
-                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{ach.description}</p>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-sky-100 bg-white p-4 md:p-5">
-              <Button onClick={onClose} className="w-full bg-sky-600 font-bold hover:bg-sky-700 md:w-auto md:px-8">
-                Voltar
+            <div className="flex shrink-0 items-center justify-between border-t border-white/10 bg-slate-900/50 p-6 md:px-8">
+              <p className="hidden text-xs font-medium text-slate-500 md:block">
+                Continue hackeando o sistema para desbloquear mais registros.
+              </p>
+              <Button 
+                onClick={onClose} 
+                className="h-12 w-full rounded-2xl bg-white text-slate-950 px-10 font-black transition-all hover:bg-slate-200 active:scale-95 md:w-auto"
+              >
+                Retornar ao Terminal
               </Button>
             </div>
+
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
+
