@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi, ShieldAlert } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -24,9 +24,10 @@ type Props = {
   onOpenGitSimulator: () => void;
   onOpenDockerSimulator: () => void;
   onOpenNetworkSimulator: () => void;
+  onOpenCyberSecSimulator: () => void;
 };
 
-export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator, onOpenNetworkSimulator }: Props) {
+export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator, onOpenNetworkSimulator, onOpenCyberSecSimulator }: Props) {
   const {
     state,
     dispatch,
@@ -158,6 +159,17 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 title="Aprender Redes"
               >
                 <Wifi className="w-4 h-4" />
+              </Button>
+
+              <Button
+                id="tutorial-cybersec"
+                variant="ghost"
+                size="icon"
+                onClick={onOpenCyberSecSimulator}
+                className="h-9 w-9 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+                title="Aprender CyberSegurança"
+              >
+                <ShieldAlert className="w-4 h-4" />
               </Button>
             </div>
 
