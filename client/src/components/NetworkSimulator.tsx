@@ -2390,25 +2390,70 @@ export function NetworkSimulator({ onBack }: Props) {
           </div>
         </div>
 
-        {/* Level selector */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {LEVELS.map((lv, i) => {
-            const isUnlocked = unlocked.has(i);
-            const isDone = completed.has(i);
-            const isCurrent = i === levelIdx;
-            return (
-              <button key={lv.id} disabled={!isUnlocked} onClick={() => isUnlocked && loadLevel(i)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${
-                  isCurrent ? "bg-cyan-500/20 border-cyan-400 text-cyan-300" :
-                  isDone ? "bg-cyan-500/5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" :
-                  isUnlocked ? "bg-slate-900 border-white/10 text-slate-300 hover:border-white/30" :
-                  "bg-slate-900/50 border-white/5 text-slate-600 cursor-not-allowed"
-                }`}>
-                {!isUnlocked ? <Lock className="w-3 h-3" /> : isDone ? <Trophy className="w-3 h-3" /> : <span className="text-[10px]">{lv.id}</span>}
-                Nível {lv.id}: {lv.title}
-              </button>
-            );
-          })}
+        {/* Level selector - Compact Progress Path */}
+        <div className="relative mb-8 mt-2 px-2">
+          {/* Progress Track Background */}
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-900 -translate-y-1/2 z-0" />
+          
+          <div className="relative z-10 flex items-center justify-between gap-2 overflow-x-auto pb-4 no-scrollbar">
+            {LEVELS.map((lv, i) => {
+              const isUnlocked = unlocked.has(i);
+              const isDone = completed.has(i);
+              const isCurrent = i === levelIdx;
+              
+              return (
+                <div key={lv.id} className="flex items-center gap-2 shrink-0">
+                  {i > 0 && (
+                    <div className={`h-0.5 w-4 md:w-8 transition-colors duration-500 ${
+                      isUnlocked ? "bg-cyan-500/40" : "bg-slate-900"
+                    }`} />
+                  )}
+                  
+                  <button
+                    disabled={!isUnlocked}
+                    onClick={() => isUnlocked && loadLevel(i)}
+                    className={`relative group flex items-center transition-all duration-500 ${
+                      isCurrent ? "px-4 py-2 rounded-full bg-cyan-500/20 border-cyan-400 border" : "w-10 h-10 rounded-full border items-center justify-center"
+                    } ${
+                      isCurrent ? "text-cyan-300" :
+                      isDone ? "bg-cyan-500/5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" :
+                      isUnlocked ? "bg-slate-900 border-white/10 text-slate-400 hover:border-white/30" :
+                      "bg-slate-900/50 border-white/5 text-slate-700 cursor-not-allowed"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="shrink-0 flex items-center justify-center">
+                        {!isUnlocked ? (
+                          <Lock className="w-3.5 h-3.5" />
+                        ) : isDone ? (
+                          <Trophy className="w-4 h-4" />
+                        ) : (
+                          <span className="text-xs font-mono font-bold">{lv.id}</span>
+                        )}
+                      </div>
+                      
+                      {isCurrent && (
+                        <motion.span 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                        >
+                          {lv.title}
+                        </motion.span>
+                      )}
+                    </div>
+
+                    {/* Tooltip on hover for non-current levels */}
+                    {!isCurrent && isUnlocked && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                        {lv.title}
+                      </div>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Briefing */}
