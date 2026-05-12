@@ -177,6 +177,9 @@ const DEFAULT_NETWORKS: Network[] = [
   { id: "no0none00001", name: "none", driver: "null", scope: "local", createdAt: Date.now() },
 ];
 
+const BUILTIN_NETWORKS = ["bridge", "host", "none"];
+const isBuiltinNetwork = (name: string) => BUILTIN_NETWORKS.includes(name);
+
 const baseState = (): State => ({
   registry: [...REGISTRY_BASE],
   images: [],
@@ -1480,6 +1483,17 @@ export function DockerSimulator({ onBack }: Props) {
         }
       });
       if (!services.length) { io.err("Erro: nenhum serviço encontrado no compose"); return null; }
+      if (!next.networks.some((n) => n.name === "proj_default")) {
+        next.networks.push({ id: randId(), name: "proj_default", driver: "bridge", scope: "local", createdAt: Date.now() });
+      }
+      if (services.includes("db") && !next.volumes.some((v) => v.name === "dbdata")) {
+        next.volumes.push({
+          name: "dbdata",
+          driver: "local",
+          mountpoint: "/var/lib/docker/volumes/dbdata/_data",
+          createdAt: Date.now(),
+        });
+      }
       services.forEach((svc) => {
         const id = randId();
         next.containers.push({
@@ -1501,6 +1515,7 @@ export function DockerSimulator({ onBack }: Props) {
     if (sub === "down") {
       if (!s.composeUp) { io.err("Compose não está rodando"); return null; }
       next.containers = next.containers.filter((c) => !c.name.startsWith("proj_"));
+      next.networks = next.networks.filter((n) => n.name !== "proj_default");
       next.composeUp = false;
       io.out("Stopping proj_web_1 ... done");
       io.out("Stopping proj_db_1 ... done");
@@ -1841,6 +1856,52 @@ export function DockerSimulator({ onBack }: Props) {
   const stopped = state.containers.filter((c) => c.status === "stopped");
   const showDockerfile = !!state.dockerfile.trim();
   const showCompose = level.id === 4;
+  const completedMissionCount = levelDone ? level.missions.length : missionIdx;
+  const missionProgress = Math.round((completedMissionCount / level.missions.length) * 100);
+  const hasMountedStorage = state.volumes.length > 0 || state.containers.some((c) => c.volumes.length > 0);
+  const hasCustomNetwork = state.networks.some((n) => !isBuiltinNetwork(n.name));
+  const usesCustomNetwork = state.containers.some((c) => !isBuiltinNetwork(c.network));
+  const showVolumesPanel = level.id >= 3 || hasMountedStorage;
+  const showNetworksPanel = level.id >= 8 || hasCustomNetwork || usesCustomNetwork;
+  const showInfraPanels = showVolumesPanel || showNetworksPanel;
+
+  const terminalPanel = (
+    <div
+      onClick={() => inputRef.current?.focus()}
+      className="bg-slate-950 border border-sky-500/40 rounded-2xl overflow-hidden flex flex-col h-[30rem] cursor-text shadow-[0_0_34px_-10px_rgba(56,189,248,0.55)] focus-within:border-sky-300 focus-within:shadow-[0_0_48px_-10px_rgba(56,189,248,0.8)] transition-all xl:h-[34rem]"
+    >
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-slate-900/80">
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+        <span className="ml-2 text-[11px] text-slate-500 font-mono">~/projeto $</span>
+        <span className="hidden min-w-0 flex-1 truncate text-[10px] text-sky-300 font-mono uppercase tracking-widest sm:block">
+          {levelDone ? "nível concluído" : mission.hint}
+        </span>
+        <span className="text-[10px] text-sky-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
+        {lines.map((l, i) => (
+          <pre key={i} className={`whitespace-pre-wrap break-words ${
+            l.type === "in" ? "text-white" :
+            l.type === "ok" ? "text-emerald-400" :
+            l.type === "err" ? "text-red-400" :
+            l.type === "info" ? "text-sky-300" : "text-slate-400"
+          }`}>{l.text}</pre>
+        ))}
+        <form onSubmit={onSubmit} className="flex items-center gap-2 pt-1">
+          <span className="text-sky-400 font-bold">$</span>
+          <input ref={inputRef} value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            spellCheck={false} autoComplete="off"
+            placeholder={levelDone ? "Escolha o próximo nível" : mission.hint}
+            className="flex-1 bg-transparent outline-none text-white caret-sky-400 placeholder:text-slate-600 placeholder:italic" />
+          <span className="w-2 h-4 bg-sky-400 animate-pulse" aria-hidden />
+        </form>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
@@ -1972,112 +2033,173 @@ export function DockerSimulator({ onBack }: Props) {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {/* Top: registry + local images + containers */}
-          <div className="grid lg:grid-cols-3 gap-4">
+        {/* Estado do Docker (registry + locais + containers) — acima do terminal para visibilidade imediata do feedback */}
+        <div className="mb-4 grid lg:grid-cols-3 gap-4">
 
-            {/* Registry */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3 text-fuchsia-400">
-                <Cloud className="w-4 h-4" />
-                <h5 className="text-xs font-bold uppercase tracking-widest">Docker Hub (Registry)</h5>
-              </div>
-              <div className="space-y-1 max-h-44 overflow-auto">
-                {state.registry.map((i) => {
-                  const local = state.images.some((l) => l.name === i.name && l.tag === i.tag);
-                  return (
-                    <div key={i.name + i.tag} className={`flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded border ${local ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-slate-950/50 border-white/5 text-slate-400"}`}>
-                      <span>{i.name}:{i.tag}</span>
-                      <span className="text-[10px] text-slate-500">{local ? "✓ baixada" : i.size}</span>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Registry */}
+          <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-fuchsia-400">
+              <Cloud className="w-4 h-4" />
+              <h5 className="text-xs font-bold uppercase tracking-widest">Docker Hub (Registry)</h5>
             </div>
-
-            {/* Local images */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3 text-sky-400">
-                <Package className="w-4 h-4" />
-                <h5 className="text-xs font-bold uppercase tracking-widest">Imagens Locais ({state.images.length})</h5>
-              </div>
-              <div className="space-y-1 max-h-44 overflow-auto">
-                {state.images.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhuma imagem baixada)</p>}
-                {state.images.map((i) => (
-                  <div key={i.id} className="flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded bg-slate-950/50 border border-white/5">
-                    <span className="text-sky-300">{i.name}:{i.tag}</span>
-                    <span className="text-[10px] text-slate-500">{i.id.slice(0, 7)} · {i.size}{i.builtFromDockerfile ? " · 🔨" : ""}</span>
+            <div className="space-y-1 max-h-36 overflow-auto">
+              {state.registry.map((i) => {
+                const local = state.images.some((l) => l.name === i.name && l.tag === i.tag);
+                return (
+                  <div key={i.name + i.tag} className={`flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded border ${local ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-slate-950/50 border-white/5 text-slate-400"}`}>
+                    <span>{i.name}:{i.tag}</span>
+                    <span className="text-[10px] text-slate-500">{local ? "✓ baixada" : i.size}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Containers */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3 text-emerald-400">
-                <ContainerIcon className="w-4 h-4" />
-                <h5 className="text-xs font-bold uppercase tracking-widest">Containers</h5>
-              </div>
-              <div className="space-y-1 max-h-44 overflow-auto">
-                {running.length === 0 && stopped.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhum container)</p>}
-                {running.map((c) => (
-                  <div key={c.id} className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2 text-xs font-mono">
-                    <div className="flex items-center justify-between">
-                      <span className="text-emerald-300 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        {c.name}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{c.id.slice(0, 7)}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">{c.imageRef}</div>
-                    {c.ports.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-amber-300">
-                        <Network className="w-3 h-3" />
-                        {c.ports.map((p) => `${p.host}:${p.container}`).join(", ")}
-                      </div>
-                    )}
-                    {c.volumes.length > 0 && (
-                      <div className="flex items-center gap-1 mt-0.5 text-[10px] text-violet-300">
-                        <HardDrive className="w-3 h-3" />
-                        {c.volumes.map((v) => `${v.host}→${v.container}`).join(", ")}
-                      </div>
-                    )}
-                    {Object.keys(c.env).length > 0 && (
-                      <div className="flex items-start gap-1 mt-0.5 text-[10px] text-emerald-300/80">
-                        <span className="font-bold mt-0.5">ENV</span>
-                        <span className="truncate" title={Object.entries(c.env).map(([k, v]) => `${k}=${v}`).join("\n")}>
-                          {Object.keys(c.env).slice(0, 2).join(", ")}{Object.keys(c.env).length > 2 ? ` +${Object.keys(c.env).length - 2}` : ""}
-                        </span>
-                      </div>
-                    )}
-                    {c.network !== "bridge" && (
-                      <div className="flex items-center gap-1 mt-0.5 text-[10px] text-cyan-300/80">
-                        <Network className="w-3 h-3" /> {c.network}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {stopped.map((c) => (
-                  <div key={c.id} className="bg-slate-950/50 border border-white/5 rounded p-2 text-xs font-mono opacity-60">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                        {c.name}
-                      </span>
-                      <span className="text-[10px] text-slate-600">stopped</span>
-                    </div>
-                    <div className="text-[10px] text-slate-600 mt-0.5">{c.imageRef}</div>
-                  </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Row: Volumes + Networks */}
-          <div className="grid lg:grid-cols-2 gap-4">
+          {/* Local images */}
+          <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sky-400">
+              <Package className="w-4 h-4" />
+              <h5 className="text-xs font-bold uppercase tracking-widest">Imagens Locais ({state.images.length})</h5>
+            </div>
+            <div className="space-y-1 max-h-36 overflow-auto">
+              {state.images.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhuma imagem baixada)</p>}
+              {state.images.map((i) => (
+                <div key={i.id} className="flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded bg-slate-950/50 border border-white/5">
+                  <span className="text-sky-300">{i.name}:{i.tag}</span>
+                  <span className="text-[10px] text-slate-500">{i.id.slice(0, 7)} · {i.size}{i.builtFromDockerfile ? " · 🔨" : ""}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            {/* Volumes */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+          {/* Containers */}
+          <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-emerald-400">
+              <ContainerIcon className="w-4 h-4" />
+              <h5 className="text-xs font-bold uppercase tracking-widest">Containers</h5>
+            </div>
+            <div className="space-y-1 max-h-36 overflow-auto">
+              {running.length === 0 && stopped.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhum container)</p>}
+              {running.map((c) => (
+                <div key={c.id} className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2 text-xs font-mono">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-300 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {c.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500">{c.id.slice(0, 7)}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{c.imageRef}</div>
+                  {c.ports.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1 text-[10px] text-amber-300">
+                      <Network className="w-3 h-3" />
+                      {c.ports.map((p) => `${p.host}:${p.container}`).join(", ")}
+                    </div>
+                  )}
+                  {c.volumes.length > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-violet-300">
+                      <HardDrive className="w-3 h-3" />
+                      {c.volumes.map((v) => `${v.host}→${v.container}`).join(", ")}
+                    </div>
+                  )}
+                  {Object.keys(c.env).length > 0 && (
+                    <div className="flex items-start gap-1 mt-0.5 text-[10px] text-emerald-300/80">
+                      <span className="font-bold mt-0.5">ENV</span>
+                      <span className="truncate" title={Object.entries(c.env).map(([k, v]) => `${k}=${v}`).join("\n")}>
+                        {Object.keys(c.env).slice(0, 2).join(", ")}{Object.keys(c.env).length > 2 ? ` +${Object.keys(c.env).length - 2}` : ""}
+                      </span>
+                    </div>
+                  )}
+                  {c.network !== "bridge" && (
+                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-cyan-300/80">
+                      <Network className="w-3 h-3" /> {c.network}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {stopped.map((c) => (
+                <div key={c.id} className="bg-slate-950/50 border border-white/5 rounded p-2 text-xs font-mono opacity-60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                      {c.name}
+                    </span>
+                    <span className="text-[10px] text-slate-600">stopped</span>
+                  </div>
+                  <div className="text-[10px] text-slate-600 mt-0.5">{c.imageRef}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          {terminalPanel}
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-sky-400">Roteiro do Nível</p>
+                <h3 className="mt-1 text-sm font-black text-white">{level.title}</h3>
+              </div>
+              <div className="rounded-lg border border-sky-500/25 bg-sky-500/10 px-2.5 py-1 text-right">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-sky-300">Progresso</p>
+                <p className="text-base font-black text-white">{completedMissionCount}/{level.missions.length}</p>
+              </div>
+            </div>
+
+            <div className="mb-4 h-2 overflow-hidden rounded-full bg-slate-950">
+              <div className="h-full rounded-full bg-sky-400 transition-all duration-500" style={{ width: `${missionProgress}%` }} />
+            </div>
+
+            <div className="max-h-[25rem] space-y-2 overflow-y-auto pr-1">
+              {level.missions.map((item, index) => {
+                const done = index < completedMissionCount;
+                const current = !levelDone && index === missionIdx;
+                return (
+                  <div
+                    key={`${level.id}-${item.id}-${index}`}
+                    className={`rounded-lg border p-3 transition ${
+                      done ? "border-emerald-500/25 bg-emerald-500/10" :
+                      current ? "border-sky-400/40 bg-sky-500/10" :
+                      "border-white/5 bg-slate-950/40 opacity-70"
+                    }`}
+                  >
+                    <div className="mb-2 flex items-start gap-2">
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                        done ? "bg-emerald-400 text-slate-950" :
+                        current ? "bg-sky-400 text-slate-950" :
+                        "bg-slate-800 text-slate-500"
+                      }`}>
+                        {done ? "✓" : index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold leading-5 text-white">{item.title}</p>
+                        <code className="mt-1 block truncate rounded border border-white/10 bg-black/25 px-2 py-1 text-[11px] text-sky-200">
+                          {item.hint}
+                        </code>
+                      </div>
+                    </div>
+                    <p className={`text-[10px] font-mono uppercase tracking-widest ${
+                      done ? "text-emerald-300" : current ? "text-sky-300" : "text-slate-600"
+                    }`}>
+                      {done ? "concluído" : current ? "em andamento" : "próximo"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Row: Volumes + Networks */}
+          {showInfraPanels && (
+            <div className={`grid gap-4 ${showVolumesPanel && showNetworksPanel ? "lg:grid-cols-2" : ""}`}>
+
+              {/* Volumes */}
+              {showVolumesPanel && (
+                <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3 text-violet-400">
                 <HardDrive className="w-4 h-4" />
                 <h5 className="text-xs font-bold uppercase tracking-widest">Volumes ({state.volumes.length})</h5>
@@ -2101,10 +2223,12 @@ export function DockerSimulator({ onBack }: Props) {
                   </div>
                 ))}
               </div>
-            </div>
+                </div>
+              )}
 
-            {/* Networks */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+              {/* Networks */}
+              {showNetworksPanel && (
+                <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3 text-cyan-400">
                 <Network className="w-4 h-4" />
                 <h5 className="text-xs font-bold uppercase tracking-widest">Networks ({state.networks.length})</h5>
@@ -2129,8 +2253,10 @@ export function DockerSimulator({ onBack }: Props) {
                   );
                 })}
               </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Topologia visual (renderiza só se houver network custom com 1+ containers) */}
           {state.networks.some((n) => !["bridge", "host", "none"].includes(n.name) && state.containers.some((c) => c.network === n.name)) && (
@@ -2210,39 +2336,6 @@ export function DockerSimulator({ onBack }: Props) {
             </div>
           )}
 
-          {/* Terminal */}
-          <div
-            onClick={() => inputRef.current?.focus()}
-            className="bg-slate-950 border border-sky-500/30 rounded-2xl overflow-hidden flex flex-col h-96 cursor-text shadow-[0_0_30px_-10px_rgba(56,189,248,0.4)] focus-within:border-sky-400 focus-within:shadow-[0_0_40px_-10px_rgba(56,189,248,0.7)] transition-all"
-          >
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-slate-900/80">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-              <span className="ml-2 text-[11px] text-slate-500 font-mono flex-1">~/projeto $</span>
-              <span className="text-[10px] text-sky-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
-            </div>
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
-              {lines.map((l, i) => (
-                <pre key={i} className={`whitespace-pre-wrap break-words ${
-                  l.type === "in" ? "text-white" :
-                  l.type === "ok" ? "text-emerald-400" :
-                  l.type === "err" ? "text-red-400" :
-                  l.type === "info" ? "text-sky-300" : "text-slate-400"
-                }`}>{l.text}</pre>
-              ))}
-              <form onSubmit={onSubmit} className="flex items-center gap-2 pt-1">
-                <span className="text-sky-400 font-bold">$</span>
-                <input ref={inputRef} value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  spellCheck={false} autoComplete="off"
-                  placeholder="docker pull nginx"
-                  className="flex-1 bg-transparent outline-none text-white caret-sky-400 placeholder:text-slate-600 placeholder:italic" />
-                <span className="w-2 h-4 bg-sky-400 animate-pulse" aria-hidden />
-              </form>
-            </div>
-          </div>
         </div>
       </div>
 

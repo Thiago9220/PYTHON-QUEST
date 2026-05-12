@@ -79,6 +79,17 @@ interface PacketLog {
   ts: number;
 }
 
+interface FirewallRule {
+  id: number;
+  chain: "INPUT" | "OUTPUT" | "FORWARD";
+  action: "ACCEPT" | "DROP" | "REJECT";
+  proto?: "tcp" | "udp" | "icmp" | "all";
+  dport?: number;
+  sport?: number;
+  src?: string;
+  dst?: string;
+}
+
 interface NetState {
   myIp: string;
   gateway: string;
@@ -97,6 +108,10 @@ interface NetState {
   connections: Connection[];
   // sessão SSH ativa (Fase 3: shell pós-acesso)
   sshSession?: { ip: string; user: string; cwd: string };
+  // Blue Team — Defesas (Nível 9+)
+  managedHost?: string;          // IP do host que VOCÊ administra (alvo das defesas)
+  firewallRules: FirewallRule[]; // regras iptables no managedHost
+  firewallSaved?: boolean;       // iptables-save executado
   // mission flags
   _ifconfigViewed?: boolean;
   _arpViewed?: boolean;
@@ -105,6 +120,7 @@ interface NetState {
   _digViewed?: boolean;
   _netstatViewed?: boolean;
   _tcpdumpViewed?: boolean;
+  _iptablesViewed?: boolean;
 }
 
 interface LevelDef {
@@ -267,6 +283,7 @@ const initialNet = (): NetState => ({
   packets: [],
   packetLog: [],
   connections: [],
+  firewallRules: [],
 });
 
 const longestCommonPrefix = (arr: string[]): string => {
@@ -354,6 +371,14 @@ const computeNetCompletions = (input: string, s: NetState): string[] => {
     const smbIps = Object.values(s.hosts).filter((h) => h.ports.some((p) => p.port === 445 && p.state === "open") && s.discovered.has(h.ip)).map((h) => h.ip);
     return suggestFor(smbIps, last);
   }
+  // Blue Team: iptables
+  if (head === "iptables") return suggestFor(["-L", "-A", "-D", "-F", "-P"], last);
+  if (head === "iptables -A" || head === "iptables -D") return suggestFor(["INPUT", "OUTPUT", "FORWARD"], last);
+  if (/^iptables -A (INPUT|OUTPUT|FORWARD)$/.test(head)) return suggestFor(["-p", "-s", "-d", "--dport", "-j"], last);
+  if (/-p$/.test(head)) return suggestFor(["tcp", "udp", "icmp", "all"], last);
+  if (/-j$/.test(head)) return suggestFor(["ACCEPT", "DROP", "REJECT"], last);
+  if (/--dport$/.test(head)) return suggestFor(["21", "22", "23", "25", "53", "80", "443", "445", "3306", "5432"], last);
+  if (/^iptables -A (INPUT|OUTPUT|FORWARD) .* -s$/.test(head)) return suggestFor(["192.168.1.42", "192.168.1.0/24", "0.0.0.0/0"], last);
 
   // Quando há sessão SSH ativa: sugerir comandos de shell remoto
   if (s.sshSession) {
@@ -390,6 +415,7 @@ const computeNetCompletions = (input: string, s: NetState): string[] => {
     "openssl s_client -connect ",
     "wireshark",
     "netstat -tuln", "tcpdump", "tcpdump -i eth0", "tcpdump host ", "tcpdump port ",
+    "iptables -L", "iptables -A INPUT ", "iptables -F", "iptables-save",
     "report",
     "help", "clear", "reset",
   ];
@@ -616,6 +642,62 @@ const LEVELS: LevelDef[] = [
         title: "Gere o relatório final do incidente",
         hint: "report",
         check: (s) => s.flags.has("investigation-done"),
+      },
+    ],
+  },
+  // ===== BLUE TEAM TRACK =====
+  {
+    id: 9,
+    title: "Hardening: Firewall (iptables)",
+    briefing: "Vire o jogo: agora você é o sysadmin do servidor web 192.168.1.50. A varredura nmap do Nível 3 mostrou portas demais abertas. Configure iptables para bloquear o que não precisa ficar exposto à subrede inteira e restrinja SSH só pra workstation admin (192.168.1.42).",
+    starter: () => {
+      const s = initialNet();
+      // contexto: você já mapeou a rede nos níveis anteriores
+      s.discovered.add("192.168.1.50");
+      s.discovered.add("192.168.1.77");
+      s.discovered.add("192.168.1.100");
+      s.discovered.add("192.168.1.150");
+      s.scanned.add("192.168.1.50");
+      // você é admin do web server
+      s.managedHost = "192.168.1.50";
+      return s;
+    },
+    missions: [
+      {
+        id: "list-rules",
+        title: "Liste as regras de firewall atuais",
+        hint: "iptables -L",
+        check: (s) => !!s._iptablesViewed,
+      },
+      {
+        id: "block-ftp",
+        title: "Bloqueie tentativas de conexão FTP (porta 21) na chain INPUT",
+        hint: "iptables -A INPUT -p tcp --dport 21 -j DROP",
+        check: (s) => s.firewallRules.some((r) => r.chain === "INPUT" && r.action === "DROP" && r.dport === 21),
+      },
+      {
+        id: "allow-ssh-admin",
+        title: "Permita SSH (22) só da workstation admin 192.168.1.42",
+        hint: "iptables -A INPUT -p tcp --dport 22 -s 192.168.1.42 -j ACCEPT",
+        check: (s) => s.firewallRules.some((r) => r.chain === "INPUT" && r.action === "ACCEPT" && r.dport === 22 && r.src === "192.168.1.42"),
+      },
+      {
+        id: "deny-ssh-others",
+        title: "Bloqueie SSH de qualquer outra origem",
+        hint: "iptables -A INPUT -p tcp --dport 22 -j DROP",
+        check: (s) => s.firewallRules.some((r) => r.chain === "INPUT" && r.action === "DROP" && r.dport === 22 && !r.src),
+      },
+      {
+        id: "save-rules",
+        title: "Persista as regras para sobreviver a reboot",
+        hint: "iptables-save > /etc/iptables/rules.v4",
+        check: (s) => !!s.firewallSaved,
+      },
+      {
+        id: "verify-nmap",
+        title: "Verifique de outro host: rode 'nmap 192.168.1.50' e veja a porta FTP filtrada",
+        hint: "nmap 192.168.1.50",
+        check: (s) => s.flags.has("firewall-verified"),
       },
     ],
   },
@@ -1014,6 +1096,14 @@ export function NetworkSimulator({ onBack }: Props) {
       out("  openssl s_client -connect <host>:<port>  inspeciona certificado TLS");
       out("  report                                relatório final");
       out("");
+      out("  BLUE TEAM / DEFESAS (Nível 9+)");
+      out("  iptables -L                           lista regras de firewall");
+      out("  iptables -A <chain> -p tcp --dport N [-s IP] -j ACCEPT|DROP");
+      out("                                        adiciona regra (chain: INPUT/OUTPUT/FORWARD)");
+      out("  iptables -D <chain> <num>             remove regra N da chain");
+      out("  iptables -F                           flush (limpa todas as regras)");
+      out("  iptables-save                         persiste regras em /etc/iptables/rules.v4");
+      out("");
       out("  PÓS-EXPLORAÇÃO (após sshpass bem-sucedido)");
       out("  ls/ls -la, cat, cd, pwd, whoami, id, uname -a, hostname, ps");
       out("  sudo -l                               vê o que pode rodar com sudo");
@@ -1242,6 +1332,130 @@ export function NetworkSimulator({ onBack }: Props) {
         return { ...next, _whoisViewed: true };
       }
 
+      // ===== BLUE TEAM: iptables / iptables-save =====
+      if (c === "iptables" || c === "iptables-save") {
+        if (!s.managedHost) {
+          err("iptables: você não está no shell de um host administrado (este comando estará disponível a partir do Nível 9).");
+          return s;
+        }
+        const host = s.hosts[s.managedHost];
+        const hostLabel = host?.hostname ?? s.managedHost;
+
+        // iptables-save → persiste e indica sucesso
+        if (c === "iptables-save") {
+          if (next.firewallRules.length === 0) {
+            err("iptables-save: nenhuma regra para salvar.");
+            return s;
+          }
+          out(`# Generated by iptables-save on ${hostLabel}`);
+          out(`*filter`);
+          out(`:INPUT ACCEPT [0:0]`);
+          out(`:FORWARD ACCEPT [0:0]`);
+          out(`:OUTPUT ACCEPT [0:0]`);
+          next.firewallRules.forEach((r) => {
+            const parts = [`-A ${r.chain}`];
+            if (r.proto) parts.push(`-p ${r.proto}`);
+            if (r.src) parts.push(`-s ${r.src}`);
+            if (r.dst) parts.push(`-d ${r.dst}`);
+            if (r.dport) parts.push(`--dport ${r.dport}`);
+            if (r.sport) parts.push(`--sport ${r.sport}`);
+            parts.push(`-j ${r.action}`);
+            out(parts.join(" "));
+          });
+          out(`COMMIT`);
+          out(`# Salvo em /etc/iptables/rules.v4`);
+          next.firewallSaved = true;
+          ok(`[+] Regras persistidas — sobreviverão a reboot.`);
+          return next;
+        }
+
+        const fwArgs = args.slice(1);
+        // iptables -L [-n] [-v]
+        if (fwArgs[0] === "-L" || fwArgs.includes("-L")) {
+          out(`Chain INPUT (policy ACCEPT)`);
+          out(`target     prot opt source               destination          dpt`);
+          const inputRules = next.firewallRules.filter((r) => r.chain === "INPUT");
+          if (inputRules.length === 0) out(`(no rules)`);
+          else inputRules.forEach((r) => {
+            const src = (r.src ?? "0.0.0.0/0").padEnd(20);
+            const dst = (r.dst ?? "0.0.0.0/0").padEnd(20);
+            const proto = (r.proto ?? "all").padEnd(4);
+            const dpt = r.dport ? `tcp dpt:${r.dport}` : "";
+            out(`${r.action.padEnd(10)} ${proto} --  ${src} ${dst} ${dpt}`);
+          });
+          out(``);
+          out(`Chain FORWARD (policy ACCEPT)`);
+          out(`target     prot opt source               destination`);
+          out(`(no rules)`);
+          out(``);
+          out(`Chain OUTPUT (policy ACCEPT)`);
+          out(`target     prot opt source               destination`);
+          out(`(no rules)`);
+          next._iptablesViewed = true;
+          return next;
+        }
+
+        // iptables -F  (flush)
+        if (fwArgs[0] === "-F" || fwArgs.includes("-F")) {
+          next.firewallRules = [];
+          ok(`[+] Todas as regras foram limpas.`);
+          return next;
+        }
+
+        // iptables -A <chain> [-p proto] [--dport N] [-s IP] [-j ACTION]
+        if (fwArgs[0] === "-A") {
+          const chain = (fwArgs[1] ?? "").toUpperCase() as FirewallRule["chain"];
+          if (chain !== "INPUT" && chain !== "OUTPUT" && chain !== "FORWARD") {
+            err(`iptables: chain inválida '${fwArgs[1]}'. Use INPUT, OUTPUT ou FORWARD.`);
+            return s;
+          }
+          let proto: FirewallRule["proto"] | undefined;
+          let dport: number | undefined;
+          let sport: number | undefined;
+          let src: string | undefined;
+          let dst: string | undefined;
+          let action: FirewallRule["action"] | undefined;
+          for (let i = 2; i < fwArgs.length; i++) {
+            const a = fwArgs[i];
+            if (a === "-p") proto = fwArgs[++i] as FirewallRule["proto"];
+            else if (a === "--dport") dport = Number(fwArgs[++i]);
+            else if (a === "--sport") sport = Number(fwArgs[++i]);
+            else if (a === "-s") src = fwArgs[++i];
+            else if (a === "-d") dst = fwArgs[++i];
+            else if (a === "-j") action = (fwArgs[++i] ?? "").toUpperCase() as FirewallRule["action"];
+          }
+          if (!action || (action !== "ACCEPT" && action !== "DROP" && action !== "REJECT")) {
+            err(`iptables: ação inválida — use -j ACCEPT | DROP | REJECT.`);
+            return s;
+          }
+          const rule: FirewallRule = {
+            id: next.firewallRules.length + 1,
+            chain, action, proto, dport, sport, src, dst,
+          };
+          next.firewallRules = [...next.firewallRules, rule];
+          ok(`[+] Regra adicionada: ${chain} ${action} ${proto ?? "all"}${dport ? ` dport=${dport}` : ""}${src ? ` src=${src}` : ""}`);
+          return next;
+        }
+
+        // iptables -D <chain> <num>
+        if (fwArgs[0] === "-D") {
+          const chain = (fwArgs[1] ?? "").toUpperCase();
+          const num = Number(fwArgs[2]);
+          const chainRules = next.firewallRules.filter((r) => r.chain === chain);
+          if (!num || num < 1 || num > chainRules.length) {
+            err(`iptables: regra ${num} inexistente em ${chain}.`);
+            return s;
+          }
+          const toRemove = chainRules[num - 1];
+          next.firewallRules = next.firewallRules.filter((r) => r.id !== toRemove.id);
+          ok(`[+] Regra ${num} removida de ${chain}.`);
+          return next;
+        }
+
+        err(`iptables: uso — iptables [-L | -A <chain> ... -j <ACTION> | -D <chain> <num> | -F]`);
+        return s;
+      }
+
       // nmap — agora com ranges, top-ports, -O, -sS/-sT/-sU, CIDR genérico, --script
       if (c === "nmap") {
         const rest = args.slice(1);
@@ -1346,9 +1560,30 @@ export function NetworkSimulator({ onBack }: Props) {
           logPacket(s.myIp, h.ip, isUdp ? "UDP" : "TCP", `${scanType} probe`);
           out(`Nmap scan report for ${h.hostname ?? h.ip} (${h.ip})`);
           out(`Host is up (${(Math.random() * 0.05).toFixed(4)}s latency).`);
+          // Blue Team: se este host tem firewall configurado, aplica regras
+          // (cenário simulado: scan vem de outro host pra revelar o efeito do firewall)
+          const isManaged = s.managedHost === h.ip;
+          const applyFw = (port: number, baseState: PortInfo["state"]): PortInfo["state"] => {
+            if (!isManaged || baseState === "closed") return baseState;
+            // primeira regra que dá match (chain=INPUT, proto=tcp/all, dport casa, sem src ou src=0.0.0.0/0)
+            // simula scan vindo de outra origem (ex: 192.168.1.99) — regra com src=.42 NÃO casa
+            const match = next.firewallRules.find((r) =>
+              r.chain === "INPUT" &&
+              (!r.proto || r.proto === "tcp" || r.proto === "all") &&
+              (!r.dport || r.dport === port) &&
+              (!r.src || r.src === "0.0.0.0/0")
+            );
+            if (match && (match.action === "DROP" || match.action === "REJECT")) return "filtered";
+            return baseState;
+          };
+          const filteredPorts = h.ports.map((p) => ({ ...p, state: applyFw(p.port, p.state) }));
           const portsToShow = portFilter
-            ? h.ports.filter((p) => portFilter!.includes(p.port))
-            : h.ports.filter((p) => p.state !== "closed");
+            ? filteredPorts.filter((p) => portFilter!.includes(p.port))
+            : filteredPorts.filter((p) => p.state !== "closed");
+          // mission check: se port 21 do managedHost aparece filtered, marca verificação
+          if (isManaged && filteredPorts.find((p) => p.port === 21)?.state === "filtered") {
+            next.flags.add("firewall-verified");
+          }
           const totalScanned = portFilter ? portFilter.length : 1000;
           if (!portsToShow.length) {
             out(`All ${totalScanned} scanned ports on ${h.hostname ?? h.ip} are closed`);
@@ -2360,6 +2595,46 @@ export function NetworkSimulator({ onBack }: Props) {
 
   // ---------- Simulator ----------
   const sel = selectedHost ? state.hosts[selectedHost] : null;
+  const completedMissionCount = levelDone ? level.missions.length : missionIdx;
+  const missionProgress = Math.round((completedMissionCount / level.missions.length) * 100);
+
+  const terminalPanel = (
+    <div
+      onClick={() => inputRef.current?.focus()}
+      className="bg-slate-950 border border-cyan-500/40 rounded-2xl overflow-hidden flex flex-col h-[22rem] cursor-text shadow-[0_0_34px_-10px_rgba(6,182,212,0.55)] focus-within:border-cyan-300 focus-within:shadow-[0_0_48px_-10px_rgba(6,182,212,0.8)] transition-all xl:h-[24rem]"
+    >
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-slate-900/80">
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+        <span className="ml-2 text-[11px] text-slate-500 font-mono">root@kali:~#</span>
+        <span className="hidden min-w-0 flex-1 truncate text-[10px] text-cyan-300 font-mono uppercase tracking-widest sm:block">
+          {levelDone ? "nível concluído" : mission.hint}
+        </span>
+        <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
+        {lines.map((l, i) => (
+          <pre key={i} className={`whitespace-pre-wrap break-words ${
+            l.type === "in" ? "text-white" :
+            l.type === "ok" ? "text-emerald-400" :
+            l.type === "err" ? "text-red-400" :
+            l.type === "info" ? "text-cyan-300" : "text-slate-400"
+          }`}>{l.text}</pre>
+        ))}
+        <form onSubmit={onSubmit} className="flex items-center gap-2 pt-1">
+          <span className="text-cyan-400 font-bold">$</span>
+          <input ref={inputRef} value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            spellCheck={false} autoComplete="off"
+            placeholder={levelDone ? "Escolha o próximo nível" : mission.hint}
+            className="flex-1 bg-transparent outline-none text-white caret-cyan-400 placeholder:text-slate-600 placeholder:italic" />
+          <span className="w-2 h-4 bg-cyan-400 animate-pulse" aria-hidden />
+        </form>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
@@ -2382,7 +2657,7 @@ export function NetworkSimulator({ onBack }: Props) {
               <Wifi className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Network Simulator</h2>
+              <h2 className="text-lg font-black text-white uppercase tracking-wider">Network & Pentest Simulator</h2>
               <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-[0.2em]">Operador {state.myIp}</p>
             </div>
           </div>
@@ -2491,7 +2766,46 @@ export function NetworkSimulator({ onBack }: Props) {
           </div>
         </div>
 
-        {/* Topology + Side panel */}
+        {/* Blue Team — painel de Defesas (firewall) — só aparece quando há managedHost */}
+        {state.managedHost && (
+          <div className="mb-4 bg-slate-900/60 border border-emerald-500/30 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-emerald-400">
+              <Shield className="w-4 h-4" />
+              <h5 className="text-xs font-bold uppercase tracking-widest">Defesas — Firewall do {state.hosts[state.managedHost]?.hostname ?? state.managedHost}</h5>
+              <span className="ml-auto text-[10px] text-slate-500 font-mono">
+                {state.firewallRules.length} regra{state.firewallRules.length === 1 ? "" : "s"}
+                {state.firewallSaved && <span className="ml-2 text-emerald-300">✓ persistido</span>}
+              </span>
+            </div>
+            {state.firewallRules.length === 0 ? (
+              <p className="text-[11px] text-slate-600 italic font-mono">
+                (nenhuma regra ativa — chains INPUT/OUTPUT/FORWARD usam policy ACCEPT por padrão)
+              </p>
+            ) : (
+              <div className="space-y-1">
+                <div className="grid grid-cols-[3rem_5rem_5rem_3rem_8rem_8rem_1fr] gap-2 text-[10px] font-mono uppercase tracking-widest text-slate-500 px-2">
+                  <span>#</span><span>chain</span><span>action</span><span>proto</span><span>src</span><span>dst</span><span>port</span>
+                </div>
+                {state.firewallRules.map((r, i) => (
+                  <div key={r.id} className={`grid grid-cols-[3rem_5rem_5rem_3rem_8rem_8rem_1fr] gap-2 text-[11px] font-mono px-2 py-1 rounded ${
+                    r.action === "ACCEPT" ? "bg-emerald-500/5 border border-emerald-500/20" :
+                    "bg-red-500/5 border border-red-500/20"
+                  }`}>
+                    <span className="text-slate-500">{i + 1}</span>
+                    <span className="text-slate-300">{r.chain}</span>
+                    <span className={r.action === "ACCEPT" ? "text-emerald-300 font-bold" : "text-red-300 font-bold"}>{r.action}</span>
+                    <span className="text-slate-400">{r.proto ?? "all"}</span>
+                    <span className="text-slate-400 truncate">{r.src ?? "any"}</span>
+                    <span className="text-slate-400 truncate">{r.dst ?? "any"}</span>
+                    <span className="text-cyan-300">{r.dport ? `dport ${r.dport}` : r.sport ? `sport ${r.sport}` : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Topology + Side panel — acima do terminal para feedback visual imediato */}
         <div className="grid lg:grid-cols-3 gap-4 mb-4">
           {/* Topology */}
           <div className="lg:col-span-2 bg-slate-900/60 border border-white/10 rounded-2xl p-4">
@@ -2599,9 +2913,41 @@ export function NetworkSimulator({ onBack }: Props) {
               {sel && <button onClick={() => setSelectedHost(null)} className="ml-auto text-slate-500 hover:text-white"><X className="w-3.5 h-3.5" /></button>}
             </div>
             {!sel ? (
-              <div className="text-center py-8">
-                <Radio className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-500">Clique num host descoberto no mapa para ver detalhes.</p>
+              <div className="space-y-3 py-2 text-xs">
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-cyan-300">
+                    <Radio className="w-4 h-4" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Próxima ação</span>
+                  </div>
+                  <p className="leading-5 text-slate-300">
+                    {levelDone ? "Nível concluído. Avance para abrir outro cenário." : "Execute a missão atual no terminal e observe o mapa mudar."}
+                  </p>
+                  {!levelDone && (
+                    <code className="mt-2 block rounded border border-white/10 bg-black/25 px-2 py-1.5 text-[11px] text-cyan-200">
+                      {mission.hint}
+                    </code>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-slate-950/40 p-3">
+                  <p className="mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Hosts clicáveis</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(state.discovered).filter((ip) => ip !== state.myIp && state.hosts[ip]).map((ip) => (
+                      <button
+                        key={ip}
+                        type="button"
+                        onClick={() => setSelectedHost(ip)}
+                        className="rounded border border-cyan-500/20 bg-cyan-500/5 px-2 py-1 font-mono text-[10px] text-cyan-200 hover:bg-cyan-500/10"
+                      >
+                        {state.hosts[ip]?.hostname?.split(".")[0] ?? ip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[11px] leading-5 text-slate-500">
+                  Depois de descobrir um host, clique nele. Depois de rodar <span className="font-mono text-cyan-300">nmap</span>, este painel mostra portas, versões, CVEs e credenciais suspeitas.
+                </p>
               </div>
             ) : (
               <div className="space-y-3 text-xs">
@@ -2677,6 +3023,65 @@ export function NetworkSimulator({ onBack }: Props) {
           </div>
         </div>
 
+        <div className="grid gap-4 mb-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          {terminalPanel}
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">Roteiro do Nível</p>
+                <h3 className="mt-1 text-sm font-black text-white">{level.title}</h3>
+              </div>
+              <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-right">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-cyan-300">Progresso</p>
+                <p className="text-base font-black text-white">{completedMissionCount}/{level.missions.length}</p>
+              </div>
+            </div>
+
+            <div className="mb-4 h-2 overflow-hidden rounded-full bg-slate-950">
+              <div className="h-full rounded-full bg-cyan-400 transition-all duration-500" style={{ width: `${missionProgress}%` }} />
+            </div>
+
+            <div className="max-h-[15rem] space-y-2 overflow-y-auto pr-1 xl:max-h-[17rem]">
+              {level.missions.map((item, index) => {
+                const done = index < completedMissionCount;
+                const current = !levelDone && index === missionIdx;
+                return (
+                  <div
+                    key={`${level.id}-${item.id}-${index}`}
+                    className={`rounded-lg border p-3 transition ${
+                      done ? "border-emerald-500/25 bg-emerald-500/10" :
+                      current ? "border-cyan-400/40 bg-cyan-500/10" :
+                      "border-white/5 bg-slate-950/40 opacity-70"
+                    }`}
+                  >
+                    <div className="mb-2 flex items-start gap-2">
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                        done ? "bg-emerald-400 text-slate-950" :
+                        current ? "bg-cyan-400 text-slate-950" :
+                        "bg-slate-800 text-slate-500"
+                      }`}>
+                        {done ? "✓" : index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold leading-5 text-white">{item.title}</p>
+                        <code className="mt-1 block truncate rounded border border-white/10 bg-black/25 px-2 py-1 text-[11px] text-cyan-200">
+                          {item.hint}
+                        </code>
+                      </div>
+                    </div>
+                    <p className={`text-[10px] font-mono uppercase tracking-widest ${
+                      done ? "text-emerald-300" : current ? "text-cyan-300" : "text-slate-600"
+                    }`}>
+                      {done ? "concluído" : current ? "em andamento" : "próximo"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
           <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3">
@@ -2697,37 +3102,6 @@ export function NetworkSimulator({ onBack }: Props) {
           </div>
         </div>
 
-        {/* Terminal */}
-        <div onClick={() => inputRef.current?.focus()}
-          className="bg-slate-950 border border-cyan-500/30 rounded-2xl overflow-hidden flex flex-col h-96 cursor-text shadow-[0_0_30px_-10px_rgba(6,182,212,0.4)] focus-within:border-cyan-400 focus-within:shadow-[0_0_40px_-10px_rgba(6,182,212,0.7)] transition-all">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-slate-900/80">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-            <span className="ml-2 text-[11px] text-slate-500 font-mono flex-1">root@kali:~#</span>
-            <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
-          </div>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
-            {lines.map((l, i) => (
-              <pre key={i} className={`whitespace-pre-wrap break-words ${
-                l.type === "in" ? "text-white" :
-                l.type === "ok" ? "text-emerald-400" :
-                l.type === "err" ? "text-red-400" :
-                l.type === "info" ? "text-cyan-300" : "text-slate-400"
-              }`}>{l.text}</pre>
-            ))}
-            <form onSubmit={onSubmit} className="flex items-center gap-2 pt-1">
-              <span className="text-cyan-400 font-bold">$</span>
-              <input ref={inputRef} value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                spellCheck={false} autoComplete="off"
-                placeholder="ifconfig"
-                className="flex-1 bg-transparent outline-none text-white caret-cyan-400 placeholder:text-slate-600 placeholder:italic" />
-              <span className="w-2 h-4 bg-cyan-400 animate-pulse" aria-hidden />
-            </form>
-          </div>
-        </div>
       </div>
 
       {/* Modal Wireshark — análise visual de pacotes capturados */}

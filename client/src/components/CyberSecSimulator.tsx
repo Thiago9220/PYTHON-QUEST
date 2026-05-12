@@ -18,7 +18,6 @@ import {
   RotateCcw,
   Server,
   Shield,
-  ShieldAlert,
   ShieldCheck,
   TerminalSquare,
   AlertTriangle,
@@ -26,6 +25,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ATTACK_STEPS,
+  ATTACK_TERMINAL_OUTPUT,
+  ATTACKS,
+  DEFENSES,
+  INTRO_SLIDES,
+  MISSION_CONCEPTS,
+  PRINCIPLES,
+} from "./cyber-lab/content";
 
 interface Props {
   onBack: () => void;
@@ -105,25 +113,6 @@ interface LevelDef {
   missions: Mission[];
 }
 
-interface AttackStep {
-  id: string;
-  title: string;
-  phase: string;
-  command: string;
-  objective: string;
-  safety: string;
-  defense: string;
-}
-
-interface IntroSlide {
-  title: string;
-  eyebrow: string;
-  body: string;
-  icon: LucideIcon;
-  items: { label: string; text: string }[];
-  command?: string;
-}
-
 const severityWeight: Record<Weakness["severity"], number> = {
   low: 4,
   medium: 8,
@@ -137,326 +126,6 @@ const controlPenalty: Record<ControlStatus, number> = {
   strong: 0,
 };
 
-const PRINCIPLES = [
-  {
-    title: "Confidencialidade, Integridade e Disponibilidade",
-    body: "Proteja dados sensíveis, garanta que não sejam alterados sem autorização e mantenha os serviços essenciais operando.",
-  },
-  {
-    title: "Menor privilégio",
-    body: "Cada usuário, serviço e chave deve ter apenas o acesso necessário. Menos permissão reduz o dano quando algo falha.",
-  },
-  {
-    title: "Defesa em profundidade",
-    body: "Combine camadas: MFA, segmentação, logs, EDR, backups, hardening, revisão de código e resposta a incidentes.",
-  },
-  {
-    title: "Zero trust",
-    body: "Não confie apenas na rede. Verifique identidade, dispositivo, contexto e comportamento antes de liberar acesso.",
-  },
-];
-
-const ATTACKS = [
-  {
-    title: "Phishing e engenharia social",
-    body: "O invasor tenta convencer a vítima a entregar credenciais, abrir anexos ou autorizar ações. Defesa: treinamento, filtros, MFA e verificação fora do canal.",
-  },
-  {
-    title: "Credential stuffing",
-    body: "Senhas vazadas em outros sites são testadas em contas corporativas. Defesa: MFA, senhas únicas, rate limit e monitoramento de login.",
-  },
-  {
-    title: "Injeção SQL",
-    body: "Entradas não validadas alteram consultas ao banco. Defesa: queries parametrizadas, validação, testes de segurança e logs de anomalia.",
-  },
-  {
-    title: "Ransomware",
-    body: "Malware criptografa dados e pressiona a organização. Defesa: EDR, menor privilégio, segmentação, patching e backups testados.",
-  },
-  {
-    title: "Exposição de serviços",
-    body: "SSH, banco ou painéis administrativos abertos na internet viram alvos. Defesa: VPN, allowlist, firewall e inventário contínuo.",
-  },
-];
-
-const DEFENSES = [
-  {
-    title: "Inventário e superfície de ataque",
-    body: "Você só protege bem o que conhece. Liste ativos, donos, portas, dados sensíveis, dependências e exposição externa.",
-  },
-  {
-    title: "Hardening",
-    body: "Remova padrões inseguros, feche portas, atualize sistemas, aplique headers, proteja segredos e automatize configurações seguras.",
-  },
-  {
-    title: "Detecção e resposta",
-    body: "Colete logs, crie alertas úteis, investigue evidências, contenha o impacto, erradique a causa e documente lições aprendidas.",
-  },
-  {
-    title: "Backups resilientes",
-    body: "Tenha cópias offline ou imutáveis, criptografadas, com acesso restrito e restauração testada regularmente.",
-  },
-];
-
-const ATTACK_STEPS: AttackStep[] = [
-  {
-    id: "attack_scope",
-    title: "Escopo e regras",
-    phase: "Preparação",
-    command: "ambiente ataque",
-    objective: "Entender quais alvos fictícios podem ser analisados e o que nunca deve sair do laboratório.",
-    safety: "Nada aqui executa tráfego real, força senha, entrega malware ou exibe payload reutilizável.",
-    defense: "Todo exercício ofensivo termina conectado a evidências e controles defensivos.",
-  },
-  {
-    id: "attack_recon_portal-web",
-    title: "Reconhecimento seguro",
-    phase: "Recon",
-    command: "recon portal-web",
-    objective: "Mapear serviços, zona, dono e exposição do Portal Web dentro do cenário simulado.",
-    safety: "A saída é pré-calculada e limitada aos ativos fictícios do jogo.",
-    defense: "Inventário, firewall e redução de superfície diminuem o que o atacante enxerga.",
-  },
-  {
-    id: "attack_fingerprint_portal-web",
-    title: "Fingerprint da aplicação",
-    phase: "Enumeração",
-    command: "fingerprint portal-web",
-    objective: "Relacionar tecnologia, cabeçalhos e comportamento anômalo a hipóteses de risco.",
-    safety: "O laboratório mostra sinais didáticos, sem instruções de exploração real.",
-    defense: "Headers, validação, logs e patching reduzem chance de abuso.",
-  },
-  {
-    id: "attack_sqli_portal-web",
-    title: "Exploração simulada",
-    phase: "Exploração",
-    command: "simular-sqli portal-web",
-    objective: "Ver o impacto conceitual de uma falha de entrada sem payload, bypass ou extração real.",
-    safety: "O teste só marca evidências fictícias e não ensina cadeia operacional reutilizável.",
-    defense: "Prepared statements, validação server-side, WAF e testes de regressão.",
-  },
-  {
-    id: "attack_creds_idp",
-    title: "Abuso de credenciais",
-    phase: "Identidade",
-    command: "cred-test idp",
-    objective: "Entender por que MFA, rate limit e alertas protegem contas privilegiadas.",
-    safety: "Não há lista de senhas, brute force, automação de login ou alvo externo.",
-    defense: "MFA resistente a phishing, bloqueio progressivo e revisão de sessões.",
-  },
-  {
-    id: "attack_pivot_db",
-    title: "Movimento lateral simulado",
-    phase: "Pós-exploração",
-    command: "pivot-sim db-core",
-    objective: "Mostrar como segmentação fraca pode aproximar um atacante do banco crítico.",
-    safety: "O pivot é narrativo e não abre shell, túnel, sessão ou comando real.",
-    defense: "Segmentação, ACL por origem, menor privilégio e auditoria.",
-  },
-  {
-    id: "attack_impact_db",
-    title: "Impacto e evidência",
-    phase: "Impacto",
-    command: "impacto-sim db-core",
-    objective: "Classificar dados afetados e transformar impacto técnico em prioridade de correção.",
-    safety: "O exercício não mostra dados reais nem técnica de exfiltração.",
-    defense: "Criptografia, auditoria, backups testados e resposta a incidentes.",
-  },
-  {
-    id: "attack_report",
-    title: "Relatório ofensivo",
-    phase: "Fechamento",
-    command: "relatorio ataque",
-    objective: "Fechar a cadeia com causa, evidência, impacto, risco e recomendações defensivas.",
-    safety: "O relatório descreve o caminho em linguagem didática, sem payloads ou procedimentos abusáveis.",
-    defense: "A correção prioriza controles que quebram a cadeia de ataque.",
-  },
-];
-
-const INTRO_SLIDES: IntroSlide[] = [
-  {
-    eyebrow: "Visão geral",
-    title: "O que é este laboratório",
-    icon: ShieldAlert,
-    body: "Este módulo ensina cibersegurança como um ciclo completo: você entende o ataque, observa evidências, toma decisões de defesa e mede se o risco caiu.",
-    items: [
-      { label: "Tudo é simulado", text: "Os alvos, logs, alertas e ataques são fictícios. Nenhum comando toca sistemas reais." },
-      { label: "Aprendizado guiado", text: "Cada etapa mostra o motivo técnico e a defesa relacionada." },
-      { label: "Objetivo", text: "Sair sabendo conectar ameaça, evidência, impacto e controle." },
-    ],
-  },
-  {
-    eyebrow: "Modos",
-    title: "Como escolher o modo certo",
-    icon: BookOpen,
-    body: "O laboratório tem três formas de estudar. Você pode alternar entre elas a qualquer momento sem perder o progresso do nível atual.",
-    items: [
-      { label: "Modo guiado", text: "Mostra uma missão por vez, com conceito, comando recomendado e painéis abertos sob demanda." },
-      { label: "Modo SOC", text: "Mostra terminal, mapa, alertas, base de conhecimento e controles ao mesmo tempo." },
-      { label: "Modo Ataque", text: "Abre a AttackBox didática para entender a cadeia ofensiva sem payload real." },
-    ],
-  },
-  {
-    eyebrow: "Terminal",
-    title: "O que é o terminal",
-    icon: TerminalSquare,
-    body: "O terminal é a área de interação do simulador. Você digita comandos curtos para revelar evidências, concluir missões e aplicar controles.",
-    command: "help",
-    items: [
-      { label: "Prompt", text: "`analyst@soc` indica investigação defensiva; `student@attackbox` indica simulação ofensiva." },
-      { label: "Comandos", text: "Use `help` para ver a lista completa. Exemplos: `inventario`, `logs portal-web`, `ambiente ataque`." },
-      { label: "Histórico", text: "Use as setas do teclado para recuperar comandos já digitados." },
-    ],
-  },
-  {
-    eyebrow: "Métricas",
-    title: "Como ler o topo da tela",
-    icon: Activity,
-    body: "As métricas resumem o estado do laboratório e ajudam você a entender se está melhorando a postura de segurança.",
-    items: [
-      { label: "Risco", text: "Pontuação de 0 a 100 calculada com exposição, fraquezas abertas e controles fracos." },
-      { label: "Alertas", text: "Mostra quantos alertas foram contidos em relação ao total existente." },
-      { label: "Controles fortes", text: "Conta quantos controles já foram reforçados nos ativos." },
-      { label: "Nível ou Ataque", text: "No modo normal mostra o nível; no modo ataque mostra etapas ofensivas concluídas." },
-    ],
-  },
-  {
-    eyebrow: "Painéis",
-    title: "O que cada painel representa",
-    icon: Radar,
-    body: "Os painéis transformam o terminal em uma investigação visual. Eles mostram onde estão os ativos, quais alertas existem e quais defesas ainda estão fracas.",
-    items: [
-      { label: "Ambiente", text: "Mapa dos ativos, zonas e sinais de risco no cenário." },
-      { label: "Alertas", text: "Fila de eventos suspeitos que precisam ser investigados, contidos ou fechados." },
-      { label: "Ativos e Controles", text: "Lista de sistemas, fraquezas abertas e estado dos controles defensivos." },
-      { label: "Base de Conhecimento", text: "Resumo rápido de princípios, ataques e defesas para consultar durante o exercício." },
-    ],
-  },
-  {
-    eyebrow: "Fluxo de estudo",
-    title: "Como avançar sem se perder",
-    icon: Crosshair,
-    body: "Siga a missão atual primeiro. Quando quiser explorar, use a Base de Conhecimento e o Modo Ataque para entender o outro lado do mesmo problema.",
-    command: "inventario",
-    items: [
-      { label: "1. Leia a missão", text: "Ela indica o comando principal e o motivo de segurança daquela etapa." },
-      { label: "2. Execute no terminal", text: "O simulador responde com evidência, risco ou correção." },
-      { label: "3. Veja os painéis", text: "Confirme se alertas, controles e risco mudaram." },
-      { label: "4. Conecte ataque e defesa", text: "Use o Modo Ataque para entender como a falha seria explorada de forma conceitual." },
-    ],
-  },
-];
-
-const MISSION_CONCEPTS: Record<string, { title: string; label: string; body: string; checks: string[] }> = {
-  principles: {
-    title: "Pense como defensor",
-    label: "Fundamento",
-    body: "Antes de usar ferramenta, defina o que precisa proteger e qual princípio justifica cada controle.",
-    checks: ["Identifique dado sensível", "Reduza permissão", "Adicione mais de uma camada"],
-  },
-  inventory: {
-    title: "Inventário defensivo",
-    label: "Superfície",
-    body: "Inventário não é lista decorativa: ele mostra dono, criticidade, zona e exposição de cada ativo.",
-    checks: ["Quem e o dono?", "Qual a criticidade?", "Está exposto na internet?"],
-  },
-  scan: {
-    title: "Superfície de ataque",
-    label: "Reconhecimento",
-    body: "Mapear portas ajuda a encontrar serviços que precisam ser fechados, filtrados ou monitorados.",
-    checks: ["Porta aberta tem justificativa?", "Administração está restrita?", "Serviço precisa de patch?"],
-  },
-  risk: {
-    title: "Priorização por risco",
-    label: "Decisão",
-    body: "Risco alto combina ativo crítico, exposição, falha explorável e controles fracos.",
-    checks: ["Impacto no negocio", "Probabilidade de exploração", "Controle compensatorio"],
-  },
-  attacks: {
-    title: "Entender ataques com segurança",
-    label: "Ameaça",
-    body: "O objetivo aqui é reconhecer padrões de ataque e conectar cada um a uma defesa concreta.",
-    checks: ["Qual é o alvo?", "Qual evidência aparece?", "Qual controle reduz o dano?"],
-  },
-  sqli: {
-    title: "Injeção SQL",
-    label: "Aplicacao",
-    body: "A falha nasce quando a entrada do usuário influencia uma consulta. A defesa principal é consulta parametrizada.",
-    checks: ["Não exibir payload real", "Registrar erro sem vazar dado", "Corrigir causa raiz"],
-  },
-  logs: {
-    title: "Logs viram evidência",
-    label: "Investigação",
-    body: "Logs bons ajudam a separar suspeita de incidente e mostram origem, horário, ação e impacto.",
-    checks: ["Evento de autenticação", "Erro de aplicação", "Ação administrativa"],
-  },
-  patch: {
-    title: "Corrigir a causa raiz",
-    label: "Correção",
-    body: "Bloquear um indicador ajuda, mas a proteção real vem de remover a falha que permitiu o ataque.",
-    checks: ["Prepared statements", "Validação server-side", "Teste de regressão"],
-  },
-  mfa: {
-    title: "Identidade forte",
-    label: "Acesso",
-    body: "Senhas vazam. MFA, rate limit e revisão de sessões reduzem o impacto de credenciais comprometidas.",
-    checks: ["MFA para admin", "Bloqueio progressivo", "Alerta de login anômalo"],
-  },
-  phishing: {
-    title: "Phishing",
-    label: "Pessoa",
-    body: "Ataques sociais exploram pressa e confiança. A defesa combina verificação, filtros, MFA e treinamento.",
-    checks: ["Remetente e domínio", "Anexo e link", "Pedido fora do padrão"],
-  },
-  edr: {
-    title: "Investigação no endpoint",
-    label: "Endpoint",
-    body: "EDR mostra processos, conexões e persistência. Use para confirmar impacto antes de erradicar.",
-    checks: ["Processo suspeito", "Origem da execução", "Conexão externa"],
-  },
-  isolate: {
-    title: "Contenção",
-    label: "Resposta",
-    body: "Isolar reduz movimento lateral e preserva evidências para entender o que aconteceu.",
-    checks: ["Limitar comunicação", "Preservar artefatos", "Avisar time afetado"],
-  },
-  block: {
-    title: "Indicadores confirmados",
-    label: "Bloqueio",
-    body: "Depois de confirmar um indicador, transforme-o em bloqueio e detecção nos controles certos.",
-    checks: ["DNS filtering", "Gateway de email", "EDR"],
-  },
-  firewall: {
-    title: "Acesso administrativo",
-    label: "Perímetro",
-    body: "SSH e painéis administrativos devem ficar atrás de VPN, allowlist e autenticação forte.",
-    checks: ["Fechar internet", "Exigir chave forte", "Revisar regras"],
-  },
-  dbacl: {
-    title: "Segmentação de dados",
-    label: "Banco",
-    body: "Banco crítico deve aceitar conexão apenas de origens necessárias e contas com menor privilégio.",
-    checks: ["ACL por origem", "Conta mínima", "Auditoria ligada"],
-  },
-  backup: {
-    title: "Backup que restaura",
-    label: "Resiliência",
-    body: "Backup só tem valor quando a restauração foi testada e o acesso ao cofre está protegido.",
-    checks: ["Restore testado", "Imutabilidade", "Acesso separado"],
-  },
-  incident: {
-    title: "Relatório de incidente",
-    label: "Melhoria",
-    body: "O fechamento registra causa, impacto, contenção, erradicação e melhorias para não repetir o problema.",
-    checks: ["Causa raiz", "Impacto", "Ações preventivas"],
-  },
-  score: {
-    title: "Segurança contínua",
-    label: "Postura",
-    body: "O score não é fim do trabalho; ele mostra se os principais riscos do laboratório foram reduzidos.",
-    checks: ["Risco abaixo do limite", "Alertas contidos", "Controles fortes"],
-  },
-};
 
 const createInitialState = (): LabState => ({
   assets: {
@@ -1230,13 +899,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "ambiente ataque") {
-      printLines("info", [
-        "AttackBox online em rede isolada: 172.16.50.10",
-        "Escopo autorizado: portal-web, idp, db-core e ws-17 fictícios deste laboratório.",
-        "Fora do escopo: internet real, contas reais, malware, brute force, exfiltração e payloads reutilizáveis.",
-        "Objetivo didático: entender a cadeia de ataque para escolher melhores controles defensivos.",
-        "Comece por: recon portal-web",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_scope);
       updateState((draft) => draft.completedActions.add("attack_scope"));
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -1244,15 +907,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "recon portal-web" || cmd === "recon 10.10.10.20") {
-      const asset = state.assets["portal-web"];
-      printLines("out", [
-        "Reconhecimento controlado do Portal Web:",
-        `  Alvo: ${asset.name} (${asset.ip}) | Zona: ${asset.zone} | Dono: ${asset.owner}`,
-        "  Serviço público: HTTPS para usuários externos.",
-        "  Sinal de risco: SSH também aparece exposto no cenário inicial.",
-        "  Próximo passo didático: fingerprint portal-web",
-        "Defesa relacionada: inventário contínuo, firewall, VPN e allowlist para administração.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_recon_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_recon_portal-web");
         draft.discovered.add("portal-web");
@@ -1264,14 +919,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "fingerprint portal-web") {
-      printLines("warn", [
-        "Fingerprint didático do Portal Web:",
-        "  Stack fictícia: app de login, banco PostgreSQL interno e logs no SOC.",
-        "  Observação: erro controlado de autenticação aparece quando a entrada é anômala.",
-        "  Hipótese de risco: validação fraca antes da consulta ao banco.",
-        "  Próximo passo didático: simular-sqli portal-web",
-        "Defesa relacionada: headers, validação server-side, prepared statements e testes automatizados.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_fingerprint_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_fingerprint_portal-web");
         draft.reviewedLogs.add("portal-web");
@@ -1282,14 +930,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "simular-sqli portal-web" || cmd === "simular-sqli 10.10.10.20") {
-      printLines("warn", [
-        "Exploração simulada de SQL Injection:",
-        "  Payload real: omitido por segurança.",
-        "  Resultado didático: a aplicação reagiu como se entrada não confiável alterasse a consulta.",
-        "  Evidência fictícia: erro de banco e alerta de anomalia no endpoint /login.",
-        "  Impacto conceitual: risco de leitura indevida se a causa raiz não for corrigida.",
-        "Defesa relacionada: patch sqli, WAF, logs úteis e revisão de código.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_sqli_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_sqli_portal-web");
         draft.completedActions.add("sqli_detected");
@@ -1303,14 +944,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "cred-test idp") {
-      printLines("warn", [
-        "Simulação de abuso de credenciais contra o IdP:",
-        "  Senhas reais: não usadas.",
-        "  Brute force: não executado.",
-        "  Sinal observado: muitas falhas distribuídas em contas administrativas.",
-        "  Impacto conceitual: uma senha vazada pode escalar risco quando MFA está ausente.",
-        "Defesa relacionada: mfa admin, rate limit adaptativo, alertas e revisão de sessões.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_creds_idp);
       updateState((draft) => {
         draft.completedActions.add("attack_creds_idp");
         draft.reviewedLogs.add("idp");
@@ -1324,14 +958,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "pivot-sim db-core") {
-      printLines("warn", [
-        "Movimento lateral simulado:",
-        "  Sessão real: não criada.",
-        "  Túnel ou shell: não executado.",
-        "  Caminho narrativo: Portal Web comprometido tentaria alcançar o banco se a ACL estivesse permissiva.",
-        "  Evidência fictícia: conexão negada de origem indevida aparece nos logs do banco.",
-        "Defesa relacionada: hardening db, segmentação, ACL por origem e menor privilégio.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_pivot_db);
       updateState((draft) => {
         draft.completedActions.add("attack_pivot_db");
         draft.discovered.add("db-core");
@@ -1343,14 +970,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "impacto-sim db-core") {
-      printLines("warn", [
-        "Impacto simulado no banco crítico:",
-        "  Dados reais: não exibidos.",
-        "  Exfiltração: não simulada operacionalmente.",
-        "  Classe de impacto: confidencialidade alta, integridade média, disponibilidade alta.",
-        "  Prioridade: corrigir ACL, validar contas de serviço e reforçar auditoria.",
-        "Defesa relacionada: criptografia, logs, backups testados e plano de resposta.",
-      ]);
+      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_impact_db);
       updateState((draft) => draft.completedActions.add("attack_impact_db"));
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -1360,16 +980,13 @@ export function CyberSecSimulator({ onBack }: Props) {
     if (cmd === "relatorio ataque") {
       const completed = ATTACK_STEPS.filter((step) => state.completedActions.has(step.id)).length;
       printLines("ok", [
-        "Relatório ofensivo didático:",
-        `  Etapas concluídas: ${completed}/${ATTACK_STEPS.length}`,
-        "  Cadeia provável: exposição -> enumeração -> falha de entrada -> acesso a dados -> impacto.",
-        "  Principais quebras da cadeia: fechar SSH público, prepared statements, MFA, segmentação e backups testados.",
-        "  Evidências usadas: alertas SOC, logs do Portal Web, logs do IdP e logs do banco.",
-        "  Próximo passo defensivo: aplicar patch sqli, mfa admin, firewall ssh private e hardening db.",
+        ...ATTACK_TERMINAL_OUTPUT.attack_report,
+        "",
+        `Etapas concluídas pelo aluno: ${completed}/${ATTACK_STEPS.length}`,
       ]);
       updateState((draft) => {
         draft.completedActions.add("attack_report");
-        draft.incidentNotes.push("Relatório ofensivo didático criado com cadeia, impacto e recomendações defensivas.");
+        draft.incidentNotes.push("Relatório ofensivo didático criado com cadeia Lockheed Martin, MITRE ATT&CK e NIST CSF.");
       });
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -2095,11 +1712,23 @@ function MissionConceptPanel({ mission, levelDone }: { mission?: Mission; levelD
 
       {concept ? (
         <div>
-          <div className="mb-2 inline-flex rounded border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200">
-            {concept.label}
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex rounded border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200">
+              {concept.label}
+            </span>
+            {concept.nistCsf && (
+              <span className="inline-flex rounded border border-sky-500/25 bg-sky-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-200">
+                NIST CSF · {concept.nistCsf}
+              </span>
+            )}
           </div>
           <h2 className="mb-2 text-lg font-black text-white">{concept.title}</h2>
-          <p className="mb-4 text-sm leading-6 text-slate-300">{concept.body}</p>
+          <p className="mb-3 text-sm leading-6 text-slate-300">{concept.body}</p>
+          {concept.reference && (
+            <p className="mb-3 text-[11px] font-mono leading-5 text-slate-500">
+              ref: {concept.reference}
+            </p>
+          )}
           <div className="grid gap-2">
             {concept.checks.map((item) => (
               <div key={item} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-300">
@@ -2299,7 +1928,13 @@ function AlertPanel({ alerts, assets }: { alerts: AlertItem[]; assets: Record<st
 }
 
 function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: string) => void }) {
-  const completed = ATTACK_STEPS.filter((step) => state.completedActions.has(step.id)).length;
+  const [quizAnswered, setQuizAnswered] = useState<Set<string>>(new Set());
+  const [quizPick, setQuizPick] = useState<Record<string, number>>({});
+  const [openStep, setOpenStep] = useState<string | null>(null);
+
+  const masteredCount = ATTACK_STEPS.filter(
+    (step) => state.completedActions.has(step.id) && quizAnswered.has(step.id)
+  ).length;
 
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
@@ -2307,25 +1942,26 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-300">
             <Flame className="h-4 w-4" />
-            Ambiente de Ataque
+            Ambiente de Ataque · Cyber Kill Chain
           </div>
           <h2 className="text-lg font-black text-white">AttackBox didática</h2>
           <p className="mt-1 text-xs leading-5 text-slate-400">
-            Trilha ofensiva 100% simulada para entender como falhas viram impacto e quais controles quebram a cadeia.
+            Trilha ofensiva alinhada a MITRE ATT&CK, OWASP Top 10 e NIST CSF. Cada etapa termina com um quiz de compreensão.
           </p>
         </div>
         <div className="rounded-md border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-right">
-          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Progresso</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Domínio</div>
           <div className="text-xl font-black text-white">
-            {completed}/{ATTACK_STEPS.length}
+            {masteredCount}/{ATTACK_STEPS.length}
           </div>
+          <div className="text-[10px] text-rose-200/80">comando + quiz</div>
         </div>
       </div>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-3">
         {[
           ["Rede", "172.16.50.0/24 isolada"],
-          ["Alvos", "Ativos fictícios do laboratório"],
+          ["Frameworks", "MITRE ATT&CK · OWASP · NIST CSF"],
           ["Regra", "Sem payload real ou alvo externo"],
         ].map(([label, value]) => (
           <div key={label} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
@@ -2335,50 +1971,176 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
         ))}
       </div>
 
-      <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+      <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
         {ATTACK_STEPS.map((step, index) => {
-          const done = state.completedActions.has(step.id);
+          const ran = state.completedActions.has(step.id);
+          const mastered = ran && quizAnswered.has(step.id);
+          const isOpen = openStep === step.id;
+          const pick = quizPick[step.id];
+          const showQuiz = ran && !mastered;
+
+          const status = mastered ? "feito" : ran ? "quiz pendente" : "pendente";
+          const statusClasses = mastered
+            ? "bg-emerald-500/20 text-emerald-200"
+            : ran
+              ? "bg-amber-500/20 text-amber-200"
+              : "bg-white/10 text-slate-400";
+          const cardClasses = mastered
+            ? "border-emerald-500/25 bg-emerald-500/10"
+            : ran
+              ? "border-amber-500/25 bg-amber-500/5"
+              : "border-white/10 bg-white/[0.04]";
+
           return (
-            <div
-              key={step.id}
-              className={`rounded-md border p-3 transition ${
-                done ? "border-emerald-500/25 bg-emerald-500/10" : "border-white/10 bg-white/[0.04]"
-              }`}
-            >
-              <div className="mb-2 flex items-start justify-between gap-3">
+            <div key={step.id} className={`rounded-md border p-3 transition ${cardClasses}`}>
+              <button
+                type="button"
+                className="flex w-full items-start justify-between gap-3 text-left"
+                onClick={() => setOpenStep(isOpen ? null : step.id)}
+              >
                 <div className="min-w-0">
-                  <div className="mb-1 flex items-center gap-2">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="rounded bg-black/25 px-2 py-0.5 text-[10px] font-black text-slate-300">
                       {index + 1}
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-rose-200">{step.phase}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-rose-200">
+                      {step.phase}
+                    </span>
+                    <span className="rounded border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] text-rose-200">
+                      {step.mitre.technique.split(" ")[0]}
+                    </span>
+                    {step.owasp && (
+                      <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] text-amber-200">
+                        {step.owasp.split(" ")[0]}
+                      </span>
+                    )}
+                    {step.nistCsf.map((fn) => (
+                      <span
+                        key={fn}
+                        className="rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold text-sky-200"
+                      >
+                        {fn}
+                      </span>
+                    ))}
                   </div>
                   <h3 className="text-sm font-black text-white">{step.title}</h3>
                 </div>
-                <span className={`rounded px-2 py-1 text-[10px] font-black uppercase ${done ? "bg-emerald-500/20 text-emerald-200" : "bg-white/10 text-slate-400"}`}>
-                  {done ? "feito" : "pendente"}
+                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-black uppercase ${statusClasses}`}>
+                  {status}
                 </span>
-              </div>
+              </button>
 
-              <p className="mb-2 text-xs leading-5 text-slate-400">{step.objective}</p>
-              <p className="mb-3 text-[11px] leading-5 text-slate-500">{step.safety}</p>
+              {isOpen && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs leading-5 text-slate-300">{step.objective}</p>
+                  <div className="rounded border border-white/10 bg-black/20 p-2">
+                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">MITRE ATT&CK</div>
+                    <div className="mt-1 font-mono text-[11px] text-rose-100">{step.mitre.tactic}</div>
+                    <div className="font-mono text-[11px] text-rose-100">{step.mitre.technique}</div>
+                  </div>
+                  <div className="rounded border border-white/10 bg-black/20 p-2">
+                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Ferramentas reais (referência)</div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {step.realTools.map((tool) => (
+                        <span key={tool} className="rounded bg-slate-800/60 px-2 py-0.5 font-mono text-[10px] text-slate-200">
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] leading-5 text-slate-500">{step.safety}</p>
+                </div>
+              )}
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <code className="rounded border border-white/10 bg-black/25 px-2 py-1 text-[11px] text-sky-200">{step.command}</code>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <code className="rounded border border-white/10 bg-black/25 px-2 py-1 text-[11px] text-sky-200">
+                  {step.command}
+                </code>
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
                   className="h-8 justify-center text-xs font-bold text-slate-300 hover:text-white"
-                  onClick={() => onRun(step.command)}
+                  onClick={() => {
+                    onRun(step.command);
+                    setOpenStep(step.id);
+                  }}
                 >
-                  Executar
+                  Executar no terminal
                 </Button>
               </div>
 
               <div className="mt-2 rounded border border-sky-500/15 bg-sky-500/5 p-2 text-[11px] leading-5 text-sky-100">
-                Defesa: {step.defense}
+                <span className="font-bold text-sky-200">Defesa:</span> {step.defense}
               </div>
+
+              {showQuiz && (
+                <div className="mt-3 rounded border border-amber-500/25 bg-amber-500/5 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-200">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Check de compreensão
+                  </div>
+                  <p className="mb-3 text-xs leading-5 text-slate-200">{step.quiz.question}</p>
+                  <div className="space-y-1.5">
+                    {step.quiz.options.map((option, optionIdx) => {
+                      const selected = pick === optionIdx;
+                      const showAnswer = pick !== undefined;
+                      const isCorrect = !!option.correct;
+                      let optionClass = "border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-slate-200";
+                      if (showAnswer && selected && isCorrect) optionClass = "border-emerald-500/40 bg-emerald-500/15 text-emerald-100";
+                      else if (showAnswer && selected && !isCorrect) optionClass = "border-red-500/40 bg-red-500/10 text-red-100";
+                      else if (showAnswer && isCorrect) optionClass = "border-emerald-500/30 bg-emerald-500/5 text-emerald-200";
+                      else if (showAnswer) optionClass = "border-white/10 bg-white/[0.02] text-slate-500";
+                      return (
+                        <button
+                          type="button"
+                          key={option.text}
+                          disabled={showAnswer}
+                          onClick={() => {
+                            setQuizPick((current) => ({ ...current, [step.id]: optionIdx }));
+                            if (isCorrect) {
+                              setQuizAnswered((current) => {
+                                const next = new Set(current);
+                                next.add(step.id);
+                                return next;
+                              });
+                            }
+                          }}
+                          className={`flex w-full items-start gap-2 rounded border px-3 py-2 text-left text-xs leading-5 transition ${optionClass}`}
+                        >
+                          <span className="mt-0.5 font-mono text-[10px] text-slate-500">
+                            {String.fromCharCode(65 + optionIdx)}
+                          </span>
+                          <span className="min-w-0 flex-1">{option.text}</span>
+                          {showAnswer && isCorrect && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />}
+                          {showAnswer && selected && !isCorrect && (
+                            <AlertTriangle className="h-4 w-4 shrink-0 text-red-300" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {pick !== undefined && (
+                    <div className="mt-3 rounded border border-sky-500/20 bg-sky-500/10 p-2 text-[11px] leading-5 text-sky-100">
+                      <span className="font-bold text-sky-200">Explicação: </span>
+                      {step.quiz.explanation}
+                    </div>
+                  )}
+                  {pick !== undefined && !step.quiz.options[pick]?.correct && (
+                    <button
+                      type="button"
+                      onClick={() => setQuizPick((current) => {
+                        const next = { ...current };
+                        delete next[step.id];
+                        return next;
+                      })}
+                      className="mt-2 text-[11px] font-bold text-amber-200 hover:text-amber-100"
+                    >
+                      Tentar novamente
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -2428,8 +2190,27 @@ function KnowledgePanel({ tab, onChange }: { tab: KnowledgeTab; onChange: (tab: 
       <div className="space-y-3">
         {data.map((item) => (
           <div key={item.title} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-            <h3 className="mb-1 text-sm font-black text-white">{item.title}</h3>
+            <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+              <h3 className="text-sm font-black text-white">{item.title}</h3>
+              {item.framework && (
+                <span className="rounded border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] text-sky-200">
+                  {item.framework}
+                </span>
+              )}
+            </div>
             <p className="text-xs leading-5 text-slate-400">{item.body}</p>
+            {item.examples && item.examples.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {item.examples.map((example) => (
+                  <span
+                    key={example}
+                    className="rounded bg-slate-800/60 px-2 py-0.5 font-mono text-[10px] text-slate-300"
+                  >
+                    {example}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
