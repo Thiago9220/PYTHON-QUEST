@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BookOpen, ClipboardList, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Challenge } from "@/lib/types";
+import { ConceptExplanation } from "./ConceptExplanation";
 
 interface Props {
   challenge: Challenge;
@@ -72,14 +73,11 @@ export function MissionPanel({
             )}
           </div>
         ) : (
-          <div className="bg-slate-900 p-6 rounded-2xl border border-sky-500/20 shadow-lg">
-            <div className="inline-block px-3 py-1 bg-sky-500/20 text-sky-400 font-bold uppercase tracking-wider text-[10px] rounded-full mb-4">
-              Conceito: {challenge.concept}
-            </div>
-            <p className="text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
-              {challenge.conceptExplanation}
-            </p>
-          </div>
+          <ConceptExplanation
+            concept={challenge.concept}
+            text={challenge.conceptExplanation}
+            themeColor={themeColor}
+          />
         )}
       </div>
     </div>
