@@ -2693,7 +2693,7 @@ export function NetworkSimulator({ onBack }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setPhase("intro")} className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs">
+            <Button variant="ghost" size="sm" onClick={() => setIsManualOpen(true)} className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs">
               <BookOpen className="w-4 h-4 mr-2" /> Manual
             </Button>
             <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
