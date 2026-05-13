@@ -53,6 +53,9 @@ import io
 sys.stdout = io.StringIO()
 `);
 
+    const fullCode = `${setupCode}\n${code}`;
+    await pyodide.loadPackagesFromImports(fullCode);
+
     if (setupCode) {
       await pyodide.runPythonAsync(setupCode);
     }

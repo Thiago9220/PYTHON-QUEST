@@ -6,7 +6,7 @@ export const NINHO_LISTAS_WORLD: World = {
   subtitle: "Processamento em Lote",
   icon: "layers",
   color: "#A855F7",
-  bgImage: "/assets/images/worlds/list_nest.png",
+  bgImage: "/assets/images/worlds/lists.png",
   lore: "O tráfego de dados no Core não viaja sozinho; ele flui em fluxos massivos e estruturados. No Ninho das Listas, você aprenderá a agrupar pacotes, fatiar buffers de memória e gerenciar coleções de informações para ataques em larga escala.",
   unlockRequirement: 0,
   challenges: [

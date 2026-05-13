@@ -9,6 +9,7 @@ import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
 import TutorialTour, { TourStep } from "@/components/TutorialTour";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const WORLD_TAGS: Record<string, string> = {
   "vila-variaveis": "print, variáveis, strings",
@@ -19,7 +20,18 @@ const WORLD_TAGS: Record<string, string> = {
   "cripta-dicionarios": "dicionários, chave-valor",
   "fortaleza-oop": "classes, objetos, POO",
   "bunker-excecoes": "try, except, módulos",
+  "refinaria-dados": "pandas, numpy",
+  "sala-comando-visual": "matplotlib, seaborn",
+  "laboratorio-neural": "scikit-learn, ml",
+  "nucleo-sintetico": "tensorflow, pytorch",
 };
+
+const DS_WORLD_IDS = new Set([
+  "refinaria-dados",
+  "sala-comando-visual",
+  "laboratorio-neural",
+  "nucleo-sintetico",
+]);
 
 type Props = {
   onSelectWorld: (worldId: string) => void;
@@ -78,6 +90,31 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
   const handleFinishTour = () => {
     setShowTour(false);
     if (!state.hasSeenTutorial) dispatch({ type: "COMPLETE_TUTORIAL" });
+  };
+
+  const showLockedToast = (xpRequired: number) => {
+    toast.custom(
+      (t) => (
+        <div
+          onClick={() => toast.dismiss(t)}
+          className="flex items-start gap-3 bg-slate-950/95 backdrop-blur-xl border border-rose-500/40 rounded-2xl px-4 py-3 shadow-[0_0_30px_rgba(244,63,94,0.25)] min-w-[320px] cursor-pointer"
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 border border-rose-500/30">
+            <Lock className="w-4 h-4 text-rose-400" />
+          </div>
+          <div className="flex-1 leading-tight">
+            <div className="text-[10px] font-black uppercase tracking-[0.25em] text-rose-400 mb-1">
+              // Acesso Negado
+            </div>
+            <div className="text-sm font-black text-white mb-0.5">Setor Bloqueado</div>
+            <div className="text-[11px] font-mono text-slate-400">
+              Requer <span className="text-rose-300 font-bold">{xpRequired.toLocaleString()} XP</span> para invadir este núcleo.
+            </div>
+          </div>
+        </div>
+      ),
+      { duration: 3500 }
+    );
   };
 
   return (
@@ -258,7 +295,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
         </div>
 
         <div id="tutorial-worlds" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {WORLDS.map((world, idx) => {
+          {WORLDS.filter((w) => !DS_WORLD_IDS.has(w.id)).map((world, idx) => {
             const unlocked = isWorldUnlocked(world.id);
             const total = world.challenges.length;
             const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
@@ -272,11 +309,17 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1, ease: "easeOut" }}
-                onClick={() => unlocked && onSelectWorld(world.id)}
+                onClick={() => {
+                  if (unlocked) {
+                    onSelectWorld(world.id);
+                  } else {
+                    showLockedToast(world.unlockRequirement);
+                  }
+                }}
                 className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${
                   unlocked 
                     ? "glass-dark hover:-translate-y-2 cursor-pointer" 
-                    : "border-white/5 opacity-50 cursor-not-allowed bg-slate-900/50"
+                    : "border-white/5 opacity-50 hover:border-white/20 cursor-pointer bg-slate-900/50"
                 }`}
                 style={{ 
                   borderColor: unlocked ? `${themeColor}40` : undefined,
@@ -377,6 +420,148 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
             );
           })}
         </div>
+
+        {/* Data Science & Machine Learning */}
+        <section className="mt-20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-[10px] font-black uppercase tracking-widest text-fuchsia-400 mb-6 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse" />
+                Protocolo Avançado
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-1 leading-tight tracking-tight">
+                Ciência de Dados <span className="bg-gradient-to-r from-fuchsia-400 to-amber-400 bg-clip-text text-transparent">&amp; Machine Learning</span>
+              </h2>
+              <p className="text-slate-400 text-xs md:text-sm font-mono uppercase tracking-[0.2em] opacity-80">
+                Domine análise de dados, ML e Deep Learning. <span className="text-white font-bold">Acesso liberado por XP.</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {WORLDS.filter((w) => DS_WORLD_IDS.has(w.id)).map((world, idx) => {
+              const unlocked = true; // TEMP: destravado para testes (original: isWorldUnlocked(world.id))
+              const total = world.challenges.length;
+              const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
+              const completedAll = completed === total && total > 0;
+              const worldProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+              const themeColor = world.color || "#a78bfa";
+
+              return (
+                <motion.div
+                  key={world.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1, ease: "easeOut" }}
+                  onClick={() => {
+                    if (unlocked) {
+                      onSelectWorld(world.id);
+                    } else {
+                      showLockedToast(world.unlockRequirement);
+                    }
+                  }}
+                  className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${
+                    unlocked
+                      ? "glass-dark hover:-translate-y-2 cursor-pointer"
+                      : "border-white/5 opacity-50 hover:border-white/20 cursor-pointer bg-slate-900/50"
+                  }`}
+                  style={{
+                    borderColor: unlocked ? `${themeColor}40` : undefined,
+                    boxShadow: unlocked ? `0 10px 30px -10px ${themeColor}20` : undefined,
+                  }}
+                >
+                  <div className="h-48 relative overflow-hidden">
+                    {world.bgImage ? (
+                      <img
+                        src={world.bgImage}
+                        alt={world.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-slate-900" />
+                    )}
+
+                    <div
+                      className="absolute inset-0 opacity-40 mix-blend-overlay"
+                      style={{ backgroundImage: `radial-gradient(circle at 50% 120%, ${themeColor}, transparent 70%)` }}
+                    />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 mix-blend-overlay" style={{ backgroundImage: `linear-gradient(to top right, transparent, ${themeColor})` }} />
+
+                    <div className="absolute top-5 left-5 inline-flex items-center gap-2 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 shadow-sm">
+                      <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
+                        {WORLD_TAGS[world.id] || "Python"}
+                      </span>
+                    </div>
+
+                    {!unlocked && (
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center">
+                        <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
+                          <Lock className="w-6 h-6 text-slate-400" />
+                        </div>
+                        <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} XP REQUERIDO</span>
+                      </div>
+                    )}
+
+                    {completedAll && (
+                      <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400 rounded-full px-3 py-1 shadow-lg shadow-emerald-500/20">
+                        <Star className="w-3 h-3 fill-emerald-400" />
+                        <span className="text-[9px] font-black uppercase tracking-wider">Mestre</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-8 space-y-5 bg-slate-950/40">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2" style={{ color: themeColor }}>{world.subtitle}</p>
+                      <h3 className="text-2xl font-black text-white leading-tight group-hover:text-sky-300 transition-colors">{world.title}</h3>
+                    </div>
+
+                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium h-[4.2rem]">
+                      {world.lore}
+                    </p>
+
+                    <div className="space-y-3 pt-4">
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                        <span>Progresso</span>
+                        <span className="text-white">{completed}/{total} - {worldProgress}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${worldProgress}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                          style={{ backgroundColor: themeColor }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      {unlocked ? (
+                        <Button
+                          className="w-full h-12 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all border group-hover:-translate-y-0.5"
+                          style={{
+                            backgroundColor: `${themeColor}20`,
+                            borderColor: `${themeColor}40`,
+                            color: themeColor,
+                          }}
+                        >
+                          {completed === 0 ? "Iniciar Desafio" : completedAll ? "Revisitar" : "Continuar Jornada"}
+                          <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      ) : (
+                        <div className="text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] border-2 border-dashed border-white/10 rounded-xl h-12 flex items-center justify-center bg-white/5">
+                          <Lock className="w-3 h-3 mr-2" /> Selado
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
       </main>
 
       <Codex isOpen={isCodexOpen} onClose={() => setIsCodexOpen(false)} />

@@ -6,7 +6,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
   subtitle: "Conexão Estabelecida",
   icon: "anchor",
   color: "#0EA5E9",
-  bgImage: "/assets/images/worlds/terminal_alpha.png",
+  bgImage: "/assets/images/worlds/variables.png",
   lore: "O sistema de segurança isolou o núcleo da cidade (Core). Aqui no Terminal Alpha, você deve inicializar o Protocolo de Alocação: definir variáveis e manipular a memória local para dar o primeiro bypass no firewall primário.",
   unlockRequirement: 0,
   challenges: [

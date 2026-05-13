@@ -8,6 +8,12 @@ import { CRIPTA_DICIONARIOS_WORLD } from "./worlds/cripta_dicionarios";
 import { FORTALEZA_OOP_WORLD } from "./worlds/fortaleza_oop";
 import { BUNKER_EXCECOES_WORLD } from "./worlds/bunker_excecoes";
 
+// Módulos Data Science
+import { REFINARIA_DADOS_WORLD } from "./worlds/refinaria_dados";
+import { SALA_COMANDO_VISUAL_WORLD } from "./worlds/sala_comando_visual";
+import { LABORATORIO_NEURAL_WORLD } from "./worlds/laboratorio_neural";
+import { NUCLEO_SINTETICO_WORLD } from "./worlds/nucleo_sintetico";
+
 export const WORLDS: World[] = [
   VILA_VARIAVEIS_WORLD,
   VALE_CONDICOES_WORLD,
@@ -17,6 +23,10 @@ export const WORLDS: World[] = [
   CRIPTA_DICIONARIOS_WORLD,
   FORTALEZA_OOP_WORLD,
   BUNKER_EXCECOES_WORLD,
+  REFINARIA_DADOS_WORLD,
+  SALA_COMANDO_VISUAL_WORLD,
+  LABORATORIO_NEURAL_WORLD,
+  NUCLEO_SINTETICO_WORLD,
 ];
 
 export function getAllChallenges(): Challenge[] {

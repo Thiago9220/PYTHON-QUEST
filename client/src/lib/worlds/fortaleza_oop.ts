@@ -6,7 +6,7 @@ export const FORTALEZA_OOP_WORLD: World = {
   subtitle: "Programação Orientada a Objetos",
   icon: "box",
   color: "#F59E0B",
-  bgImage: "/assets/images/worlds/oop_fortress.png",
+  bgImage: "/assets/images/worlds/oop.png",
   lore: "A Fortaleza dos Objetos protege a estrutura central. Aqui, códigos isolados não sobrevivem; você deve construir Classes e Objetos — entidades autossuficientes com suas próprias memórias e habilidades para invadir a fortaleza.",
   unlockRequirement: 0,
   challenges: [

@@ -6,7 +6,7 @@ export const BUNKER_EXCECOES_WORLD: World = {
   subtitle: "Manejo de Erros e Módulos",
   icon: "alert-triangle",
   color: "#EF4444",
-  bgImage: "/assets/images/worlds/exception_bunker.png",
+  bgImage: "/assets/images/worlds/exceptions.png",
   lore: "Em sistemas críticos da CorpHQ, um único erro pode travar todo o núcleo e disparar alarmes. No Bunker de Exceções, você aprenderá a capturar erros (Try/Except) graciosamente e usar Módulos externos para estender suas capacidades.",
   unlockRequirement: 0,
   challenges: [

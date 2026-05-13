@@ -6,7 +6,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
   subtitle: "Ciclos de Processamento Infinito",
   icon: "refresh-cw",
   color: "#F97316",
-  bgImage: "/assets/images/worlds/iteration_sector.png",
+  bgImage: "/assets/images/worlds/loops.png",
   lore: "No Setor de Iteração, o tempo é medido em ciclos de CPU. Aqui, você deve aprender a dominar os Loops de Processamento para executar tarefas repetitivas em escala massiva com um único script.",
   unlockRequirement: 0,
   challenges: [
