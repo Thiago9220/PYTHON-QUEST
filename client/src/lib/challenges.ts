@@ -13,6 +13,10 @@ import { REFINARIA_DADOS_WORLD } from "./worlds/refinaria_dados";
 import { SALA_COMANDO_VISUAL_WORLD } from "./worlds/sala_comando_visual";
 import { LABORATORIO_NEURAL_WORLD } from "./worlds/laboratorio_neural";
 import { NUCLEO_SINTETICO_WORLD } from "./worlds/nucleo_sintetico";
+import { CAMARA_PROBABILIDADES_WORLD } from "./worlds/camara_probabilidades";
+import { CRONOGRAMA_TEMPORAL_WORLD } from "./worlds/cronograma_temporal";
+import { SINTETIZADOR_LINGUAGEM_WORLD } from "./worlds/sintetizador_linguagem";
+import { ORACULO_GENERATIVO_WORLD } from "./worlds/oraculo_generativo";
 
 export const WORLDS: World[] = [
   VILA_VARIAVEIS_WORLD,
@@ -27,6 +31,10 @@ export const WORLDS: World[] = [
   SALA_COMANDO_VISUAL_WORLD,
   LABORATORIO_NEURAL_WORLD,
   NUCLEO_SINTETICO_WORLD,
+  CAMARA_PROBABILIDADES_WORLD,
+  CRONOGRAMA_TEMPORAL_WORLD,
+  SINTETIZADOR_LINGUAGEM_WORLD,
+  ORACULO_GENERATIVO_WORLD,
 ];
 
 export function getAllChallenges(): Challenge[] {

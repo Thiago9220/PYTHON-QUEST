@@ -24,6 +24,10 @@ const WORLD_TAGS: Record<string, string> = {
   "sala-comando-visual": "matplotlib, seaborn",
   "laboratorio-neural": "scikit-learn, ml",
   "nucleo-sintetico": "tensorflow, pytorch",
+  "camara-probabilidades": "scipy, statsmodels",
+  "cronograma-temporal": "arima, prophet",
+  "sintetizador-linguagem": "nltk, spacy, transformers",
+  "oraculo-generativo": "openai, langchain, rag",
 };
 
 const DS_WORLD_IDS = new Set([
@@ -31,6 +35,10 @@ const DS_WORLD_IDS = new Set([
   "sala-comando-visual",
   "laboratorio-neural",
   "nucleo-sintetico",
+  "camara-probabilidades",
+  "cronograma-temporal",
+  "sintetizador-linguagem",
+  "oraculo-generativo",
 ]);
 
 type Props = {
