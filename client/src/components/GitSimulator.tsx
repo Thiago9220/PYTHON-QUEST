@@ -6,6 +6,7 @@ import {
   Shield, Cloud, Users, Clock, BookOpen, Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GitCodex } from "./GitCodex";
 
 interface Props {
   onBack: () => void;
@@ -429,6 +430,7 @@ export function GitSimulator({ onBack }: Props) {
   const [introStep, setIntroStep] = useState(0);
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1365,7 +1367,7 @@ export function GitSimulator({ onBack }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setPhase("intro")} className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 text-xs">
+            <Button variant="ghost" size="sm" onClick={() => setIsManualOpen(true)} className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 text-xs">
               <BookOpen className="w-4 h-4 mr-2" /> Manual
             </Button>
             <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
@@ -1754,6 +1756,16 @@ export function GitSimulator({ onBack }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <GitCodex 
+        isOpen={isManualOpen} 
+        onClose={() => setIsManualOpen(false)} 
+        onSendToTerminal={(cmd) => {
+          setInput(cmd);
+          // Focus the input so the user can just press Enter
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
+      />
     </div>
   );
 }

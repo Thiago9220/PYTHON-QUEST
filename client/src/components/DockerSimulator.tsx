@@ -5,6 +5,7 @@ import {
   Container as ContainerIcon, Package, Cloud, FileCode, Layers, Network, HardDrive, Server, Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DockerCodex } from "./DockerCodex";
 
 interface Props {
   onBack: () => void;
@@ -663,6 +664,7 @@ export function DockerSimulator({ onBack }: Props) {
   const [buildViz, setBuildViz] = useState<{ steps: string[]; isMultiStage: boolean; finalSize: string; revealed: number } | null>(null);
   const lastBuildTs = useRef<number>(0);
   const [editorContent, setEditorContent] = useState("");
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1929,7 +1931,7 @@ export function DockerSimulator({ onBack }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setPhase("intro")} className="text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 text-xs">
+            <Button variant="ghost" size="sm" onClick={() => setIsManualOpen(true)} className="text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 text-xs">
               <BookOpen className="w-4 h-4 mr-2" /> Manual
             </Button>
             <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
@@ -2422,6 +2424,15 @@ export function DockerSimulator({ onBack }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <DockerCodex 
+        isOpen={isManualOpen} 
+        onClose={() => setIsManualOpen(false)} 
+        onSendToTerminal={(cmd) => {
+          setInput(cmd);
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
+      />
     </div>
   );
 }

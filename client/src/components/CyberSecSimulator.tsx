@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NetworkCodex } from "./NetworkCodex";
 import {
   ATTACK_STEPS,
   ATTACK_TERMINAL_OUTPUT,
@@ -681,6 +682,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     return savedMode === "soc" || savedMode === "attack" ? savedMode : "guided";
   });
   const [detailPanel, setDetailPanel] = useState<DetailPanel | null>(null);
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1589,6 +1591,14 @@ export function CyberSecSimulator({ onBack }: Props) {
               value={viewMode === "attack" ? `${completedAttackSteps}/${ATTACK_STEPS.length}` : `${level.id}/4`}
               tone="info"
             />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsManualOpen(true)}
+              className="border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:text-white font-black uppercase tracking-widest text-[10px]"
+            >
+              <BookOpen className="h-3.5 w-3.5 mr-2" /> Manual
+            </Button>
           </div>
         </header>
 
@@ -1680,6 +1690,15 @@ export function CyberSecSimulator({ onBack }: Props) {
           </main>
         )}
       </div>
+      <NetworkCodex 
+        isOpen={isManualOpen} 
+        onClose={() => setIsManualOpen(false)} 
+        primaryColor="rose"
+        onSendToTerminal={(cmd) => {
+          setInput(cmd);
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
+      />
     </div>
   );
 }

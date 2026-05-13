@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { NetworkCodex } from "./NetworkCodex";
 
 interface Props { onBack: () => void }
 
@@ -136,41 +137,58 @@ const initialNet = (): NetState => ({
   gateway: "192.168.1.1",
   subnet: "192.168.1.0/24",
   hosts: {
-    "192.168.1.1":   { ip: "192.168.1.1",   hostname: "router.local",      os: "RouterOS", vendor: "MikroTik", status: "up",
+    "192.168.1.1": {
+      ip: "192.168.1.1", hostname: "router.local", os: "RouterOS", vendor: "MikroTik", status: "up",
       ports: [
-        { port: 22,  state: "open",   service: "ssh",  version: "OpenSSH 7.4", banner: "SSH-2.0-OpenSSH_7.4",
-          cves: ["CVE-2018-15473 (user enumeration)"] },
-        { port: 80,  state: "open",   service: "http", version: "MikroTik HTTP", banner: "HTTP/1.1 200 OK\nServer: MikroTik\n" },
-        { port: 53,  state: "open",   service: "dns" },
+        {
+          port: 22, state: "open", service: "ssh", version: "OpenSSH 7.4", banner: "SSH-2.0-OpenSSH_7.4",
+          cves: ["CVE-2018-15473 (user enumeration)"]
+        },
+        { port: 80, state: "open", service: "http", version: "MikroTik HTTP", banner: "HTTP/1.1 200 OK\nServer: MikroTik\n" },
+        { port: 53, state: "open", service: "dns" },
       ]
     },
-    "192.168.1.50":  { ip: "192.168.1.50",  hostname: "web.corp.local",    os: "Linux 5.15", status: "up",
+    "192.168.1.50": {
+      ip: "192.168.1.50", hostname: "web.corp.local", os: "Linux 5.15", status: "up",
       ports: [
-        { port: 22,  state: "open",   service: "ssh",   version: "OpenSSH 8.9p1 Ubuntu", banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1" },
-        { port: 80,  state: "open",   service: "http",  version: "nginx 1.18.0",
-          banner: "HTTP/1.1 200 OK\nServer: nginx/1.18.0 (Ubuntu)\nContent-Type: text/html\n\n<!DOCTYPE html><html><body><h1>CorpHQ Internal Portal</h1><p>Authorized personnel only</p><!-- TODO: remove this — admin panel at /admin --></body></html>" },
-        { port: 443, state: "open",   service: "https", version: "nginx 1.18.0" },
+        { port: 22, state: "open", service: "ssh", version: "OpenSSH 8.9p1 Ubuntu", banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1" },
+        {
+          port: 80, state: "open", service: "http", version: "nginx 1.18.0",
+          banner: "HTTP/1.1 200 OK\nServer: nginx/1.18.0 (Ubuntu)\nContent-Type: text/html\n\n<!DOCTYPE html><html><body><h1>CorpHQ Internal Portal</h1><p>Authorized personnel only</p><!-- TODO: remove this — admin panel at /admin --></body></html>"
+        },
+        { port: 443, state: "open", service: "https", version: "nginx 1.18.0" },
         { port: 3306, state: "filtered", service: "mysql" },
       ],
       webContent: "<!DOCTYPE html>\n<html><body>\n<h1>CorpHQ Internal Portal</h1>\n<p>Authorized personnel only</p>\n<!-- TODO: remove this — admin panel at /admin -->\n</body></html>",
       webPaths: {
-        "/": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html" },
-          body: "<!DOCTYPE html>\n<html><body>\n<h1>CorpHQ Internal Portal</h1>\n<p>Authorized personnel only</p>\n<!-- TODO: remove this — admin panel at /admin -->\n</body></html>" },
-        "/admin": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html", "X-Powered-By": "Internal-CMS/2.1" },
+        "/": {
+          status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html" },
+          body: "<!DOCTYPE html>\n<html><body>\n<h1>CorpHQ Internal Portal</h1>\n<p>Authorized personnel only</p>\n<!-- TODO: remove this — admin panel at /admin -->\n</body></html>"
+        },
+        "/admin": {
+          status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html", "X-Powered-By": "Internal-CMS/2.1" },
           body: "<!DOCTYPE html>\n<html><body>\n<h1>Admin Panel — CorpHQ</h1>\n<form><input name=user><input name=pass type=password><button>Login</button></form>\n<!-- DEBUG token vazado em produção: CTF{admin_panel_index_was_public} -->\n</body></html>",
-          flag: "CTF{admin_panel_index_was_public}" },
-        "/.git/config": { status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/plain" },
+          flag: "CTF{admin_panel_index_was_public}"
+        },
+        "/.git/config": {
+          status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/plain" },
           body: "[core]\n  repositoryformatversion = 0\n[remote \"origin\"]\n  url = git@github.com:corphq/portal.git\n[branch \"main\"]\n  merge = refs/heads/main\n",
-          flag: "CTF{dotgit_exposed_on_webroot}" },
-        "/api/health": { status: 200, headers: { "Content-Type": "application/json" },
-          body: "{\"status\":\"ok\",\"version\":\"2.1.4\",\"db\":\"192.168.1.77:5432\"}" },
-        "/robots.txt": { status: 200, headers: { "Content-Type": "text/plain" },
-          body: "User-agent: *\nDisallow: /admin\nDisallow: /.git\nDisallow: /backup\n" },
+          flag: "CTF{dotgit_exposed_on_webroot}"
+        },
+        "/api/health": {
+          status: 200, headers: { "Content-Type": "application/json" },
+          body: "{\"status\":\"ok\",\"version\":\"2.1.4\",\"db\":\"192.168.1.77:5432\"}"
+        },
+        "/robots.txt": {
+          status: 200, headers: { "Content-Type": "text/plain" },
+          body: "User-agent: *\nDisallow: /admin\nDisallow: /.git\nDisallow: /backup\n"
+        },
       },
     },
-    "192.168.1.77":  { ip: "192.168.1.77",  hostname: "db.corp.local",     os: "Linux 5.15", status: "up",
+    "192.168.1.77": {
+      ip: "192.168.1.77", hostname: "db.corp.local", os: "Linux 5.15", status: "up",
       ports: [
-        { port: 22,   state: "open", service: "ssh", version: "OpenSSH 8.9p1" },
+        { port: 22, state: "open", service: "ssh", version: "OpenSSH 8.9p1" },
         { port: 5432, state: "open", service: "postgresql", version: "PostgreSQL 16.1", banner: "PostgreSQL 16.1 — needs auth" },
       ],
       // senha fraca acidental do dba
@@ -203,13 +221,18 @@ const initialNet = (): NetState => ({
         },
       },
     },
-    "192.168.1.100": { ip: "192.168.1.100", hostname: "ftp-legacy.corp.local", os: "Windows Server 2008", status: "up",
+    "192.168.1.100": {
+      ip: "192.168.1.100", hostname: "ftp-legacy.corp.local", os: "Windows Server 2008", status: "up",
       ports: [
-        { port: 21,  state: "open", service: "ftp",     version: "vsftpd 2.3.4", banner: "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)",
-          cves: ["CVE-2011-2523 (vsftpd backdoor)"] },
+        {
+          port: 21, state: "open", service: "ftp", version: "vsftpd 2.3.4", banner: "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)",
+          cves: ["CVE-2011-2523 (vsftpd backdoor)"]
+        },
         { port: 139, state: "open", service: "netbios" },
-        { port: 445, state: "open", service: "smb",     version: "Samba 3.6 (vulnerável a EternalBlue)",
-          cves: ["CVE-2017-0144 (EternalBlue/MS17-010)", "CVE-2017-7494 (SambaCry)"] },
+        {
+          port: 445, state: "open", service: "smb", version: "Samba 3.6 (vulnerável a EternalBlue)",
+          cves: ["CVE-2017-0144 (EternalBlue/MS17-010)", "CVE-2017-7494 (SambaCry)"]
+        },
         { port: 3389, state: "filtered", service: "rdp" },
       ],
       flag: "CTF{ftp_anonymous_was_enabled}",
@@ -219,7 +242,8 @@ const initialNet = (): NetState => ({
         { name: "IPC$", type: "IPC", comment: "Remote IPC", readable: false },
         { name: "ADMIN$", type: "Disk", comment: "Remote Admin", readable: false },
         { name: "C$", type: "Disk", comment: "Default share", readable: false },
-        { name: "Backups", type: "Disk", comment: "Backups antigos do banco — sem permissão restrita", readable: true,
+        {
+          name: "Backups", type: "Disk", comment: "Backups antigos do banco — sem permissão restrita", readable: true,
           flag: "CTF{smb_backup_share_was_world_readable}",
           files: [
             { name: "db_dump_2023.sql", size: 124550, content: "-- backup parcial — credenciais expostas em plain text\nINSERT INTO users (login,pwd) VALUES ('admin','S3nh@F0rt3!');\n[truncado: 2.4MB]" },
@@ -227,7 +251,8 @@ const initialNet = (): NetState => ({
             { name: ".env.bak", size: 287, content: "DB_HOST=db.corp.local\nDB_USER=postgres\nDB_PASS=postgres\nJWT_SECRET=8f3a91-internal\nFLAG=CTF{smb_backup_share_was_world_readable}\n" },
           ]
         },
-        { name: "Public", type: "Disk", comment: "Read-only para todos", readable: true,
+        {
+          name: "Public", type: "Disk", comment: "Read-only para todos", readable: true,
           files: [
             { name: "Manual_Procedimentos.pdf", size: 89221 },
             { name: "Aviso_TI.txt", size: 156, content: "Reset de senhas: contatar admin@corp.local\n" },
@@ -235,10 +260,13 @@ const initialNet = (): NetState => ({
         },
       ],
     },
-    "192.168.1.150": { ip: "192.168.1.150", hostname: "iot-cam.corp.local", os: "Embedded Linux", status: "up",
+    "192.168.1.150": {
+      ip: "192.168.1.150", hostname: "iot-cam.corp.local", os: "Embedded Linux", status: "up",
       ports: [
-        { port: 80, state: "open", service: "http", version: "Boa/0.94.14", banner: "HTTP/1.1 200 OK\nServer: Boa/0.94.14rc21\n",
-          cves: ["CVE-2017-9833 (Boa path traversal)", "CVE-2021-33558 (Boa info disclosure)"] },
+        {
+          port: 80, state: "open", service: "http", version: "Boa/0.94.14", banner: "HTTP/1.1 200 OK\nServer: Boa/0.94.14rc21\n",
+          cves: ["CVE-2017-9833 (Boa path traversal)", "CVE-2021-33558 (Boa info disclosure)"]
+        },
         { port: 554, state: "open", service: "rtsp", version: "RTSP/1.0" },
       ],
       defaultCreds: { user: "admin", pass: "admin" },
@@ -247,16 +275,20 @@ const initialNet = (): NetState => ({
         { user: "admin", pass: "admin", protocol: "ssh" },
       ],
       webPaths: {
-        "/": { status: 401, headers: { "Server": "Boa/0.94.14rc21", "WWW-Authenticate": "Basic realm=\"IPCam\"" },
+        "/": {
+          status: 401, headers: { "Server": "Boa/0.94.14rc21", "WWW-Authenticate": "Basic realm=\"IPCam\"" },
           body: "401 Unauthorized — autenticação necessária",
-          authRequired: { user: "admin", pass: "admin" } },
-        "/cgi-bin/snapshot": { status: 200, headers: { "Server": "Boa/0.94.14rc21", "Content-Type": "image/jpeg", "X-Flag": "CTF{iot_default_admin_admin}" },
+          authRequired: { user: "admin", pass: "admin" }
+        },
+        "/cgi-bin/snapshot": {
+          status: 200, headers: { "Server": "Boa/0.94.14rc21", "Content-Type": "image/jpeg", "X-Flag": "CTF{iot_default_admin_admin}" },
           body: "[binary jpeg snapshot — 38 KB] (header X-Flag vazou a flag)",
           flag: "CTF{iot_default_admin_admin}",
-          authRequired: { user: "admin", pass: "admin" } },
+          authRequired: { user: "admin", pass: "admin" }
+        },
       },
     },
-    "8.8.8.8":       { ip: "8.8.8.8",       hostname: "dns.google",         os: "Unknown", status: "up", ports: [{ port: 53, state: "open", service: "dns" }] },
+    "8.8.8.8": { ip: "8.8.8.8", hostname: "dns.google", os: "Unknown", status: "up", ports: [{ port: 53, state: "open", service: "dns" }] },
   },
   discovered: new Set(["192.168.1.42", "192.168.1.1"]),
   scanned: new Set(),
@@ -723,6 +755,7 @@ export function NetworkSimulator({ onBack }: Props) {
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
   const [showWireshark, setShowWireshark] = useState(false);
   const [wsFilter, setWsFilter] = useState("");
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const [wsSelectedPacket, setWsSelectedPacket] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1465,9 +1498,9 @@ export function NetworkSimulator({ onBack }: Props) {
         const isOsDetect = flags.includes("-O") || flags.includes("-A");
         const scanType =
           flags.includes("-sS") ? "TCP SYN Scan" :
-          flags.includes("-sT") ? "TCP Connect Scan" :
-          flags.includes("-sU") ? "UDP Scan" :
-          "TCP Default Scan";
+            flags.includes("-sT") ? "TCP Connect Scan" :
+              flags.includes("-sU") ? "UDP Scan" :
+                "TCP Default Scan";
         const isUdp = flags.includes("-sU");
         // --script vuln / smb-vuln-ms17-010 / etc
         const scriptIdx = rest.findIndex((a) => a === "--script" || a.startsWith("--script="));
@@ -2426,14 +2459,14 @@ export function NetworkSimulator({ onBack }: Props) {
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5 mb-6">
               {[
-                { t: "IP",         d: "Endereço numérico único de cada máquina na rede. Ex: 192.168.1.42 (privado), 8.8.8.8 (público).", c: "text-cyan-300" },
-                { t: "Subrede",    d: "Faixa de IPs do mesmo segmento físico. 192.168.1.0/24 = 256 endereços (192.168.1.0 a 192.168.1.255).", c: "text-emerald-300" },
-                { t: "Gateway",    d: "Roteador que conecta sua subrede ao resto do mundo. Geralmente o primeiro IP da faixa.", c: "text-amber-300" },
-                { t: "DNS",        d: "Sistema que traduz nomes (google.com) em IPs (142.250.78.78). Sem DNS você só decoraria números.", c: "text-fuchsia-300" },
-                { t: "Porta",      d: "Identificador de serviço dentro de um IP. 80=HTTP, 443=HTTPS, 22=SSH, 25=SMTP, 5432=PostgreSQL.", c: "text-violet-300" },
-                { t: "Pacote",     d: "Unidade de informação que viaja na rede. ICMP, TCP e UDP são os tipos mais comuns.", c: "text-rose-300" },
-                { t: "Banner",     d: "Mensagem inicial que muitos serviços enviam ao conectar — costuma vazar a versão do software.", c: "text-pink-300" },
-                { t: "CIDR",       d: "Forma compacta de expressar faixas: /24 = 256 IPs, /16 = 65536 IPs, /32 = 1 IP só.", c: "text-cyan-300" },
+                { t: "IP", d: "Endereço numérico único de cada máquina na rede. Ex: 192.168.1.42 (privado), 8.8.8.8 (público).", c: "text-cyan-300" },
+                { t: "Subrede", d: "Faixa de IPs do mesmo segmento físico. 192.168.1.0/24 = 256 endereços (192.168.1.0 a 192.168.1.255).", c: "text-emerald-300" },
+                { t: "Gateway", d: "Roteador que conecta sua subrede ao resto do mundo. Geralmente o primeiro IP da faixa.", c: "text-amber-300" },
+                { t: "DNS", d: "Sistema que traduz nomes (google.com) em IPs (142.250.78.78). Sem DNS você só decoraria números.", c: "text-fuchsia-300" },
+                { t: "Porta", d: "Identificador de serviço dentro de um IP. 80=HTTP, 443=HTTPS, 22=SSH, 25=SMTP, 5432=PostgreSQL.", c: "text-violet-300" },
+                { t: "Pacote", d: "Unidade de informação que viaja na rede. ICMP, TCP e UDP são os tipos mais comuns.", c: "text-rose-300" },
+                { t: "Banner", d: "Mensagem inicial que muitos serviços enviam ao conectar — costuma vazar a versão do software.", c: "text-pink-300" },
+                { t: "CIDR", d: "Forma compacta de expressar faixas: /24 = 256 IPs, /16 = 65536 IPs, /32 = 1 IP só.", c: "text-cyan-300" },
               ].map((it, i) => (
                 <div key={i} className="flex items-start gap-3 p-4">
                   <span className={`text-sm font-bold font-mono ${it.c} min-w-[120px] pt-0.5`}>{it.t}</span>
@@ -2443,9 +2476,9 @@ export function NetworkSimulator({ onBack }: Props) {
             </div>
 
             <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden">
-              <img 
-                src="/assets/images/network_edu.png" 
-                alt="Infográfico Educativo: Fluxo de Pacotes na Rede" 
+              <img
+                src="/assets/images/network_edu.png"
+                alt="Infográfico Educativo: Fluxo de Pacotes na Rede"
                 className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
               />
             </div>
@@ -2576,10 +2609,9 @@ export function NetworkSimulator({ onBack }: Props) {
                 <div className="flex gap-1.5">
                   {steps.map((_, i) => (
                     <button key={i} onClick={() => setIntroStep(i)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === introStep ? "w-8 bg-cyan-400" :
-                        i < introStep ? "w-1.5 bg-cyan-400/60" : "w-1.5 bg-slate-700"
-                      }`} aria-label={`Ir para passo ${i + 1}`} />
+                      className={`h-1.5 rounded-full transition-all ${i === introStep ? "w-8 bg-cyan-400" :
+                          i < introStep ? "w-1.5 bg-cyan-400/60" : "w-1.5 bg-slate-700"
+                        }`} aria-label={`Ir para passo ${i + 1}`} />
                   ))}
                 </div>
               </div>
@@ -2615,12 +2647,11 @@ export function NetworkSimulator({ onBack }: Props) {
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
         {lines.map((l, i) => (
-          <pre key={i} className={`whitespace-pre-wrap break-words ${
-            l.type === "in" ? "text-white" :
-            l.type === "ok" ? "text-emerald-400" :
-            l.type === "err" ? "text-red-400" :
-            l.type === "info" ? "text-cyan-300" : "text-slate-400"
-          }`}>{l.text}</pre>
+          <pre key={i} className={`whitespace-pre-wrap break-words ${l.type === "in" ? "text-white" :
+              l.type === "ok" ? "text-emerald-400" :
+                l.type === "err" ? "text-red-400" :
+                  l.type === "info" ? "text-cyan-300" : "text-slate-400"
+            }`}>{l.text}</pre>
         ))}
         <form onSubmit={onSubmit} className="flex items-center gap-2 pt-1">
           <span className="text-cyan-400 font-bold">$</span>
@@ -2639,9 +2670,9 @@ export function NetworkSimulator({ onBack }: Props) {
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.06]">
-        <img 
-          src="/assets/images/network_bg.png" 
-          alt="Network Background" 
+        <img
+          src="/assets/images/network_bg.png"
+          alt="Network Background"
           className="w-full h-full object-cover"
         />
       </div>
@@ -2657,7 +2688,7 @@ export function NetworkSimulator({ onBack }: Props) {
               <Wifi className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Network & Pentest Simulator</h2>
+              <h2 className="text-lg font-black text-white uppercase tracking-wider">Network Simulator</h2>
               <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-[0.2em]">Operador {state.myIp}</p>
             </div>
           </div>
@@ -2673,32 +2704,29 @@ export function NetworkSimulator({ onBack }: Props) {
         <div className="relative mb-8 mt-2 px-2">
           {/* Progress Track Background */}
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-900 -translate-y-1/2 z-0" />
-          
+
           <div className="relative z-10 flex items-center justify-between gap-2 overflow-x-auto pb-4 no-scrollbar">
             {LEVELS.map((lv, i) => {
               const isUnlocked = unlocked.has(i);
               const isDone = completed.has(i);
               const isCurrent = i === levelIdx;
-              
+
               return (
                 <div key={lv.id} className="flex items-center gap-2 shrink-0">
                   {i > 0 && (
-                    <div className={`h-0.5 w-4 md:w-8 transition-colors duration-500 ${
-                      isUnlocked ? "bg-cyan-500/40" : "bg-slate-900"
-                    }`} />
+                    <div className={`h-0.5 w-4 md:w-8 transition-colors duration-500 ${isUnlocked ? "bg-cyan-500/40" : "bg-slate-900"
+                      }`} />
                   )}
-                  
+
                   <button
                     disabled={!isUnlocked}
                     onClick={() => isUnlocked && loadLevel(i)}
-                    className={`relative group flex items-center transition-all duration-500 ${
-                      isCurrent ? "px-4 py-2 rounded-full bg-cyan-500/20 border-cyan-400 border" : "w-10 h-10 rounded-full border items-center justify-center"
-                    } ${
-                      isCurrent ? "text-cyan-300" :
-                      isDone ? "bg-cyan-500/5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" :
-                      isUnlocked ? "bg-slate-900 border-white/10 text-slate-400 hover:border-white/30" :
-                      "bg-slate-900/50 border-white/5 text-slate-700 cursor-not-allowed"
-                    }`}
+                    className={`relative group flex items-center transition-all duration-500 ${isCurrent ? "px-4 py-2 rounded-full bg-cyan-500/20 border-cyan-400 border" : "w-10 h-10 rounded-full border items-center justify-center"
+                      } ${isCurrent ? "text-cyan-300" :
+                        isDone ? "bg-cyan-500/5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" :
+                          isUnlocked ? "bg-slate-900 border-white/10 text-slate-400 hover:border-white/30" :
+                            "bg-slate-900/50 border-white/5 text-slate-700 cursor-not-allowed"
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <div className="shrink-0 flex items-center justify-center">
@@ -2710,9 +2738,9 @@ export function NetworkSimulator({ onBack }: Props) {
                           <span className="text-xs font-mono font-bold">{lv.id}</span>
                         )}
                       </div>
-                      
+
                       {isCurrent && (
-                        <motion.span 
+                        <motion.span
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
@@ -2787,10 +2815,9 @@ export function NetworkSimulator({ onBack }: Props) {
                   <span>#</span><span>chain</span><span>action</span><span>proto</span><span>src</span><span>dst</span><span>port</span>
                 </div>
                 {state.firewallRules.map((r, i) => (
-                  <div key={r.id} className={`grid grid-cols-[3rem_5rem_5rem_3rem_8rem_8rem_1fr] gap-2 text-[11px] font-mono px-2 py-1 rounded ${
-                    r.action === "ACCEPT" ? "bg-emerald-500/5 border border-emerald-500/20" :
-                    "bg-red-500/5 border border-red-500/20"
-                  }`}>
+                  <div key={r.id} className={`grid grid-cols-[3rem_5rem_5rem_3rem_8rem_8rem_1fr] gap-2 text-[11px] font-mono px-2 py-1 rounded ${r.action === "ACCEPT" ? "bg-emerald-500/5 border border-emerald-500/20" :
+                      "bg-red-500/5 border border-red-500/20"
+                    }`}>
                     <span className="text-slate-500">{i + 1}</span>
                     <span className="text-slate-300">{r.chain}</span>
                     <span className={r.action === "ACCEPT" ? "text-emerald-300 font-bold" : "text-red-300 font-bold"}>{r.action}</span>
@@ -2968,10 +2995,9 @@ export function NetworkSimulator({ onBack }: Props) {
                   {state.scanned.has(sel.ip) ? (
                     <div className="space-y-1">
                       {sel.ports.filter((p) => p.state !== "closed").map((p) => (
-                        <div key={p.port} className={`rounded px-2 py-1 font-mono text-[11px] ${
-                          p.state === "open" ? "bg-emerald-500/5 border border-emerald-500/20 text-emerald-300" :
-                          "bg-amber-500/5 border border-amber-500/20 text-amber-300"
-                        }`}>
+                        <div key={p.port} className={`rounded px-2 py-1 font-mono text-[11px] ${p.state === "open" ? "bg-emerald-500/5 border border-emerald-500/20 text-emerald-300" :
+                            "bg-amber-500/5 border border-amber-500/20 text-amber-300"
+                          }`}>
                           <div className="flex items-center justify-between">
                             <span>{p.port}/tcp</span>
                             <span>{p.service}</span>
@@ -3049,18 +3075,16 @@ export function NetworkSimulator({ onBack }: Props) {
                 return (
                   <div
                     key={`${level.id}-${item.id}-${index}`}
-                    className={`rounded-lg border p-3 transition ${
-                      done ? "border-emerald-500/25 bg-emerald-500/10" :
-                      current ? "border-cyan-400/40 bg-cyan-500/10" :
-                      "border-white/5 bg-slate-950/40 opacity-70"
-                    }`}
+                    className={`rounded-lg border p-3 transition ${done ? "border-emerald-500/25 bg-emerald-500/10" :
+                        current ? "border-cyan-400/40 bg-cyan-500/10" :
+                          "border-white/5 bg-slate-950/40 opacity-70"
+                      }`}
                   >
                     <div className="mb-2 flex items-start gap-2">
-                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-                        done ? "bg-emerald-400 text-slate-950" :
-                        current ? "bg-cyan-400 text-slate-950" :
-                        "bg-slate-800 text-slate-500"
-                      }`}>
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${done ? "bg-emerald-400 text-slate-950" :
+                          current ? "bg-cyan-400 text-slate-950" :
+                            "bg-slate-800 text-slate-500"
+                        }`}>
                         {done ? "✓" : index + 1}
                       </span>
                       <div className="min-w-0">
@@ -3070,9 +3094,8 @@ export function NetworkSimulator({ onBack }: Props) {
                         </code>
                       </div>
                     </div>
-                    <p className={`text-[10px] font-mono uppercase tracking-widest ${
-                      done ? "text-emerald-300" : current ? "text-cyan-300" : "text-slate-600"
-                    }`}>
+                    <p className={`text-[10px] font-mono uppercase tracking-widest ${done ? "text-emerald-300" : current ? "text-cyan-300" : "text-slate-600"
+                      }`}>
                       {done ? "concluído" : current ? "em andamento" : "próximo"}
                     </p>
                   </div>
@@ -3264,6 +3287,16 @@ export function NetworkSimulator({ onBack }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <NetworkCodex 
+        isOpen={isManualOpen} 
+        onClose={() => setIsManualOpen(false)} 
+        primaryColor="cyan"
+        onSendToTerminal={(cmd) => {
+          setInput(cmd);
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
+      />
     </div>
   );
 }
