@@ -7,6 +7,7 @@ import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
 import ChallengeList from "./pages/ChallengeList";
 import GameArena from "./pages/GameArena";
+import BossArena from "./pages/BossArena";
 import Profile from "./pages/Profile";
 import { GitSimulator } from "./components/GitSimulator";
 import { DockerSimulator } from "./components/DockerSimulator";
@@ -20,6 +21,7 @@ type View =
   | { name: "map" }
   | { name: "list"; worldId: string }
   | { name: "arena"; challengeId: string; worldId: string }
+  | { name: "boss"; worldId: string }
   | { name: "profile" }
   | { name: "git-simulator" }
   | { name: "docker-simulator" }
@@ -59,6 +61,7 @@ function AppContent() {
   const goList = (worldId: string) => setView({ name: "list", worldId });
   const goArena = (challengeId: string, worldId: string) =>
     setView({ name: "arena", challengeId, worldId });
+  const goBoss = (worldId: string) => setView({ name: "boss", worldId });
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
@@ -86,9 +89,17 @@ function AppContent() {
         <ChallengeList
           worldId={view.worldId}
           onSelectChallenge={(id) => goArena(id, view.worldId)}
+          onSelectBoss={() => goBoss(view.worldId)}
           onBack={goMap}
           onBackToHome={goWelcome}
           onOpenProfile={goProfile}
+        />
+      )}
+
+      {view.name === "boss" && (
+        <BossArena
+          worldId={view.worldId}
+          onBack={() => goList(view.worldId)}
         />
       )}
 

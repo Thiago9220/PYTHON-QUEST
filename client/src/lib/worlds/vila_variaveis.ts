@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { BLACKBOX_ALPHA_BOSS } from "../bosses/blackbox_alpha";
 
 export const VILA_VARIAVEIS_WORLD: World = {
   id: "vila-variaveis",
@@ -9,6 +10,7 @@ export const VILA_VARIAVEIS_WORLD: World = {
   bgImage: "/assets/images/worlds/variables.png",
   lore: "O sistema de segurança isolou o núcleo da cidade (Core). Aqui no Terminal Alpha, você deve inicializar o Protocolo de Alocação: definir variáveis e manipular a memória local para dar o primeiro bypass no firewall primário.",
   unlockRequirement: 0,
+  boss: BLACKBOX_ALPHA_BOSS,
   challenges: [
     {
       id: "py-01",

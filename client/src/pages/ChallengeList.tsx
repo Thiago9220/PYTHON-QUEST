@@ -1,17 +1,18 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  Circle, 
-  Flame, 
-  Lock, 
-  LogOut, 
-  Star, 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Flame,
+  Lock,
+  LogOut,
+  Star,
   Trophy,
   ChevronRight,
   BookOpen,
-  Zap
+  Zap,
+  Skull
 } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
@@ -31,13 +32,14 @@ const DIFFICULTY_COLORS = {
 type Props = {
   worldId: string;
   onSelectChallenge: (challengeId: string) => void;
+  onSelectBoss?: () => void;
   onBack: () => void;
   onBackToHome: () => void;
   onOpenProfile: () => void;
 };
 
-export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBackToHome, onOpenProfile }: Props) {
-  const { isChallengeCompleted, state, getPlayerLevel, dispatch } = useGame();
+export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss, onBack, onBackToHome, onOpenProfile }: Props) {
+  const { isChallengeCompleted, isBossDefeated, isBossUnlocked, state, getPlayerLevel, dispatch } = useGame();
   const { user, logout } = useAuth();
   const world = getWorldById(worldId);
   const nextChallengeRef = useRef<HTMLDivElement>(null);
@@ -377,6 +379,135 @@ export default function ChallengeList({ worldId, onSelectChallenge, onBack, onBa
                 </div>
               );
             })}
+
+            {world.boss && onSelectBoss && (() => {
+              const bossUnlocked = isBossUnlocked(world.id);
+              const bossDefeated = isBossDefeated(world.boss.id);
+              const threshold = Math.round(world.boss.unlockThreshold * 100);
+              const currentPct = completionPct;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  onClick={() => {
+                    if (!bossUnlocked) {
+                      toast.error(`Complete ${threshold}% dos desafios para liberar o boss.`, {
+                        description: `Progresso atual: ${currentPct}%`,
+                      });
+                      return;
+                    }
+                    onSelectBoss();
+                  }}
+                  className={`group relative mt-8 flex items-center gap-4 sm:gap-6 rounded-2xl p-6 sm:p-7 transition-all border-2 backdrop-blur-sm cursor-pointer ${
+                    bossDefeated
+                      ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent"
+                      : bossUnlocked
+                        ? "hover:scale-[1.01] shadow-2xl"
+                        : "opacity-60 cursor-not-allowed"
+                  }`}
+                  style={{
+                    borderColor: bossDefeated
+                      ? undefined
+                      : bossUnlocked
+                        ? `${themeColor}80`
+                        : `${themeColor}30`,
+                    background: bossUnlocked && !bossDefeated
+                      ? `linear-gradient(to right, ${themeColor}15, transparent 60%)`
+                      : undefined,
+                    boxShadow: bossUnlocked && !bossDefeated
+                      ? `0 0 40px -10px ${themeColor}60`
+                      : undefined,
+                  }}
+                >
+                  <div className="shrink-0 relative">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center border-2"
+                      style={{
+                        backgroundColor: bossDefeated ? "#f59e0b22" : `${themeColor}22`,
+                        borderColor: bossDefeated ? "#f59e0b" : themeColor,
+                        boxShadow: bossUnlocked ? `0 0 30px ${themeColor}40` : undefined,
+                      }}
+                    >
+                      {bossDefeated ? (
+                        <Trophy className="w-7 h-7 text-amber-400" />
+                      ) : (
+                        <Skull className="w-7 h-7" style={{ color: themeColor }} />
+                      )}
+                    </div>
+                    {bossUnlocked && !bossDefeated && (
+                      <motion.div
+                        animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 rounded-2xl border-2 pointer-events-none"
+                        style={{ borderColor: themeColor }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                      <span
+                        className="text-[9px] font-black uppercase tracking-[0.3em]"
+                        style={{ color: bossDefeated ? "#fbbf24" : themeColor }}
+                      >
+                        // Boss Encounter
+                      </span>
+                      {bossDefeated && (
+                        <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black uppercase tracking-widest">
+                          Derrotado
+                        </span>
+                      )}
+                      {!bossUnlocked && (
+                        <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black uppercase tracking-widest flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" />
+                          {threshold}% requerido
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-2xl font-black tracking-tight text-white leading-tight mb-1">
+                      {world.boss.title}
+                    </h3>
+                    <p className="text-sm font-bold mb-3" style={{ color: themeColor }}>
+                      » {world.boss.codename}
+                    </p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-300">
+                        <Skull className="w-3 h-3" style={{ color: themeColor }} />
+                        {world.boss.acts.length} atos
+                      </div>
+                      <div
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest"
+                        style={{
+                          backgroundColor: `${themeColor}15`,
+                          borderColor: `${themeColor}30`,
+                          color: themeColor,
+                        }}
+                      >
+                        <Zap className="w-3 h-3" />
+                        +{world.boss.xpReward.toLocaleString()} XP
+                      </div>
+                      {!bossUnlocked && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                          Atual: {currentPct}%
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 hidden md:block">
+                    {bossUnlocked ? (
+                      <ChevronRight
+                        className="w-7 h-7 transition-transform group-hover:translate-x-2"
+                        style={{ color: themeColor }}
+                      />
+                    ) : (
+                      <Lock className="w-6 h-6 text-slate-700" />
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })()}
           </div>
         </section>
       </main>

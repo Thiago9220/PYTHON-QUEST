@@ -7,6 +7,7 @@ export const INITIAL_STATE: GameState = {
   playerName: "",
   totalXP: 0,
   challengeProgress: {},
+  bossProgress: {},
   achievements: ACHIEVEMENTS_ROOT,
   currentWorldId: null,
   currentChallengeId: null,
@@ -64,10 +65,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return rootAch;
       });
 
-      return { 
-        ...action.state, 
+      return {
+        ...action.state,
+        bossProgress: action.state.bossProgress ?? {},
         streak: newStreak,
-        achievements: syncedAchievements
+        achievements: syncedAchievements,
       };
     }
 
@@ -160,6 +162,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             bestScore: isFirstTimeCompletion ? score : Math.max(prev.bestScore, score),
             bestChars: newBestChars,
             completedAt: prev.completedAt || Date.now(),
+          },
+        },
+      };
+    }
+
+    case "DEFEAT_BOSS": {
+      const prev = state.bossProgress?.[action.bossId];
+      const isFirstTime = !prev?.defeated;
+      const newXP = isFirstTime ? state.totalXP + action.xp : state.totalXP;
+
+      return {
+        ...state,
+        totalXP: newXP,
+        bossProgress: {
+          ...(state.bossProgress || {}),
+          [action.bossId]: {
+            defeated: true,
+            defeatedAt: prev?.defeatedAt || Date.now(),
+            totalHintsUsed: isFirstTime
+              ? action.hintsUsed
+              : Math.min(prev?.totalHintsUsed ?? action.hintsUsed, action.hintsUsed),
+            durationSec: isFirstTime
+              ? action.durationSec
+              : Math.min(prev?.durationSec ?? action.durationSec, action.durationSec),
           },
         },
       };

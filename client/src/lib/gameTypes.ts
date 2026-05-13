@@ -17,10 +17,18 @@ export type ChallengeProgress = {
   completedAt?: number;
 };
 
+export type BossProgress = {
+  defeated: boolean;
+  defeatedAt?: number;
+  totalHintsUsed: number;
+  durationSec?: number;
+};
+
 export type GameState = {
   playerName: string;
   totalXP: number;
   challengeProgress: Record<string, ChallengeProgress>;
+  bossProgress: Record<string, BossProgress>;
   achievements: Achievement[];
   currentWorldId: string | null;
   currentChallengeId: string | null;
@@ -39,6 +47,7 @@ export type GameState = {
 export type GameAction =
   | { type: "SET_PLAYER_NAME"; name: string }
   | { type: "COMPLETE_CHALLENGE"; challengeId: string; xp: number; hintsUsed: number; attempts: number; charCount: number; usedStudyAnswer?: boolean }
+  | { type: "DEFEAT_BOSS"; bossId: string; xp: number; hintsUsed: number; durationSec: number }
   | { type: "RECORD_ATTEMPT"; challengeId: string }
   | { type: "USE_STUDY_ANSWER" }
   | { type: "SET_CURRENT_CHALLENGE"; worldId: string; challengeId: string }

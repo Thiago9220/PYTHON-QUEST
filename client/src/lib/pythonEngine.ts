@@ -99,10 +99,10 @@ export async function validatePythonChallenge(
     // Injetar o output e o código original no ambiente Python para o testCode poder validar
     pyodide.globals.set("output", result.output);
     pyodide.globals.set("code", userCode);
-    
+
     // Executar o código de teste
     await pyodide.runPythonAsync(challenge.testCode);
-    
+
     return {
       correct: true,
       feedback: "Incrível! Seu código funcionou perfeitamente.",
@@ -113,6 +113,89 @@ export async function validatePythonChallenge(
       correct: false,
       feedback: "O código rodou, mas o resultado não é o esperado. Tente novamente!",
       output: result.output,
+    };
+  }
+}
+
+export type BossObjectiveResult = {
+  index: number;
+  label: string;
+  passed: boolean;
+  error?: string;
+};
+
+export type BossExecutionResult = {
+  success: boolean;
+  output: string;
+  error?: string;
+  results: BossObjectiveResult[];
+};
+
+/**
+ * Executa o código acumulado do boss e avalia cada objetivo
+ * de cada ato em sequência. Retorna o status individual de cada objetivo.
+ */
+export async function runBossExecution(
+  accumulatedSetup: string,
+  userCode: string,
+  objectives: { label: string; check: string }[]
+): Promise<BossExecutionResult> {
+  if (!pyodide) await initPython();
+
+  try {
+    // Reset stdout e namespace
+    await pyodide.runPythonAsync(`
+import sys
+import io
+sys.stdout = io.StringIO()
+`);
+
+    const fullCode = `${accumulatedSetup}\n${userCode}`;
+    await pyodide.loadPackagesFromImports(fullCode);
+
+    // Roda setup + código do aluno
+    await pyodide.runPythonAsync(fullCode);
+
+    const output: string = await pyodide.runPythonAsync(
+      "sys.stdout.getvalue()"
+    );
+
+    // Injeta output no namespace para os checks usarem
+    pyodide.globals.set("output", output);
+    pyodide.globals.set("code", userCode);
+
+    // Avalia cada objetivo
+    const results: BossObjectiveResult[] = [];
+    for (let i = 0; i < objectives.length; i++) {
+      const obj = objectives[i];
+      try {
+        const passed = await pyodide.runPythonAsync(`bool(${obj.check})`);
+        results.push({
+          index: i,
+          label: obj.label,
+          passed: !!passed,
+        });
+      } catch (e: any) {
+        results.push({
+          index: i,
+          label: obj.label,
+          passed: false,
+          error: e.message,
+        });
+      }
+    }
+
+    return { success: true, output, results };
+  } catch (err: any) {
+    return {
+      success: false,
+      output: "",
+      error: err.message,
+      results: objectives.map((o, i) => ({
+        index: i,
+        label: o.label,
+        passed: false,
+      })),
     };
   }
 }

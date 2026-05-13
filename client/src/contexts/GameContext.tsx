@@ -37,6 +37,8 @@ type GameContextType = {
   };
   isWorldUnlocked: (worldId: string) => boolean;
   isChallengeCompleted: (challengeId: string) => boolean;
+  isBossDefeated: (bossId: string) => boolean;
+  isBossUnlocked: (worldId: string) => boolean;
   getCompletedCount: () => number;
   getTotalChallenges: () => number;
   refreshGameData: () => Promise<void>;
@@ -587,6 +589,19 @@ export function GameProvider({
     getWorldUnlockStatus(id, state.totalXP, state.isDevMode, purchasedWorlds);
   const isChallengeCompleted = (id: string) =>
     state.challengeProgress[id]?.completed ?? false;
+  const isBossDefeated = (bossId: string) =>
+    state.bossProgress?.[bossId]?.defeated ?? false;
+  const isBossUnlocked = (worldId: string) => {
+    if (state.isDevMode) return true;
+    const world = WORLDS.find((w) => w.id === worldId);
+    if (!world?.boss) return false;
+    const total = world.challenges.length;
+    if (total === 0) return false;
+    const completed = world.challenges.filter((c) =>
+      isChallengeCompleted(c.id)
+    ).length;
+    return completed / total >= world.boss.unlockThreshold;
+  };
   const getCompletedCount = () =>
     Object.values(state.challengeProgress).filter(p => p.completed).length;
   const getTotalChallenges = () => WORLDS.flatMap(w => w.challenges).length;
@@ -613,6 +628,8 @@ export function GameProvider({
         getPlayerLevel,
         isWorldUnlocked,
         isChallengeCompleted,
+        isBossDefeated,
+        isBossUnlocked,
         getCompletedCount,
         getTotalChallenges,
         refreshGameData,

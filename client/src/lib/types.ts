@@ -26,6 +26,33 @@ export type Challenge = {
   solution?: string;
 };
 
+export type BossObjective = {
+  label: string;
+  check: string;
+};
+
+export type BossAct = {
+  id: string;
+  title: string;
+  narrative: string;
+  setupCode: string;
+  starterHint?: string;
+  objectives: BossObjective[];
+  hints: Hint[];
+};
+
+export type BossChallenge = {
+  id: string;
+  worldId: string;
+  title: string;
+  codename: string;
+  intro: string;
+  finalStory: string;
+  unlockThreshold: number;
+  xpReward: number;
+  acts: BossAct[];
+};
+
 export type World = {
   id: string;
   title: string;
@@ -36,4 +63,5 @@ export type World = {
   lore?: string;
   challenges: Challenge[];
   unlockRequirement: number;
+  boss?: BossChallenge;
 };
