@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Book, BookOpen, Code2, Copy, Play, X, Zap, History, Flame, LayoutList, Split, Terminal, Cpu
@@ -68,10 +68,14 @@ const RITUALS = {
 
 export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("why_python");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab("why_python");
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+      }
     }
     
     if (!isOpen) return;
@@ -81,6 +85,12 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
       document.body.style.overflow = originalStyle;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -334,7 +344,11 @@ export function Codex({ isOpen, onClose, onSendToEditor }: Props) {
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-thin scrollbar-thumb-white/10">
+              <div 
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-thin scrollbar-thumb-white/10"
+              >
+
                 <div className="max-w-3xl mx-auto">
                   {renderContent()}
                 </div>
