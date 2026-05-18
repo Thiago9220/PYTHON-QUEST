@@ -34,6 +34,17 @@ const asciiBar = (pct: number, width = 24) => {
 
 const isImagePath = (v?: string | null) => !!v && (v.startsWith("/") || v.startsWith("http"));
 
+const PREDEFINED_AVATARS = [
+  "/avatars/avatar_1.png",
+  "/avatars/avatar_2.png",
+  "/avatars/avatar_3.png",
+  "/avatars/guido.webp",
+  "/avatars/wizard.webp",
+  "/avatars/golem.webp",
+  "/avatars/galadriel.webp",
+  "/avatars/ai7_guide.png",
+];
+
 export default function Profile({ onBack }: Props) {
   const { state, dispatch, getPlayerLevel, getCompletedCount, getTotalChallenges } = useGame();
   const { user, logout, updateProfile } = useAuth();
@@ -527,7 +538,23 @@ export default function Profile({ onBack }: Props) {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">AVATAR_URL</label>
+                <label className="mb-2 block text-[10px] tracking-[0.25em] text-cyan-400/80">SELECIONAR AVATAR</label>
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {PREDEFINED_AVATARS.map((url) => (
+                    <button
+                      key={url}
+                      onClick={() => setAvatarUrl(url)}
+                      className={`relative aspect-square overflow-hidden border-2 transition-all ${
+                        avatarUrl === url
+                          ? "border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-105 z-10"
+                          : "border-cyan-500/20 opacity-60 hover:opacity-100 hover:border-cyan-500/50"
+                      }`}
+                    >
+                      <img src={url} alt="Avatar option" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">OU URL CUSTOMIZADA</label>
                 <Input
                   value={avatarUrl}
                   onChange={(e) => setAvatarUrl(e.target.value)}
