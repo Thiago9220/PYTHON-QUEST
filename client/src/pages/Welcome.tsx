@@ -41,6 +41,7 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
   const handleStart = () => {
     if (name.trim().length < 2) return;
     dispatch({ type: "SET_PLAYER_NAME", name: name.trim() });
+    dispatch({ type: "COMPLETE_TUTORIAL" });
     onStart();
   };
 

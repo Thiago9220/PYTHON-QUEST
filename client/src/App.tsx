@@ -50,12 +50,12 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  // Handle initial redirection if already logged in/identified
+  // Handle initial redirection se o usuario ja viu a introducao
   useEffect(() => {
-    if (hasHydrated && state.playerName && view.name === "welcome") {
+    if (hasHydrated && state.hasSeenTutorial && view.name === "welcome") {
       setView({ name: "map" });
     }
-  }, [hasHydrated, state.playerName, view.name]);
+  }, [hasHydrated, state.hasSeenTutorial, view.name]);
 
   const goWelcome = () => setView({ name: "welcome" });
   const goMap = () => setView({ name: "map" });
