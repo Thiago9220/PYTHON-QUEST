@@ -32,9 +32,16 @@ export const ACHIEVEMENTS_ROOT: Achievement[] = [
   { id: "streak_3", title: "Hacker Persistente", description: "Mantenha uma sequência de 3 dias ativos", icon: "/achievements/streak.png", unlocked: false, titleReward: "Infiltrador" },
   { id: "streak_7", title: "Fantasma do Sistema", description: "Mantenha uma sequência de 7 dias ativos", icon: "/achievements/ghost.png", unlocked: false, titleReward: "Sombra do Core" },
   { id: "streak_14", title: "Lenda Viva", description: "Mantenha uma sequência de 14 dias ativos", icon: "/achievements/streak_14.png", unlocked: false, titleReward: "Lenda Viva" },
+  { id: "streak_30", title: "Operador do Mês", description: "Mantenha uma sequência de 30 dias ativos", icon: "/achievements/streak_30.png", unlocked: false, titleReward: "Viciado no Core" },
   { id: "xp_3000", title: "Transcendente", description: "Acumule 3.000 XP", icon: "/achievements/xp_guru.png", unlocked: false, titleReward: "Transcendente" },
+  { id: "xp_5000", title: "Deus Ex Machina", description: "Acumule 5.000 XP", icon: "/achievements/xp_5000.png", unlocked: false, titleReward: "Deus da Máquina" },
   { id: "first_try_10", title: "Código Limpo", description: "Complete 10 desafios na primeira tentativa", icon: "/achievements/precision_master.png", unlocked: false, titleReward: "Sniper" },
+  { id: "first_try_20", title: "Máquina Implacável", description: "Complete 20 desafios na primeira tentativa", icon: "/achievements/first_try_20.png", unlocked: false, titleReward: "Ciborgue" },
+  { id: "hints_used_1", title: "Curioso", description: "Use sua primeira dica", icon: "/achievements/first_hint.png", unlocked: false, titleReward: "Buscador" },
+  { id: "no_hints_10", title: "Processamento Puro", description: "Complete 10 desafios sem usar dicas", icon: "/achievements/no_hints_10.png", unlocked: false, titleReward: "Mente Focada" },
+  { id: "four_worlds_complete", title: "Vetor Principal", description: "Complete 4 mundos inteiros", icon: "/achievements/four_worlds.png", unlocked: false, titleReward: "Comandante de Setor" },
   { id: "perfect_3_worlds", title: "Trindade do Código", description: "Complete 3 mundos sem usar dicas", icon: "/achievements/trinity.png", unlocked: false, titleReward: "Arquiteto Neo" },
+  { id: "all_perfect_worlds", title: "Nirvana Digital", description: "Complete todos os mundos disponíveis sem usar dicas", icon: "/achievements/nirvana.png", unlocked: false, titleReward: "O Iluminado" },
 ];
 
 export function getAchievementConditions(state: any) {
@@ -59,12 +66,18 @@ export function getAchievementConditions(state: any) {
     hints_used_5: hintsUsedCompleted.length >= 5,
     first_try_1: firstTryCompleted.length >= 3,
     two_worlds_complete: worldsCompleted >= 2,
+    four_worlds_complete: worldsCompleted >= 4,
     all_complete: completed.length === totalInGame && totalInGame > 0,
     streak_3: state.streak >= 3,
     streak_7: state.streak >= 7,
     streak_14: state.streak >= 14,
+    streak_30: state.streak >= 30,
     xp_3000: state.totalXP >= 3000,
+    xp_5000: state.totalXP >= 5000,
     first_try_10: firstTryCompleted.length >= 10,
+    first_try_20: firstTryCompleted.length >= 20,
+    no_hints_10: noHintsCompleted.length >= 10,
+    hints_used_1: hintsUsedCompleted.length >= 1,
     all_worlds_started: WORLDS.every((world) =>
       world.challenges.some((c) => completedIds.includes(c.id))
     ),
@@ -80,6 +93,12 @@ export function getAchievementConditions(state: any) {
         ids.every((id) => completedIds.includes(id)) &&
         ids.every((id) => (state.challengeProgress[id]?.hintsUsed ?? 0) === 0);
     }).length >= 3,
+    all_perfect_worlds: WORLDS.filter((world) => {
+      const ids = world.challenges.map((c) => c.id);
+      return ids.length > 0 &&
+        ids.every((id) => completedIds.includes(id)) &&
+        ids.every((id) => (state.challengeProgress[id]?.hintsUsed ?? 0) === 0);
+    }).length === WORLDS.length && WORLDS.length > 0,
   };
 
 
