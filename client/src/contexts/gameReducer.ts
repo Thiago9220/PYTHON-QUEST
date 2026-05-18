@@ -17,6 +17,7 @@ export const INITIAL_STATE: GameState = {
   hasSeenTutorial: false,
   hasSeenWorldTour: false,
   hasSeenProfileTour: false,
+  hasSeenArenaTour: false,
   isDevMode: false,
   studyAnswerUses: 0,
   lastStudyAnswerDate: null,
@@ -44,6 +45,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "COMPLETE_PROFILE_TOUR":
       return { ...state, hasSeenProfileTour: true };
+
+    case "COMPLETE_ARENA_TOUR":
+      return { ...state, hasSeenArenaTour: true };
 
     case "LOAD_STATE": {
       const now = Date.now();
@@ -274,6 +278,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         hasSeenTutorial: false,
         hasSeenWorldTour: false,
         hasSeenProfileTour: false,
+        hasSeenArenaTour: false,
       };
 
     case "DEBUG_ADD_STREAK":

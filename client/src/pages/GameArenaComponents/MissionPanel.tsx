@@ -20,7 +20,7 @@ export function MissionPanel({
   hintsUsed = 0,
 }: Props) {
   return (
-    <div className="flex flex-col glass-dark overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl">
+    <div id="arena-mission" className="flex flex-col glass-dark overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl">
       <div className="flex bg-slate-900/60 border-b border-white/5 backdrop-blur-md">
         <button
           onClick={() => setActiveTab("mission")}

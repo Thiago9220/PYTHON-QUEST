@@ -34,7 +34,7 @@ export function ResultPanel({
   const showNextButton = isCorrect || wasAlreadyCompleted;
 
   return (
-    <div className={`${isExpanded ? "flex-[2]" : "lg:w-[380px]"} flex flex-col bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-500`}>
+    <div id="arena-terminal" className={`${isExpanded ? "flex-[2]" : "lg:w-[380px]"} flex flex-col bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-500`}>
       <div className="flex items-center justify-between px-4 py-3 bg-slate-950 text-sky-100 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Terminal size={14} className="text-sky-400" />

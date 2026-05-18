@@ -17,6 +17,7 @@ import { NetworkSimulator } from "./components/NetworkSimulator";
 import { CyberSecSimulator } from "./components/CyberSecSimulator";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
+import { DevPanel } from "./components/DevPanel";
 
 type View =
   | { name: "welcome" }
@@ -120,7 +121,7 @@ function AppContent() {
 
       {view.name !== "welcome" && <PomodoroTimer />}
 
-      <Toaster position="top-center" expand={false} richColors />
+      <Toaster position="top-center" expand={false} theme="dark" richColors />
     </div>
   );
 }
@@ -140,7 +141,7 @@ function AppContentWrapper() {
     return (
       <>
         <AuthPage />
-        <Toaster position="top-center" expand={false} richColors />
+        <Toaster position="top-center" expand={false} theme="dark" richColors />
       </>
     );
   }
@@ -149,6 +150,7 @@ function AppContentWrapper() {
     <GameProvider userId={user?.id}>
       <PomodoroProvider>
         <AppContent />
+        <DevPanel />
       </PomodoroProvider>
     </GameProvider>
   );
@@ -156,7 +158,7 @@ function AppContentWrapper() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <AuthProvider>
         <AppContentWrapper />
       </AuthProvider>

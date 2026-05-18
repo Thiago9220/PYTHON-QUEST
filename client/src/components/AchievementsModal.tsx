@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Lock, Trophy, X } from "lucide-react";
+import { 
+  Check, Lock, Trophy, X, Terminal, Zap, Award, BookOpen, Compass, 
+  MapPin, RefreshCw, Layers, Flame, Ghost, Sparkles, Cpu, Target, 
+  HelpCircle, Shield, BrainCircuit, Infinity, Crown, EyeOff, Binary
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
 
@@ -23,11 +27,54 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
-  const getFallbackIcon = (id: string) => {
-    if (id.includes("xp")) return <Zap className="h-8 w-8 text-amber-400" />;
-    if (id.includes("world")) return <Award className="h-8 w-8 text-sky-400" />;
-    if (id.includes("hint")) return <BookOpen className="h-8 w-8 text-emerald-400" />;
-    return <Trophy className="h-8 w-8 text-slate-400" />;
+  const getAchievementIcon = (id: string, isUnlocked: boolean) => {
+    const size = "h-9 w-9";
+    let IconComponent = Trophy;
+    let colorClass = "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+
+    if (id === "first_query") {
+      IconComponent = Terminal;
+      colorClass = "text-sky-400 drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]";
+    } else if (id.startsWith("xp_")) {
+      IconComponent = Zap;
+      if (id.includes("250")) colorClass = "text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]";
+      else if (id.includes("500")) colorClass = "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]";
+      else if (id.includes("1000")) colorClass = "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]";
+      else if (id.includes("1500")) colorClass = "text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]";
+      else if (id.includes("3000")) colorClass = "text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.5)]";
+      else if (id.includes("5000")) colorClass = "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.7)] animate-pulse";
+    } else if (id.startsWith("world_")) {
+      IconComponent = MapPin;
+      if (id.includes("vila-variaveis")) colorClass = "text-sky-400 drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]";
+      else if (id.includes("vale-condicoes")) colorClass = "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+      else if (id.includes("ninho-listas")) colorClass = "text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]";
+      else if (id.includes("montanha-loops")) colorClass = "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+      else if (id.includes("floresta-funcoes")) colorClass = "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]";
+    } else if (id.includes("no_hints")) {
+      IconComponent = EyeOff;
+      colorClass = "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+    } else if (id.includes("hints")) {
+      IconComponent = BookOpen;
+      colorClass = "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]";
+    } else if (id.includes("first_try_") || id.includes("precision")) {
+      IconComponent = Target;
+      colorClass = "text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]";
+    } else if (id === "perfect_world" || id.includes("perfect")) {
+      IconComponent = Crown;
+      colorClass = "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+    } else if (id.includes("streak_")) {
+      IconComponent = id.includes("7") ? Ghost : Flame;
+      colorClass = id.includes("7") ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.5)]" : "text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]";
+    } else if (id === "all_complete") {
+      IconComponent = Trophy;
+      colorClass = "text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]";
+    }
+
+    if (!isUnlocked) {
+      return <IconComponent className={`${size} text-slate-800 transition-all duration-300`} />;
+    }
+
+    return <IconComponent className={`${size} ${colorClass} transition-all duration-300`} />;
   };
 
   return (
@@ -92,24 +139,16 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                       }`}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
+                        <div className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
                           isUnlocked 
-                            ? "border-emerald-500/20 bg-slate-950 shadow-inner shadow-emerald-500/5" 
+                            ? "border-emerald-500/20 bg-slate-950/80 shadow-lg shadow-black" 
                             : "border-white/5 bg-slate-950"
                         }`}>
-                          {isUnlocked ? (
-                            ach.icon.startsWith("/") ? (
-                              <img 
-                                src={ach.icon} 
-                                alt={ach.title} 
-                                className="h-full w-full object-cover p-2 transition-transform group-hover:scale-110" 
-                                loading="lazy" 
-                              />
-                            ) : (
-                              <span className="text-4xl">{ach.icon}</span>
-                            )
-                          ) : (
-                            <Lock className="h-8 w-8 text-slate-700" />
+                          {getAchievementIcon(ach.id, isUnlocked)}
+                          {!isUnlocked && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Lock className="h-4 w-4 text-slate-600" />
+                            </div>
                           )}
                         </div>
                         <div className="min-w-0">

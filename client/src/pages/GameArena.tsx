@@ -22,9 +22,11 @@ import { getChallengeById, getWorldById } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
 import { AnswerRevealModal } from "@/components/AnswerRevealModal";
 import { WorldCompletionModal } from "@/components/WorldCompletionModal";
-import { toast } from "sonner";
+import TutorialTour, { TourStep } from "@/components/TutorialTour";
 import { soundManager } from "@/lib/sounds";
+import { toast } from "sonner";
 import { useChallengeEngine } from "@/hooks/useChallengeEngine";
+import { useAuth } from "@/contexts/AuthContext";
 import { MissionPanel } from "./GameArenaComponents/MissionPanel";
 import { ResultPanel } from "./GameArenaComponents/ResultPanel";
 
@@ -44,10 +46,12 @@ type Props = {
 };
 
 export default function GameArena({ challengeId, onBack, onBackToHome, onNext }: Props) {
+  const { user } = useAuth();
   const { state: gameState, dispatch, isChallengeCompleted } = useGame();
   const challenge = getChallengeById(challengeId);
   const world = challenge ? getWorldById(challenge.worldId) : null;
   const engine = useChallengeEngine(challenge ?? null, dispatch, isChallengeCompleted);
+  const isMaster = user?.email === "thiago.ramoss2009@gmail.com";
 
   const [activeTab, setActiveTab] = useState<"mission" | "concept">("mission");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -56,6 +60,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const [showAnswerModal, setShowAnswerModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [hasNotifiedStruggle, setHasNotifiedStruggle] = useState(false);
+  const [showArenaTour, setShowArenaTour] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -71,6 +76,13 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [engine.handleRun]);
+
+  // Arena Tour Trigger
+  useEffect(() => {
+    if (engine.pythonReady && !gameState.hasSeenArenaTour && !engine.showIntroCutscene) {
+      setShowArenaTour(true);
+    }
+  }, [engine.pythonReady, gameState.hasSeenArenaTour, engine.showIntroCutscene]);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -130,7 +142,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
         <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:64px_64px]" />
       </div>
 
-      <header className="flex-shrink-0 border-b border-white/10 bg-slate-950/60 backdrop-blur-md sticky top-0 z-20">
+      <header id="arena-header" className="flex-shrink-0 border-b border-white/10 bg-slate-950/60 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <button className="group flex items-center gap-3" onClick={onBackToHome}>
@@ -183,6 +195,9 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                 <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg">
                   <BookOpen className="w-4 h-4" />
                 </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowArenaTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-lg">
+                  <HelpCircle className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -201,6 +216,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
             />
 
             <motion.div 
+              id="arena-editor"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 bg-slate-900/60 border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(14,165,233,0.15)] flex flex-col backdrop-blur-xl"
@@ -215,7 +231,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                     <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Reforje sua lógica no terminal</div>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div id="arena-actions" className="flex flex-wrap items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={engine.handleReset} className="text-slate-400 hover:text-white hover:bg-white/5 h-10 px-4 rounded-xl font-bold transition-all border border-transparent hover:border-white/10">
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Resetar
@@ -247,10 +263,23 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                       <HelpCircle className="w-4 h-4 mr-2" /> Resposta
                     </Button>
                   )}
+                  {isMaster && challenge.solution && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        engine.setCode(challenge.solution || "");
+                        engine.forceSuccess();
+                      }}
+                      className="text-fuchsia-400 bg-fuchsia-400/10 hover:bg-fuchsia-400/20 border border-fuchsia-400/30 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      <Zap className="w-4 h-4 mr-2" /> Resolver (DEV)
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={engine.handleRun}
-                    disabled={!engine.pythonReady || engine.isRunning || !engine.code.trim() || engine.isCorrect === true}
+                    disabled={engine.isRunning || !engine.pythonReady || !engine.code.trim() || engine.isCorrect === true}
                     className="bg-sky-600 hover:bg-sky-500 h-10 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
                   >
                     <Play className="w-4 h-4 mr-2" />
@@ -347,6 +376,45 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
           onBack();
         }}
         world={world}
+      />
+      <TutorialTour 
+        isOpen={showArenaTour} 
+        onClose={() => {
+          setShowArenaTour(false);
+          if (!gameState.hasSeenArenaTour) dispatch({ type: "COMPLETE_ARENA_TOUR" });
+        }} 
+        steps={[
+          {
+            targetId: "arena-mission",
+            title: "Diretrizes e Conceitos",
+            content: "Aqui você encontra o objetivo da missão atual. Alterne para a aba 'Conceito' para ler a documentação teórica antes de codar.",
+            position: "right"
+          },
+          {
+            targetId: "arena-editor",
+            title: "Câmara de Código",
+            content: "Seu ambiente de desenvolvimento. Escreva seu código Python real aqui para solucionar o desafio.",
+            position: "left"
+          },
+          {
+            targetId: "arena-terminal",
+            title: "Console Terminal",
+            content: "Acompanhe os resultados da execução do seu código, erros do interpretador e as tentativas gastas.",
+            position: "left"
+          },
+          {
+            targetId: "arena-actions",
+            title: "Ações de Execução",
+            content: "Solicite dicas se ficar preso, limpe seu código com o botão Resetar, ou clique em EXECUTAR para testar seu script contra as defesas do sistema.",
+            position: "bottom"
+          },
+          {
+            targetId: "arena-header",
+            title: "Painel de Controle",
+            content: "Verifique sua progressão atual, acesse suas conquistas ou consulte o Codex para documentação a qualquer momento.",
+            position: "bottom"
+          }
+        ]}
       />
     </div>
   );

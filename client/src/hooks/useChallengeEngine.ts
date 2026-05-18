@@ -22,6 +22,14 @@ type EngineState = {
   usedStudyAnswer: boolean;
 };
 
+const hasSeenIntro = (challengeId: string) => {
+  return localStorage.getItem(`python_quest_intro_seen_${challengeId}`) === "true";
+};
+
+const markIntroSeen = (challengeId: string) => {
+  localStorage.setItem(`python_quest_intro_seen_${challengeId}`, "true");
+};
+
 export function useChallengeEngine(
   challenge: Challenge | null,
   dispatch: any,
@@ -38,7 +46,7 @@ export function useChallengeEngine(
     showHint: false,
     currentHintIdx: 0,
     showCutscene: false,
-    showIntroCutscene: !!challenge?.introStory && (!challenge ? false : !isChallengeCompleted(challenge.id)),
+    showIntroCutscene: !!challenge?.introStory && (!challenge ? false : (!isChallengeCompleted(challenge.id) && !hasSeenIntro(challenge.id))),
     isRunning: false,
     wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
     usedStudyAnswer: false,
@@ -62,7 +70,7 @@ export function useChallengeEngine(
         showHint: false,
         currentHintIdx: 0,
         showCutscene: false,
-        showIntroCutscene: !!challenge?.introStory && !isChallengeCompleted(challenge.id),
+        showIntroCutscene: !!challenge?.introStory && !isChallengeCompleted(challenge.id) && !hasSeenIntro(challenge.id),
         wasAlreadyCompleted: isChallengeCompleted(challenge.id),
         usedStudyAnswer: false,
       }));
@@ -170,6 +178,31 @@ export function useChallengeEngine(
     setUsedStudyAnswer: (used: boolean) => setState((prev) => ({ ...prev, usedStudyAnswer: used })),
     setShowHint: (show: boolean) => setState((prev) => ({ ...prev, showHint: show })),
     closeCutscene: () => setState((prev) => ({ ...prev, showCutscene: false })),
-    closeIntroCutscene: () => setState((prev) => ({ ...prev, showIntroCutscene: false })),
+    closeIntroCutscene: () => {
+      if (challenge) markIntroSeen(challenge.id);
+      setState((prev) => ({ ...prev, showIntroCutscene: false }));
+    },
+    forceSuccess: () => {
+      if (!challenge) return;
+      soundManager.playSuccess();
+      dispatch({
+        type: "COMPLETE_CHALLENGE",
+        challengeId: challenge.id,
+        xp: challenge.xpReward,
+        hintsUsed: 0,
+        attempts: 1,
+        charCount: challenge.solution?.length || 10,
+        usedStudyAnswer: false,
+      });
+      setState((prev) => ({
+        ...prev,
+        isCorrect: true,
+        feedback: "Incrível! Seu código funcionou perfeitamente. (DEV BYPASS)",
+        output: challenge.expectedOutput || "Bypass Output",
+      }));
+      setTimeout(() => {
+        setState((prev) => ({ ...prev, showCutscene: true }));
+      }, 500);
+    },
   };
 }
