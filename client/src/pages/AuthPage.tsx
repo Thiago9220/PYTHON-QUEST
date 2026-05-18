@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, LogIn, UserPlus, Mail } from "lucide-react";
 
-type Mode = "login" | "register" | "reset";
+type Mode = "landing" | "login" | "register" | "reset";
 
 export default function AuthPage() {
   const { login, register, resetPassword } = useAuth();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>("landing");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,176 +79,219 @@ export default function AuthPage() {
         animate={{ opacity: 1, y: 0 }}
         className="relative w-full max-w-md"
       >
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img 
-              src="/assets/images/python-quest-logo.png" 
-              alt="Python Quest Logo" 
-              className="w-24 h-24 object-cover rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.3)] ring-2 ring-cyan-500/50"
-            />
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Python Quest</h1>
-          <p className="text-sm text-slate-400 mt-1">
-            {mode === "login" && "Entre para continuar sua jornada."}
-            {mode === "register" && "Crie sua conta e comece a aventura."}
-            {mode === "reset" && "Vamos recuperar seu acesso."}
-          </p>
-        </div>
-
-        <div className="bg-slate-900/70 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-          {mode !== "reset" ? (
-            <div className="flex bg-slate-950/40 border-b border-slate-800">
-              <button
-                type="button"
-                onClick={() => { setInfo(null); setMode("login"); }}
-                className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
-                  mode === "login"
-                    ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
-                    : "text-slate-400 hover:text-slate-200 border-transparent hover:bg-slate-900/10"
-                }`}
-              >
-                <LogIn className="size-4" />
-                Entrar
-              </button>
-              <button
-                type="button"
-                onClick={() => { setInfo(null); setMode("register"); }}
-                className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
-                  mode === "register"
-                    ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
-                    : "text-slate-400 hover:text-slate-200 border-transparent hover:bg-slate-900/10"
-                }`}
-              >
-                <UserPlus className="size-4" />
-                Criar Conta
-              </button>
+        {mode !== "landing" && (
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center mb-4">
+              <img 
+                src="/assets/images/python-quest-logo.png" 
+                alt="Python Quest Logo" 
+                className="w-24 h-24 object-cover rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.3)] ring-2 ring-cyan-500/50"
+              />
             </div>
-          ) : (
-            <div className="flex bg-slate-950/40 border-b border-slate-800">
-              <div className="flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm text-cyan-400 border-b-2 border-cyan-500 bg-slate-900/20">
-                Recuperar Acesso
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Python Quest</h1>
+            <p className="text-sm text-slate-400 mt-1">
+              {mode === "login" && "Entre para continuar sua jornada."}
+              {mode === "register" && "Crie sua conta e comece a aventura."}
+              {mode === "reset" && "Vamos recuperar seu acesso."}
+            </p>
+          </div>
+        )}
+
+        {mode === "landing" ? (
+          <div className="text-center bg-slate-900/70 backdrop-blur border border-slate-800 rounded-3xl shadow-2xl p-8 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center justify-center mb-6">
+                <img 
+                  src="/assets/images/python-quest-logo.png" 
+                  alt="Python Quest Logo" 
+                  className="w-32 h-32 object-cover rounded-3xl shadow-[0_0_40px_rgba(34,211,238,0.4)] ring-2 ring-cyan-500/50"
+                />
+              </div>
+              <h1 className="text-5xl font-black tracking-tighter mb-4 bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 bg-clip-text text-transparent drop-shadow-lg">
+                PYTHON QUEST
+              </h1>
+              <p className="text-slate-300 text-lg mb-8 max-w-sm mx-auto leading-relaxed font-medium">
+                Aprenda programação hackeando sistemas, invadindo servidores e dominando a linguagem Python.
+              </p>
+              <div className="space-y-4">
+                <Button 
+                  size="lg" 
+                  className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] transition-all bg-cyan-600 hover:bg-cyan-500"
+                  onClick={() => setMode("register")}
+                >
+                  <UserPlus className="size-5 mr-2" /> Iniciar Jornada
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full h-14 text-sm font-bold uppercase tracking-widest rounded-xl border-slate-700 hover:bg-slate-800 text-slate-300"
+                  onClick={() => setMode("login")}
+                >
+                  <LogIn className="size-4 mr-2" /> Acessar Terminal
+                </Button>
               </div>
             </div>
-          )}
-
-          <div className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.form
-                key={mode}
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.15 }}
-                onSubmit={handleSubmit}
-                className="space-y-4"
-              >
-                {mode === "register" && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="displayName">Codinome</Label>
-                    <Input
-                      id="displayName"
-                      autoComplete="nickname"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Ex: Hacker_77"
-                      disabled={submitting}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="voce@exemplo.com"
-                    disabled={submitting}
-                  />
+          </div>
+        ) : (
+          <div className="bg-slate-900/70 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            {mode !== "reset" ? (
+              <div className="flex bg-slate-950/40 border-b border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => { setInfo(null); setMode("login"); }}
+                  className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
+                    mode === "login"
+                      ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
+                      : "text-slate-400 hover:text-slate-200 border-transparent hover:bg-slate-900/10"
+                  }`}
+                >
+                  <LogIn className="size-4" />
+                  Entrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setInfo(null); setMode("register"); }}
+                  className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
+                    mode === "register"
+                      ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
+                      : "text-slate-400 hover:text-slate-200 border-transparent hover:bg-slate-900/10"
+                  }`}
+                >
+                  <UserPlus className="size-4" />
+                  Criar Conta
+                </button>
+              </div>
+            ) : (
+              <div className="flex bg-slate-950/40 border-b border-slate-800">
+                <div className="flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm text-cyan-400 border-b-2 border-cyan-500 bg-slate-900/20">
+                  Recuperar Acesso
                 </div>
+              </div>
+            )}
 
-                {mode !== "reset" && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Senha</Label>
-                      {mode === "login" && (
-                        <button
-                          type="button"
-                          onClick={() => { setInfo(null); setMode("reset"); }}
-                          className="text-xs text-cyan-400 hover:text-cyan-300"
-                        >
-                          Esqueci minha senha
-                        </button>
-                      )}
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                <motion.form
+                  key={mode}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.15 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                >
+                  {mode === "register" && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="displayName">Codinome</Label>
+                      <Input
+                        id="displayName"
+                        autoComplete="nickname"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Ex: Hacker_77"
+                        disabled={submitting}
+                      />
                     </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">E-mail</Label>
                     <Input
-                      id="password"
-                      type="password"
-                      autoComplete={mode === "login" ? "current-password" : "new-password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="voce@exemplo.com"
                       disabled={submitting}
                     />
                   </div>
-                )}
 
-                {info && (
-                  <div className="text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-md p-2.5">
-                    {info}
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : mode === "login" ? (
-                    <><LogIn className="size-4" /> Entrar</>
-                  ) : mode === "register" ? (
-                    <><UserPlus className="size-4" /> Criar conta</>
-                  ) : (
-                    <><Mail className="size-4" /> Enviar link</>
+                  {mode !== "reset" && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Senha</Label>
+                        {mode === "login" && (
+                          <button
+                            type="button"
+                            onClick={() => { setInfo(null); setMode("reset"); }}
+                            className="text-xs text-cyan-400 hover:text-cyan-300"
+                          >
+                            Esqueci minha senha
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        id="password"
+                        type="password"
+                        autoComplete={mode === "login" ? "current-password" : "new-password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Mínimo 6 caracteres"
+                        disabled={submitting}
+                      />
+                    </div>
                   )}
-                </Button>
-              </motion.form>
-            </AnimatePresence>
 
-            <div className="mt-6 text-center text-sm text-slate-400">
-              {mode === "login" && (
-                <>
-                  Não tem conta?{" "}
+                  {info && (
+                    <div className="text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-md p-2.5">
+                      {info}
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full" disabled={submitting}>
+                    {submitting ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : mode === "login" ? (
+                      <><LogIn className="size-4" /> Entrar</>
+                    ) : mode === "register" ? (
+                      <><UserPlus className="size-4" /> Criar conta</>
+                    ) : (
+                      <><Mail className="size-4" /> Enviar link</>
+                    )}
+                  </Button>
+                </motion.form>
+              </AnimatePresence>
+
+              <div className="mt-6 text-center text-sm text-slate-400">
+                {mode === "login" && (
+                  <>
+                    Não tem conta?{" "}
+                    <button
+                      type="button"
+                      onClick={() => { setInfo(null); setMode("register"); }}
+                      className="text-cyan-400 hover:text-cyan-300 font-medium"
+                    >
+                      Crie uma agora
+                    </button>
+                  </>
+                )}
+                {mode === "register" && (
+                  <>
+                    Já tem conta?{" "}
+                    <button
+                      type="button"
+                      onClick={() => { setInfo(null); setMode("login"); }}
+                      className="text-cyan-400 hover:text-cyan-300 font-medium"
+                    >
+                      Entre agora
+                    </button>
+                  </>
+                )}
+                {mode === "reset" && (
                   <button
-                    onClick={() => { setInfo(null); setMode("register"); }}
-                    className="text-cyan-400 hover:text-cyan-300 font-medium"
-                  >
-                    Crie uma agora
-                  </button>
-                </>
-              )}
-              {mode === "register" && (
-                <>
-                  Já tem conta?{" "}
-                  <button
+                    type="button"
                     onClick={() => { setInfo(null); setMode("login"); }}
                     className="text-cyan-400 hover:text-cyan-300 font-medium"
                   >
-                    Entre agora
+                    Voltar ao login
                   </button>
-                </>
-              )}
-              {mode === "reset" && (
-                <button
-                  onClick={() => { setInfo(null); setMode("login"); }}
-                  className="text-cyan-400 hover:text-cyan-300 font-medium"
-                >
-                  Voltar ao login
-                </button>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <p className="text-center text-xs text-slate-500 mt-4">
           Seu progresso é salvo na nuvem e acompanha você em qualquer dispositivo.
