@@ -259,6 +259,7 @@ export function GameProvider({
           hasSeenTutorial: profile?.has_seen_tutorial || false,
           hasSeenWorldTour: profile?.has_seen_world_tour || false,
           hasSeenProfileTour: profile?.has_seen_profile_tour || false,
+          hasSeenArenaTour: profile?.has_seen_arena_tour || false,
           equippedTitle: profile?.equipped_title,
           isMuted: profile?.is_muted || false,
           lastPlayedAt: profile?.last_played_at
@@ -351,6 +352,7 @@ export function GameProvider({
         has_seen_tutorial: state.hasSeenTutorial,
         has_seen_world_tour: state.hasSeenWorldTour,
         has_seen_profile_tour: state.hasSeenProfileTour,
+        has_seen_arena_tour: state.hasSeenArenaTour,
         equipped_title: state.equippedTitle,
         is_muted: state.isMuted,
         last_played_at: state.lastPlayedAt
@@ -367,6 +369,7 @@ export function GameProvider({
     state.hasSeenTutorial,
     state.hasSeenWorldTour,
     state.hasSeenProfileTour,
+    state.hasSeenArenaTour,
     state.isMuted,
     state.lastPlayedAt,
     hasHydrated,
@@ -421,51 +424,17 @@ export function GameProvider({
         if (ach) {
           soundManager.playAchievement();
           
-          // Get matching Lucide icon for toast
-          let ToastIcon = Trophy;
-          let toastIconColor = "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
-          
-          if (nextId === "first_query") {
-            ToastIcon = Terminal;
-            toastIconColor = "text-sky-400 drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]";
-          } else if (nextId.startsWith("xp_")) {
-            ToastIcon = Zap;
-            if (nextId.includes("250")) toastIconColor = "text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]";
-            else if (nextId.includes("500")) toastIconColor = "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]";
-            else if (nextId.includes("1000")) toastIconColor = "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]";
-            else if (nextId.includes("1500")) toastIconColor = "text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]";
-            else if (nextId.includes("3000")) toastIconColor = "text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.5)]";
-            else if (nextId.includes("5000")) toastIconColor = "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]";
-          } else if (nextId.startsWith("world_")) {
-            ToastIcon = MapPin;
-            if (nextId.includes("vila-variaveis")) toastIconColor = "text-sky-400 drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]";
-            else if (nextId.includes("vale-condicoes")) toastIconColor = "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
-            else if (nextId.includes("ninho-listas")) toastIconColor = "text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]";
-            else if (nextId.includes("montanha-loops")) toastIconColor = "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
-            else if (nextId.includes("floresta-funcoes")) toastIconColor = "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]";
-          } else if (nextId.includes("no_hints")) {
-            ToastIcon = EyeOff;
-            toastIconColor = "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
-          } else if (nextId.includes("hints")) {
-            ToastIcon = BookOpen;
-            toastIconColor = "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]";
-          } else if (nextId.includes("first_try_") || nextId.includes("precision")) {
-            ToastIcon = Target;
-            toastIconColor = "text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]";
-          } else if (nextId === "perfect_world" || nextId.includes("perfect")) {
-            ToastIcon = Crown;
-            toastIconColor = "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
-          } else if (nextId.includes("streak_")) {
-            ToastIcon = nextId.includes("7") ? Ghost : Flame;
-            toastIconColor = nextId.includes("7") ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.5)]" : "text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]";
-          } else if (nextId === "all_complete") {
-            ToastIcon = Trophy;
-            toastIconColor = "text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]";
-          }
-
           toast(`Conquista Desbloqueada: ${ach.title}`, {
             description: ach.description,
-            icon: <ToastIcon className={`h-6 w-6 ${toastIconColor}`} />,
+            icon: ach.icon.startsWith("/") ? (
+              <img 
+                src={ach.icon} 
+                className={`w-8 h-8 rounded-lg border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)] ${ach.id !== "first_query" ? "invert hue-rotate-180 brightness-125 contrast-125 bg-black" : ""}`} 
+                alt="" 
+              />
+            ) : (
+              ach.icon
+            ),
             className: "bg-slate-900 border border-amber-500/30 text-white shadow-2xl shadow-amber-500/10",
             duration: 5000,
           });
@@ -542,6 +511,9 @@ export function GameProvider({
           streak: 0,
           equipped_title: null,
           has_seen_tutorial: false,
+          has_seen_world_tour: false,
+          has_seen_profile_tour: false,
+          has_seen_arena_tour: false,
           last_played_at: new Date().toISOString(),
         })
         .eq("id", userId);
