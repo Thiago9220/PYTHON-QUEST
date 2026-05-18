@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkCodex } from "./NetworkCodex";
+import { useGame } from "@/contexts/GameContext";
 import {
   ATTACK_STEPS,
   ATTACK_TERMINAL_OUTPUT,
@@ -661,6 +662,7 @@ const severityClass: Record<Weakness["severity"], string> = {
 };
 
 export function CyberSecSimulator({ onBack }: Props) {
+  const { state: gameState, dispatch, hasHydrated } = useGame();
   const [phase, setPhase] = useState<"intro" | "playing">(() =>
     localStorage.getItem("cyber_sim_intro") ? "playing" : "intro"
   );
@@ -704,8 +706,23 @@ export function CyberSecSimulator({ onBack }: Props) {
 
   const startLab = () => {
     localStorage.setItem("cyber_sim_intro", "true");
+    if (!gameState.hasSeenCyberSecIntro) dispatch({ type: "COMPLETE_CYBERSEC_INTRO" });
     setPhase("playing");
   };
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (gameState.hasSeenCyberSecIntro) {
+      localStorage.setItem("cyber_sim_intro", "true");
+      setPhase("playing");
+      return;
+    }
+
+    if (localStorage.getItem("cyber_sim_intro") === "true") {
+      dispatch({ type: "COMPLETE_CYBERSEC_INTRO" });
+    }
+  }, [dispatch, gameState.hasSeenCyberSecIntro, hasHydrated]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });

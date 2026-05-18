@@ -18,6 +18,7 @@ export const INITIAL_STATE: GameState = {
   hasSeenWorldTour: false,
   hasSeenProfileTour: false,
   hasSeenArenaTour: false,
+  hasSeenCyberSecIntro: false,
   isDevMode: false,
   studyAnswerUses: 0,
   lastStudyAnswerDate: null,
@@ -49,6 +50,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "COMPLETE_ARENA_TOUR":
       return { ...state, hasSeenArenaTour: true };
 
+    case "COMPLETE_CYBERSEC_INTRO":
+      return { ...state, hasSeenCyberSecIntro: true };
+
     case "LOAD_STATE": {
       const now = Date.now();
       let newStreak = action.state.streak;
@@ -72,6 +76,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...action.state,
         bossProgress: action.state.bossProgress ?? {},
+        hasSeenArenaTour: action.state.hasSeenArenaTour ?? false,
+        hasSeenCyberSecIntro: action.state.hasSeenCyberSecIntro ?? false,
         streak: newStreak,
         achievements: syncedAchievements,
       };
@@ -279,6 +285,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         hasSeenWorldTour: false,
         hasSeenProfileTour: false,
         hasSeenArenaTour: false,
+        hasSeenCyberSecIntro: false,
       };
 
     case "DEBUG_ADD_STREAK":

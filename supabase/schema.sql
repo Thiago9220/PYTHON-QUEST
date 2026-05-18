@@ -29,6 +29,7 @@ create table if not exists public.profiles (
   has_seen_world_tour boolean not null default false,
   has_seen_profile_tour boolean not null default false,
   has_seen_arena_tour boolean not null default false,
+  has_seen_cybersec_intro boolean not null default false,
   last_played_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

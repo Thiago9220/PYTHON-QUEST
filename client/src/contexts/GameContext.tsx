@@ -260,6 +260,7 @@ export function GameProvider({
           hasSeenWorldTour: profile?.has_seen_world_tour || false,
           hasSeenProfileTour: profile?.has_seen_profile_tour || false,
           hasSeenArenaTour: profile?.has_seen_arena_tour || false,
+          hasSeenCyberSecIntro: profile?.has_seen_cybersec_intro || false,
           equippedTitle: profile?.equipped_title,
           isMuted: profile?.is_muted || false,
           lastPlayedAt: profile?.last_played_at
@@ -343,24 +344,53 @@ export function GameProvider({
   useEffect(() => {
     if (!userId || loadingRef.current || !hasHydrated) return;
 
+    const profilePayload = {
+      id: userId,
+      total_xp: state.totalXP,
+      streak: state.streak,
+      has_seen_tutorial: state.hasSeenTutorial,
+      has_seen_world_tour: state.hasSeenWorldTour,
+      has_seen_profile_tour: state.hasSeenProfileTour,
+      has_seen_arena_tour: state.hasSeenArenaTour,
+      has_seen_cybersec_intro: state.hasSeenCyberSecIntro,
+      equipped_title: state.equippedTitle,
+      is_muted: state.isMuted,
+      last_played_at: state.lastPlayedAt
+        ? new Date(state.lastPlayedAt).toISOString()
+        : new Date().toISOString(),
+    };
+
     supabase
       .from("profiles")
-      .upsert({
-        id: userId,
-        total_xp: state.totalXP,
-        streak: state.streak,
-        has_seen_tutorial: state.hasSeenTutorial,
-        has_seen_world_tour: state.hasSeenWorldTour,
-        has_seen_profile_tour: state.hasSeenProfileTour,
-        has_seen_arena_tour: state.hasSeenArenaTour,
-        equipped_title: state.equippedTitle,
-        is_muted: state.isMuted,
-        last_played_at: state.lastPlayedAt
-          ? new Date(state.lastPlayedAt).toISOString()
-          : new Date().toISOString(),
-      })
-      .then(({ error }: { error: unknown }) => {
-        if (error) console.error("Erro ao sincronizar perfil:", error);
+      .upsert(profilePayload)
+      .then(async ({ error }: { error: any }) => {
+        if (!error) return;
+
+        const errorText = `${error.message ?? ""} ${error.details ?? ""}`;
+        const missingIntroColumn =
+          errorText.includes("has_seen_arena_tour") ||
+          errorText.includes("has_seen_cybersec_intro");
+
+        if (!missingIntroColumn) {
+          console.error("Erro ao sincronizar perfil:", error);
+          return;
+        }
+
+        const {
+          has_seen_arena_tour: _hasSeenArenaTour,
+          has_seen_cybersec_intro: _hasSeenCyberSecIntro,
+          ...fallbackPayload
+        } = profilePayload;
+
+        const retry = await supabase.from("profiles").upsert(fallbackPayload);
+        if (retry.error) {
+          console.error("Erro ao sincronizar perfil:", retry.error);
+          return;
+        }
+
+        console.warn(
+          "Flags de introducao guiada nao foram salvos. Rode supabase/add_has_seen_arena_tour.sql no banco."
+        );
       });
   }, [
     state.totalXP,
@@ -370,6 +400,7 @@ export function GameProvider({
     state.hasSeenWorldTour,
     state.hasSeenProfileTour,
     state.hasSeenArenaTour,
+    state.hasSeenCyberSecIntro,
     state.isMuted,
     state.lastPlayedAt,
     hasHydrated,
@@ -514,6 +545,7 @@ export function GameProvider({
           has_seen_world_tour: false,
           has_seen_profile_tour: false,
           has_seen_arena_tour: false,
+          has_seen_cybersec_intro: false,
           last_played_at: new Date().toISOString(),
         })
         .eq("id", userId);

@@ -40,6 +40,7 @@ export type GameState = {
   hasSeenWorldTour: boolean;
   hasSeenProfileTour: boolean;
   hasSeenArenaTour: boolean;
+  hasSeenCyberSecIntro: boolean;
   isDevMode: boolean;
   studyAnswerUses: number;
   lastStudyAnswerDate: string | null;
@@ -60,6 +61,7 @@ export type GameAction =
   | { type: "COMPLETE_WORLD_TOUR" }
   | { type: "COMPLETE_PROFILE_TOUR" }
   | { type: "COMPLETE_ARENA_TOUR" }
+  | { type: "COMPLETE_CYBERSEC_INTRO" }
   | { type: "LOAD_STATE"; state: GameState }
   | { type: "RESET_STATE" }
   | { type: "DEBUG_COMPLETE_ALL" }
