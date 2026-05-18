@@ -19,6 +19,7 @@ type Props = {
 export default function TutorialTour({ steps, isOpen, onClose }: Props) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [hasMeasuredTarget, setHasMeasuredTarget] = useState(false);
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   const currentStep = steps[currentStepIndex];
@@ -26,8 +27,17 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
 
   // Reseta ao passo inicial sempre que o tour é (re)aberto
   useEffect(() => {
-    if (isOpen) setCurrentStepIndex(0);
+    if (isOpen) {
+      setCurrentStepIndex(0);
+    }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTargetRect(null);
+      setHasMeasuredTarget(false);
+    }
+  }, [currentStepIndex, isOpen]);
 
   // Bloqueia scroll do fundo durante o tutorial
   useEffect(() => {
@@ -47,6 +57,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
       setTimeout(() => {
         const rect = el.getBoundingClientRect();
         setTargetRect(new DOMRect(rect.x - 8, rect.y - 8, rect.width + 16, rect.height + 16));
+        setHasMeasuredTarget(true);
         
         if (rect.bottom > window.innerHeight || rect.top < 0) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -54,6 +65,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
       }, 50);
     } else {
       setTargetRect(null);
+      setHasMeasuredTarget(true);
     }
   }, [currentStep, isOpen, windowSize]);
 
@@ -72,6 +84,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
   }, [updatePosition]);
 
   if (!isOpen) return null;
+  if (!hasMeasuredTarget) return null;
 
   /* ── Navegação compartilhada ── */
   const navControls = (

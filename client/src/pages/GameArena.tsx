@@ -61,6 +61,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [hasNotifiedStruggle, setHasNotifiedStruggle] = useState(false);
   const [showArenaTour, setShowArenaTour] = useState(false);
+  const arenaTourStorageKey = `python_quest_arena_tour_seen:${user?.id ?? "guest"}`;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -79,10 +80,26 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
 
   // Arena Tour Trigger
   useEffect(() => {
-    if (engine.pythonReady && !gameState.hasSeenArenaTour && !engine.showIntroCutscene) {
-      setShowArenaTour(true);
+    if (!engine.pythonReady || engine.showIntroCutscene) return;
+
+    if (gameState.hasSeenArenaTour) {
+      localStorage.setItem(arenaTourStorageKey, "true");
+      return;
     }
-  }, [engine.pythonReady, gameState.hasSeenArenaTour, engine.showIntroCutscene]);
+
+    if (localStorage.getItem(arenaTourStorageKey) === "true") {
+      dispatch({ type: "COMPLETE_ARENA_TOUR" });
+      return;
+    }
+
+    setShowArenaTour(true);
+  }, [
+    arenaTourStorageKey,
+    dispatch,
+    engine.pythonReady,
+    engine.showIntroCutscene,
+    gameState.hasSeenArenaTour,
+  ]);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -380,6 +397,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
       <TutorialTour 
         isOpen={showArenaTour} 
         onClose={() => {
+          localStorage.setItem(arenaTourStorageKey, "true");
           setShowArenaTour(false);
           if (!gameState.hasSeenArenaTour) dispatch({ type: "COMPLETE_ARENA_TOUR" });
         }} 
