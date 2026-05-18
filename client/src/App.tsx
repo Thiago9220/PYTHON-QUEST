@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
+import { Loader2 } from "lucide-react";
 import { GameProvider, useGame } from "./contexts/GameContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import AuthPage from "./pages/AuthPage";
 import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
 import ChallengeList from "./pages/ChallengeList";
@@ -124,7 +126,25 @@ function AppContent() {
 }
 
 function AppContentWrapper() {
-  const { user } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center text-slate-300">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <AuthPage />
+        <Toaster position="top-center" expand={false} richColors />
+      </>
+    );
+  }
+
   return (
     <GameProvider userId={user?.id}>
       <PomodoroProvider>

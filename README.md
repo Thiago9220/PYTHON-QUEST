@@ -40,6 +40,53 @@ pnpm install
 pnpm dev
 ```
 
+## 🔐 Login e Banco de Dados (Supabase)
+
+O jogo usa **Supabase** para autenticação e persistência do progresso na nuvem.
+Enquanto não houver credenciais o app roda em "modo offline" e exibe a tela de
+login sem permitir entrar.
+
+### 1. Crie um projeto Supabase
+
+1. Acesse https://supabase.com e crie um projeto novo (free tier serve).
+2. Anote a **Project URL** e a **anon public key** em *Project Settings → API*.
+
+### 2. Rode o schema SQL
+
+1. No painel do Supabase, vá em **SQL Editor**.
+2. Abra o arquivo [`supabase/schema.sql`](supabase/schema.sql) deste repositório.
+3. Cole todo o conteúdo no editor e clique em **Run**.
+
+Isso cria as tabelas `profiles`, `challenge_progress`, `user_achievements` e
+`user_purchases`, ativa Row Level Security em todas e instala um trigger que
+gera o perfil automaticamente quando um usuário se registra.
+
+### 3. (Opcional) Habilite provedores de autenticação
+
+- Em **Authentication → Providers**, mantenha **Email** ligado.
+- Para login com Google, habilite o provedor **Google** e configure o OAuth.
+
+### 4. Configure o `.env`
+
+```bash
+cd client
+cp .env.example .env
+# Edite .env e preencha com sua URL e anon key do Supabase
+```
+
+```env
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+```
+
+Reinicie o `pnpm dev` para que o Vite recarregue as variáveis.
+
+### 5. Pronto
+
+- Novos usuários se registram em `/` (tela inicial).
+- O progresso é persistido nas tabelas do Supabase em tempo real.
+- Tutoriais, tours e cutscenes já vistos não se repetem entre dispositivos.
+
 ## 🤝 Créditos
 
 Baseado no projeto original **SQL-QUEST** criado por [Thiago Ramos](https://github.com/Thiago9220).
