@@ -33,6 +33,11 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
     },
     {
       npc: "AI-7",
+      text: "Mais tarde, caso obtenha XP suficiente, seu Nível de Acesso permitirá explorar os protocolos avançados de Ciência de Dados e Machine Learning.",
+      avatar: "PY",
+    },
+    {
+      npc: "AI-7",
       text: "O console será sua principal interface. Diga-me, qual será o seu codinome nos registros da rede?",
       avatar: "PY",
     },

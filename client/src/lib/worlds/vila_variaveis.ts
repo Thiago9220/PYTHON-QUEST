@@ -34,6 +34,9 @@ export const VILA_VARIAVEIS_WORLD: World = {
       successNpc: "AI-7, Módulo Guia",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Ping recebido. A porta de entrada registrou sua presença na rede. O acesso ao terminal local foi garantido.",
+      introStory: "Conexão estabelecida, Operador. O Mainframe da cidade está instável e o Core central foi isolado pelo sistema de defesa. Seu primeiro destino é o Terminal Alpha. Lá, você aprenderá a alocar memória e a executar seus primeiros scripts de invasão.",
+      introNpc: "AI-7, Módulo Guia",
+      introAvatar: "/avatars/ai7_guide.png",
       solution: "print('Ola, Python!')",
     },
     {

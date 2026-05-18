@@ -16,6 +16,7 @@ type EngineState = {
   showHint: boolean;
   currentHintIdx: number;
   showCutscene: boolean;
+  showIntroCutscene: boolean;
   isRunning: boolean;
   wasAlreadyCompleted: boolean;
   usedStudyAnswer: boolean;
@@ -37,6 +38,7 @@ export function useChallengeEngine(
     showHint: false,
     currentHintIdx: 0,
     showCutscene: false,
+    showIntroCutscene: !!challenge?.introStory && (!challenge ? false : !isChallengeCompleted(challenge.id)),
     isRunning: false,
     wasAlreadyCompleted: challenge ? isChallengeCompleted(challenge.id) : false,
     usedStudyAnswer: false,
@@ -60,6 +62,7 @@ export function useChallengeEngine(
         showHint: false,
         currentHintIdx: 0,
         showCutscene: false,
+        showIntroCutscene: !!challenge?.introStory && !isChallengeCompleted(challenge.id),
         wasAlreadyCompleted: isChallengeCompleted(challenge.id),
         usedStudyAnswer: false,
       }));
@@ -167,5 +170,6 @@ export function useChallengeEngine(
     setUsedStudyAnswer: (used: boolean) => setState((prev) => ({ ...prev, usedStudyAnswer: used })),
     setShowHint: (show: boolean) => setState((prev) => ({ ...prev, showHint: show })),
     closeCutscene: () => setState((prev) => ({ ...prev, showCutscene: false })),
+    closeIntroCutscene: () => setState((prev) => ({ ...prev, showIntroCutscene: false })),
   };
 }

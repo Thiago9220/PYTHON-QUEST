@@ -23,6 +23,9 @@ export type Challenge = {
   successStory?: string;
   successNpc?: string;
   successAvatar?: string;
+  introStory?: string;
+  introNpc?: string;
+  introAvatar?: string;
   solution?: string;
 };
 

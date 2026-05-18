@@ -299,6 +299,18 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
       </AnimatePresence>
 
       <AnimatePresence>
+        {engine.showIntroCutscene && challenge.introStory && (
+          <DialogueCutscene
+            npc={challenge.introNpc ?? "Mentor Aurora"}
+            avatar={challenge.introAvatar ?? "PY"}
+            text={challenge.introStory}
+            themeColor={themeColor}
+            onComplete={() => engine.closeIntroCutscene()}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showAchievements && <AchievementsModal isOpen={showAchievements} onClose={() => setShowAchievements(false)} />}
       </AnimatePresence>
       <AnimatePresence>
