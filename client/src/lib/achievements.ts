@@ -31,6 +31,10 @@ export const ACHIEVEMENTS_ROOT: Achievement[] = [
   { id: "all_complete", title: "Mestre do Protocolo", description: "Complete todos os desafios do jogo", icon: "/achievements/master.png", unlocked: false, titleReward: "Mestre do Protocolo" },
   { id: "streak_3", title: "Hacker Persistente", description: "Mantenha uma sequência de 3 dias ativos", icon: "/achievements/streak.png", unlocked: false, titleReward: "Infiltrador" },
   { id: "streak_7", title: "Fantasma do Sistema", description: "Mantenha uma sequência de 7 dias ativos", icon: "/achievements/ghost.png", unlocked: false, titleReward: "Sombra do Core" },
+  { id: "streak_14", title: "Lenda Viva", description: "Mantenha uma sequência de 14 dias ativos", icon: "/achievements/streak_14.png", unlocked: false, titleReward: "Lenda Viva" },
+  { id: "xp_3000", title: "Transcendente", description: "Acumule 3.000 XP", icon: "/achievements/xp_guru.png", unlocked: false, titleReward: "Transcendente" },
+  { id: "first_try_10", title: "Código Limpo", description: "Complete 10 desafios na primeira tentativa", icon: "/achievements/precision_master.png", unlocked: false, titleReward: "Sniper" },
+  { id: "perfect_3_worlds", title: "Trindade do Código", description: "Complete 3 mundos sem usar dicas", icon: "/achievements/trinity.png", unlocked: false, titleReward: "Arquiteto Neo" },
 ];
 
 export function getAchievementConditions(state: any) {
@@ -58,6 +62,9 @@ export function getAchievementConditions(state: any) {
     all_complete: completed.length === totalInGame && totalInGame > 0,
     streak_3: state.streak >= 3,
     streak_7: state.streak >= 7,
+    streak_14: state.streak >= 14,
+    xp_3000: state.totalXP >= 3000,
+    first_try_10: firstTryCompleted.length >= 10,
     all_worlds_started: WORLDS.every((world) =>
       world.challenges.some((c) => completedIds.includes(c.id))
     ),
@@ -67,6 +74,12 @@ export function getAchievementConditions(state: any) {
         ids.every((id) => completedIds.includes(id)) &&
         ids.every((id) => (state.challengeProgress[id]?.hintsUsed ?? 0) === 0);
     }),
+    perfect_3_worlds: WORLDS.filter((world) => {
+      const ids = world.challenges.map((c) => c.id);
+      return ids.length > 0 &&
+        ids.every((id) => completedIds.includes(id)) &&
+        ids.every((id) => (state.challengeProgress[id]?.hintsUsed ?? 0) === 0);
+    }).length >= 3,
   };
 
 
