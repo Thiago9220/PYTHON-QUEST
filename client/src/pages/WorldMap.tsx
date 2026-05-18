@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
 import TutorialTour, { TourStep } from "@/components/TutorialTour";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const WORLD_TAGS: Record<string, string> = {
@@ -59,6 +59,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
     isChallengeCompleted,
     getCompletedCount,
     getTotalChallenges,
+    hasHydrated,
   } = useGame();
   const { user, logout } = useAuth();
   const { level, title, progress } = getPlayerLevel();
@@ -66,6 +67,12 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
   const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    if (hasHydrated && !state.hasSeenTutorial) {
+      setShowTour(true);
+    }
+  }, [hasHydrated, state.hasSeenTutorial]);
 
   const TOUR_STEPS: TourStep[] = [
     {
@@ -77,6 +84,11 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
       targetId: "tutorial-worlds",
       title: "Núcleos Python",
       content: "Explore as ilhas para aprender lógica, loops e funções. Cada node invadido libera novos conhecimentos.",
+    },
+    {
+      targetId: "tutorial-ds",
+      title: "Ciência de Dados",
+      content: "Desbloqueie os módulos de Ciência de Dados e Machine Learning (IA) ao acumular XP e subir seu Nível de Acesso.",
     },
     {
       targetId: "tutorial-simulators",
@@ -430,7 +442,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
         </div>
 
         {/* Data Science & Machine Learning */}
-        <section className="mt-20">
+        <section id="tutorial-ds" className="mt-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-[10px] font-black uppercase tracking-widest text-fuchsia-400 mb-6 backdrop-blur-sm">
