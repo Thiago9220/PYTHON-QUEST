@@ -61,6 +61,11 @@ Isso cria as tabelas `profiles`, `challenge_progress`, `user_achievements` e
 `user_purchases`, ativa Row Level Security em todas e instala um trigger que
 gera o perfil automaticamente quando um usuário se registra.
 
+Se o banco ja existia antes das correcoes de seguranca, rode tambem
+[`supabase/security_hardening.sql`](supabase/security_hardening.sql). Esse
+patch remove escrita direta de compras pelo cliente e adiciona restricoes de
+sanidade para progresso.
+
 ### 3. (Opcional) Habilite provedores de autenticação
 
 - Em **Authentication → Providers**, mantenha **Email** ligado.
@@ -77,7 +82,12 @@ cp .env.example .env
 ```env
 VITE_SUPABASE_URL=https://xxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+VITE_TURNSTILE_SITE_KEY=
 ```
+
+`VITE_TURNSTILE_SITE_KEY` e opcional. Quando preenchida, login, cadastro e
+recuperacao de senha exigem Cloudflare Turnstile; quando vazia, o CAPTCHA fica
+desabilitado para ambiente local/offline.
 
 Reinicie o `pnpm dev` para que o Vite recarregue as variáveis.
 

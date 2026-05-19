@@ -51,7 +51,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   const challenge = getChallengeById(challengeId);
   const world = challenge ? getWorldById(challenge.worldId) : null;
   const engine = useChallengeEngine(challenge ?? null, dispatch, isChallengeCompleted);
-  const isMaster = user?.email === "thiago.ramoss2009@gmail.com";
+  const isMaster = import.meta.env.DEV && user?.email === "thiago.ramoss2009@gmail.com";
 
   const [activeTab, setActiveTab] = useState<"mission" | "concept">("mission");
   const [isExpanded, setIsExpanded] = useState(false);

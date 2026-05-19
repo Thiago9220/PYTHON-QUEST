@@ -370,11 +370,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('user_id', authState.user.id);
       if (achievementsError) throw achievementsError;
 
-      const { error: purchasesError } = await supabase
-        .from('user_purchases')
-        .delete()
-        .eq('user_id', authState.user.id);
-      if (purchasesError) throw purchasesError;
+      // Compras/desbloqueios pagos sao autoritativos e nao devem ser apagados
+      // diretamente pelo cliente. Remocao completa de conta precisa de backend
+      // usando service role para limpar auth.users e registros de pagamento.
       
       // 2. Deletar perfil
       const { error: profileError } = await supabase

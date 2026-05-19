@@ -460,7 +460,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {WORLDS.filter((w) => DS_WORLD_IDS.has(w.id)).map((world, idx) => {
-              const unlocked = true; // TEMP: destravado para testes (original: isWorldUnlocked(world.id))
+              const unlocked = isWorldUnlocked(world.id);
               const total = world.challenges.length;
               const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
               const completedAll = completed === total && total > 0;

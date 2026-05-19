@@ -21,8 +21,8 @@ create table if not exists public.profiles (
   display_name text not null default 'Aventureiro',
   avatar_emoji text not null default '👤',
   avatar_url text,
-  total_xp integer not null default 0,
-  streak integer not null default 0,
+  total_xp integer not null default 0 check (total_xp >= 0),
+  streak integer not null default 0 check (streak >= 0),
   equipped_title text,
   is_muted boolean not null default false,
   has_seen_tutorial boolean not null default false,
@@ -44,10 +44,10 @@ create table if not exists public.challenge_progress (
   user_id uuid not null references auth.users(id) on delete cascade,
   challenge_id text not null,
   completed boolean not null default false,
-  attempts integer not null default 0,
-  hints_used integer not null default 0,
-  best_score integer not null default 0,
-  best_chars integer,
+  attempts integer not null default 0 check (attempts >= 0),
+  hints_used integer not null default 0 check (hints_used >= 0),
+  best_score integer not null default 0 check (best_score >= 0),
+  best_chars integer check (best_chars is null or best_chars >= 0),
   completed_at timestamptz,
   updated_at timestamptz not null default now(),
   unique (user_id, challenge_id)
@@ -79,7 +79,7 @@ create table if not exists public.user_purchases (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   world_id text not null,
-  status text not null default 'approved',
+  status text not null default 'approved' check (status in ('pending', 'approved', 'rejected', 'refunded')),
   created_at timestamptz not null default now(),
   unique (user_id, world_id)
 );
@@ -213,16 +213,13 @@ create policy "achievements_delete_own"
 -- mas mantemos política para o cliente conseguir LER suas próprias compras.
 drop policy if exists "purchases_select_own" on public.user_purchases;
 drop policy if exists "purchases_insert_own" on public.user_purchases;
+drop policy if exists "purchases_update_own" on public.user_purchases;
 drop policy if exists "purchases_delete_own" on public.user_purchases;
 
 create policy "purchases_select_own"
   on public.user_purchases for select
   using (auth.uid() = user_id);
 
-create policy "purchases_insert_own"
-  on public.user_purchases for insert
-  with check (auth.uid() = user_id);
-
-create policy "purchases_delete_own"
-  on public.user_purchases for delete
-  using (auth.uid() = user_id);
+-- Nao crie policies de INSERT/UPDATE/DELETE para usuarios finais nesta tabela.
+-- Compras e desbloqueios pagos devem ser gravados exclusivamente por backend,
+-- webhook ou Edge Function usando service role; a service role bypassa RLS.

@@ -12,8 +12,8 @@ export function DevPanel() {
   const { dispatch, state } = useGame();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Check if user is master
-  if (user?.email !== "thiago.ramoss2009@gmail.com") return null;
+  // Ferramentas locais de desenvolvimento nao devem aparecer no build publicado.
+  if (!import.meta.env.DEV || user?.email !== "thiago.ramoss2009@gmail.com") return null;
 
   const handleAddXP = () => {
     dispatch({ type: "DEBUG_ADD_XP", amount: 1000 });

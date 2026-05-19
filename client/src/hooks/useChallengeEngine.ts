@@ -183,6 +183,7 @@ export function useChallengeEngine(
       setState((prev) => ({ ...prev, showIntroCutscene: false }));
     },
     forceSuccess: () => {
+      if (!import.meta.env.DEV) return;
       if (!challenge) return;
       soundManager.playSuccess();
       dispatch({

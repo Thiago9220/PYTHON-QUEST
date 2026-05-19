@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { toast } from "sonner";
 import { Loader2, LogIn, UserPlus, Mail } from "lucide-react";
 
@@ -15,8 +16,29 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const captchaEnabled = Boolean(turnstileSiteKey);
+
+  const requireCaptcha = () => {
+    if (!captchaEnabled || captchaToken) return true;
+    toast.error("Confirme o desafio de seguranca antes de continuar.");
+    return false;
+  };
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaNonce((nonce) => nonce + 1);
+  };
+
+  const changeMode = (nextMode: Mode) => {
+    setInfo(null);
+    resetCaptcha();
+    setMode(nextMode);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -25,9 +47,11 @@ export default function AuthPage() {
 
     if (mode === "reset") {
       if (!email.trim()) return toast.error("Informe seu e-mail.");
+      if (!requireCaptcha()) return;
       setSubmitting(true);
-      const result = await resetPassword(email.trim());
+      const result = await resetPassword(email.trim(), captchaToken ?? undefined);
       setSubmitting(false);
+      if (!result.success) resetCaptcha();
       if (!result.success) return toast.error(result.error ?? "Falha ao enviar e-mail.");
       setInfo("Enviamos um link de recuperação para seu e-mail.");
       return;
@@ -44,19 +68,30 @@ export default function AuthPage() {
     setSubmitting(true);
 
     if (mode === "login") {
-      const result = await login(email.trim(), password);
+      if (!requireCaptcha()) {
+        setSubmitting(false);
+        return;
+      }
+      const result = await login(email.trim(), password, captchaToken ?? undefined);
       setSubmitting(false);
+      if (!result.success) resetCaptcha();
       if (!result.success) return toast.error(result.error ?? "Credenciais inválidas.");
       toast.success("Bem-vindo de volta!");
       return;
     }
 
     // register
-    const result = await register(displayName.trim(), email.trim(), password, "");
+    if (!requireCaptcha()) {
+      setSubmitting(false);
+      return;
+    }
+    const result = await register(displayName.trim(), email.trim(), password, captchaToken ?? "");
     setSubmitting(false);
+    if (!result.success) resetCaptcha();
     if (!result.success) return toast.error(result.error ?? "Falha ao registrar.");
     if (result.needsEmailConfirmation) {
       setInfo("Conta criada! Confirme seu e-mail para entrar.");
+      resetCaptcha();
       setMode("login");
     } else {
       toast.success("Conta criada com sucesso!");
@@ -118,7 +153,7 @@ export default function AuthPage() {
                 <Button 
                   size="lg" 
                   className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] transition-all bg-cyan-600 hover:bg-cyan-500"
-                  onClick={() => setMode("register")}
+                  onClick={() => changeMode("register")}
                 >
                   <UserPlus className="size-5 mr-2" /> Iniciar Jornada
                 </Button>
@@ -126,7 +161,7 @@ export default function AuthPage() {
                   variant="outline" 
                   size="lg" 
                   className="w-full h-14 text-sm font-bold uppercase tracking-widest rounded-xl border-slate-700 hover:bg-slate-800 text-slate-300"
-                  onClick={() => setMode("login")}
+                  onClick={() => changeMode("login")}
                 >
                   <LogIn className="size-4 mr-2" /> Acessar Terminal
                 </Button>
@@ -139,7 +174,7 @@ export default function AuthPage() {
               <div className="flex bg-slate-950/40 border-b border-slate-800">
                 <button
                   type="button"
-                  onClick={() => { setInfo(null); setMode("login"); }}
+                  onClick={() => changeMode("login")}
                   className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
                     mode === "login"
                       ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
@@ -151,7 +186,7 @@ export default function AuthPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setInfo(null); setMode("register"); }}
+                  onClick={() => changeMode("register")}
                   className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all border-b-2 ${
                     mode === "register"
                       ? "text-cyan-400 border-cyan-500 bg-slate-900/20"
@@ -215,7 +250,7 @@ export default function AuthPage() {
                         {mode === "login" && (
                           <button
                             type="button"
-                            onClick={() => { setInfo(null); setMode("reset"); }}
+                            onClick={() => changeMode("reset")}
                             className="text-xs text-cyan-400 hover:text-cyan-300"
                           >
                             Esqueci minha senha
@@ -232,6 +267,14 @@ export default function AuthPage() {
                         disabled={submitting}
                       />
                     </div>
+                  )}
+
+                  {captchaEnabled && turnstileSiteKey && (
+                    <TurnstileWidget
+                      key={`${mode}-${captchaNonce}`}
+                      siteKey={turnstileSiteKey}
+                      onToken={setCaptchaToken}
+                    />
                   )}
 
                   {info && (
@@ -260,7 +303,7 @@ export default function AuthPage() {
                     Não tem conta?{" "}
                     <button
                       type="button"
-                      onClick={() => { setInfo(null); setMode("register"); }}
+                      onClick={() => changeMode("register")}
                       className="text-cyan-400 hover:text-cyan-300 font-medium"
                     >
                       Crie uma agora
@@ -272,7 +315,7 @@ export default function AuthPage() {
                     Já tem conta?{" "}
                     <button
                       type="button"
-                      onClick={() => { setInfo(null); setMode("login"); }}
+                      onClick={() => changeMode("login")}
                       className="text-cyan-400 hover:text-cyan-300 font-medium"
                     >
                       Entre agora
@@ -282,7 +325,7 @@ export default function AuthPage() {
                 {mode === "reset" && (
                   <button
                     type="button"
-                    onClick={() => { setInfo(null); setMode("login"); }}
+                    onClick={() => changeMode("login")}
                     className="text-cyan-400 hover:text-cyan-300 font-medium"
                   >
                     Voltar ao login

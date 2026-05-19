@@ -3,6 +3,8 @@ import { ACHIEVEMENTS_ROOT } from "@/lib/achievements";
 import { isSameDay, isYesterday } from "@/lib/gameLogic";
 import { WORLDS } from "@/lib/challenges";
 
+const allowDevAction = () => import.meta.env.DEV;
+
 export const INITIAL_STATE: GameState = {
   playerName: "",
   totalXP: 0,
@@ -33,6 +35,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, isMuted: !state.isMuted };
 
     case "TOGGLE_DEV_MODE": {
+      if (!allowDevAction()) return state;
       const newVal = !state.isDevMode;
       localStorage.setItem("python_quest_dev_mode", String(newVal));
       return { ...state, isDevMode: newVal };
@@ -213,6 +216,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "DEBUG_COMPLETE_ALL": {
+      if (!allowDevAction()) return state;
       const newProgress: Record<string, any> = { ...state.challengeProgress };
       let totalXP = 0;
 
@@ -238,6 +242,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "DEBUG_COMPLETE_WORLD": {
+      if (!allowDevAction()) return state;
       const world = WORLDS.find((w) => w.id === action.worldId);
       if (!world) return state;
 
@@ -266,9 +271,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "DEBUG_ADD_XP":
+      if (!allowDevAction()) return state;
       return { ...state, totalXP: state.totalXP + action.amount };
 
     case "DEBUG_UNLOCK_ALL_ACHIEVEMENTS":
+      if (!allowDevAction()) return state;
       return {
         ...state,
         achievements: state.achievements.map((a) => ({
@@ -279,6 +286,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "DEBUG_RESET_TUTORIAL":
+      if (!allowDevAction()) return state;
       return {
         ...state,
         hasSeenTutorial: false,
@@ -289,6 +297,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "DEBUG_ADD_STREAK":
+      if (!allowDevAction()) return state;
       return { ...state, streak: state.streak + action.days };
 
     default:
