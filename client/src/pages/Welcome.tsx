@@ -172,7 +172,11 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                   style={{ top: island.top, left: island.left, width: island.active ? 170 : 148 }}
                 >
                   <div className="rounded-2xl bg-white/80 p-3">
-                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-sm font-black text-white">PY</div>
+                    <img
+                      src="/assets/images/python-protocol-mark.png"
+                      alt="Python Protocol"
+                      className="mb-3 h-9 w-9 rounded-xl object-cover shadow-[0_0_14px_rgba(14,165,233,0.35)]"
+                    />
                     <div className="text-sm font-black text-slate-950">{island.name}</div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
                       <div className={`h-full rounded-full ${island.active ? "w-2/3 bg-sky-500" : "w-1/4 bg-slate-300"}`} />

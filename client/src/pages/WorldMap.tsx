@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi, ShieldAlert, TerminalSquare } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi, ShieldAlert } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
@@ -164,22 +164,11 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
             className="group flex items-center gap-3"
             onClick={() => window.location.reload()}
           >
-            <div className="relative h-9 w-9 rounded-lg bg-gradient-to-br from-sky-500 via-cyan-500 to-emerald-500 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.6)] group-hover:shadow-[0_0_30px_rgba(14,165,233,0.95)] group-hover:scale-110 transition-all duration-300 overflow-hidden border border-white/20">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.35),transparent_55%)]" />
-              <motion.div
-                aria-hidden
-                animate={{ y: ["-100%", "100%"] }}
-                transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-white/70 to-transparent"
-              />
-              <TerminalSquare className="w-5 h-5 text-white relative z-10 drop-shadow-[0_0_3px_rgba(255,255,255,0.6)]" strokeWidth={2.4} />
-              <motion.span
-                aria-hidden
-                animate={{ opacity: [1, 0.2, 1] }}
-                transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-300 shadow-[0_0_6px_rgba(110,231,183,0.95)] z-10"
-              />
-            </div>
+            <img
+              src="/assets/images/python-protocol-mark.png"
+              alt="Python Protocol"
+              className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-[0_0_20px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(14,165,233,0.8)]"
+            />
             <div className="flex flex-col items-start leading-none">
               <span className="text-[8px] font-black uppercase tracking-[0.35em] text-sky-400/80">// initd</span>
               <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-sky-100 to-cyan-300 bg-clip-text text-transparent group-hover:from-sky-300 group-hover:to-emerald-300 transition-all mt-0.5">Python Protocol</span>
@@ -382,17 +371,19 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                     </div>
                   )}
 
-                  {completedAll && (
-                    <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400 rounded-full px-3 py-1 shadow-lg shadow-emerald-500/20">
-                      <Star className="w-3 h-3 fill-emerald-400" />
-                      <span className="text-[9px] font-black uppercase tracking-wider">Mestre</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="p-8 space-y-5 bg-slate-950/40">
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2" style={{ color: themeColor }}>{world.subtitle}</p>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: themeColor }}>{world.subtitle}</p>
+                      {completedAll && (
+                        <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 text-[8px] font-black uppercase tracking-widest text-emerald-300">
+                          <Star className="h-3 w-3 fill-emerald-300" />
+                          Mestre
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-2xl font-black text-white leading-tight group-hover:text-sky-300 transition-colors">{world.title}</h3>
                   </div>
 
@@ -523,17 +514,19 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                       </div>
                     )}
 
-                    {completedAll && (
-                      <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400 rounded-full px-3 py-1 shadow-lg shadow-emerald-500/20">
-                        <Star className="w-3 h-3 fill-emerald-400" />
-                        <span className="text-[9px] font-black uppercase tracking-wider">Mestre</span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="p-8 space-y-5 bg-slate-950/40">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2" style={{ color: themeColor }}>{world.subtitle}</p>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: themeColor }}>{world.subtitle}</p>
+                        {completedAll && (
+                          <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 text-[8px] font-black uppercase tracking-widest text-emerald-300">
+                            <Star className="h-3 w-3 fill-emerald-300" />
+                            Mestre
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-2xl font-black text-white leading-tight group-hover:text-sky-300 transition-colors">{world.title}</h3>
                     </div>
 

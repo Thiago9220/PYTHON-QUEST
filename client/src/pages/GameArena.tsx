@@ -163,7 +163,11 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
         <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <button className="group flex items-center gap-3" onClick={onBackToHome}>
-              <div className="h-8 w-8 rounded-xl bg-sky-500 flex items-center justify-center text-white font-black text-xs shadow-[0_0_15px_rgba(14,165,233,0.5)] group-hover:scale-110 transition-transform">PY</div>
+              <img
+                src="/assets/images/python-protocol-mark.png"
+                alt="Python Protocol"
+                className="h-8 w-8 shrink-0 rounded-xl object-cover shadow-[0_0_15px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-transform group-hover:scale-110"
+              />
               <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
             </button>
             
@@ -280,12 +284,12 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
                       <HelpCircle className="w-4 h-4 mr-2" /> Resposta
                     </Button>
                   )}
-                  {isMaster && challenge.solution && (
+                  {isMaster && answerCode && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        engine.setCode(challenge.solution || "");
+                        engine.setCode(answerCode);
                         engine.forceSuccess();
                       }}
                       className="text-fuchsia-400 bg-fuchsia-400/10 hover:bg-fuchsia-400/20 border border-fuchsia-400/30 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
