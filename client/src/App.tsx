@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Toaster } from "sonner";
 import { Loader2 } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner";
 import { GameProvider, useGame } from "./contexts/GameContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -121,7 +121,7 @@ function AppContent() {
 
       {view.name !== "welcome" && <PomodoroTimer />}
 
-      <Toaster position="top-center" expand={false} theme="dark" richColors />
+      <Toaster position="top-center" expand={false} theme="dark" />
     </div>
   );
 }
@@ -141,7 +141,7 @@ function AppContentWrapper() {
     return (
       <>
         <AuthPage />
-        <Toaster position="top-center" expand={false} theme="dark" richColors />
+        <Toaster position="top-center" expand={false} theme="dark" />
       </>
     );
   }

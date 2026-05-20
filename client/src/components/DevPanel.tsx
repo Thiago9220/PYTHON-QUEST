@@ -2,18 +2,36 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "./ui/button";
-import { Terminal, Zap, Unlock, X, ChevronUp, CheckCircle2 } from "lucide-react";
+import { RotateCcw, Terminal, Trash2, Zap, Unlock, X, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { WORLDS } from "@/lib/challenges";
 
 export function DevPanel() {
   const { user } = useAuth();
-  const { dispatch, state } = useGame();
+  const { dispatch, state, resetAllProgress, resetWorldProgress } = useGame();
   const [isOpen, setIsOpen] = useState(false);
 
   // Ferramentas locais de desenvolvimento nao devem aparecer no build publicado.
   if (!import.meta.env.DEV || user?.email !== "thiago.ramoss2009@gmail.com") return null;
+
+  const getActiveWorldId = () => {
+    if (state.currentWorldId) return state.currentWorldId;
+
+    try {
+      const savedView = JSON.parse(localStorage.getItem("python_quest_current_view") ?? "null");
+      if (
+        savedView?.name === "list" ||
+        savedView?.name === "arena" ||
+        savedView?.name === "boss"
+      ) {
+        return typeof savedView.worldId === "string" ? savedView.worldId : null;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  };
 
   const handleAddXP = () => {
     dispatch({ type: "DEBUG_ADD_XP", amount: 1000 });
@@ -21,11 +39,12 @@ export function DevPanel() {
   };
 
   const handleCompleteWorld = () => {
-    if (!state.currentWorldId) {
+    const activeWorldId = getActiveWorldId();
+    if (!activeWorldId) {
       toast.error("Entre em um mundo primeiro para completá-lo.");
       return;
     }
-    dispatch({ type: "DEBUG_COMPLETE_WORLD", worldId: state.currentWorldId });
+    dispatch({ type: "DEBUG_COMPLETE_WORLD", worldId: activeWorldId });
     toast.success("Mundo atual completado (DEV)");
   };
 
@@ -37,6 +56,21 @@ export function DevPanel() {
   const handleCompleteAll = () => {
     dispatch({ type: "DEBUG_COMPLETE_ALL" });
     toast.success("Tudo completado (DEV)");
+  };
+
+  const handleResetWorld = async () => {
+    const activeWorldId = getActiveWorldId();
+    if (!activeWorldId) {
+      toast.error("Entre em um mundo primeiro para zerá-lo.");
+      return;
+    }
+    if (!window.confirm("Zerar o progresso do mundo atual?")) return;
+    await resetWorldProgress(activeWorldId);
+  };
+
+  const handleResetAll = async () => {
+    if (!window.confirm("Zerar TODO o progresso da conta?")) return;
+    await resetAllProgress();
   };
 
   return (
@@ -70,6 +104,12 @@ export function DevPanel() {
               </Button>
               <Button onClick={handleCompleteAll} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5 text-fuchsia-400 hover:text-fuchsia-300 border-fuchsia-500/30">
                 <Unlock className="mr-2 h-3 w-3" /> Modo Deus (Tudo)
+              </Button>
+              <Button onClick={handleResetWorld} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5 text-amber-300 hover:text-amber-200">
+                <RotateCcw className="mr-2 h-3 w-3" /> Zerar Mundo Atual
+              </Button>
+              <Button onClick={handleResetAll} variant="outline" size="sm" className="w-full justify-start text-xs border-red-500/30 hover:bg-red-500/10 text-red-300 hover:text-red-200">
+                <Trash2 className="mr-2 h-3 w-3" /> Zerar Tudo
               </Button>
             </div>
           </motion.div>

@@ -117,9 +117,9 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
       (t) => (
         <div
           onClick={() => toast.dismiss(t)}
-          className="flex items-start gap-3 bg-slate-950/95 backdrop-blur-xl border border-rose-500/40 rounded-2xl px-4 py-3 shadow-[0_0_30px_rgba(244,63,94,0.25)] min-w-[320px] cursor-pointer"
+          className="flex min-w-[320px] cursor-pointer items-start gap-3 rounded-xl border border-rose-400/40 bg-slate-950/95 px-4 py-3 shadow-[0_0_30px_rgba(244,63,94,0.2)] backdrop-blur-xl"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 border border-rose-500/30">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-400/30 bg-rose-400/10">
             <Lock className="w-4 h-4 text-rose-400" />
           </div>
           <div className="flex-1 leading-tight">

@@ -102,7 +102,7 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                               <img 
                                 src={ach.icon} 
                                 alt={ach.title} 
-                                className={`h-full w-full object-cover p-1 transition-transform duration-300 group-hover:scale-110 ${ach.id !== "first_query" ? "invert hue-rotate-180 brightness-125 contrast-125 bg-black" : ""}`} 
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                 loading="lazy" 
                               />
                             ) : (
@@ -184,4 +184,3 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
     </AnimatePresence>
   );
 }
-

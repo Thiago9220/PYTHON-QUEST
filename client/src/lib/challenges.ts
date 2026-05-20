@@ -18,7 +18,34 @@ import { CRONOGRAMA_TEMPORAL_WORLD } from "./worlds/cronograma_temporal";
 import { SINTETIZADOR_LINGUAGEM_WORLD } from "./worlds/sintetizador_linguagem";
 import { ORACULO_GENERATIVO_WORLD } from "./worlds/oraculo_generativo";
 
-export const WORLDS: World[] = [
+const UNLOCK_REQUIREMENT_RATIO = 0.9;
+const UNLOCK_REQUIREMENT_ROUND_TO = 500;
+
+const getWorldChallengeXp = (world: World) =>
+  world.challenges.reduce((total, challenge) => total + challenge.xpReward, 0);
+
+const roundUnlockRequirement = (xp: number) =>
+  Math.round(xp / UNLOCK_REQUIREMENT_ROUND_TO) * UNLOCK_REQUIREMENT_ROUND_TO;
+
+const applyProgressiveUnlockRequirements = (worlds: World[]): World[] => {
+  let previousChallengeXp = 0;
+
+  return worlds.map((world, index) => {
+    const unlockRequirement =
+      index === 0
+        ? 0
+        : roundUnlockRequirement(previousChallengeXp * UNLOCK_REQUIREMENT_RATIO);
+
+    previousChallengeXp += getWorldChallengeXp(world);
+
+    return {
+      ...world,
+      unlockRequirement,
+    };
+  });
+};
+
+const WORLD_SEQUENCE: World[] = [
   VILA_VARIAVEIS_WORLD,
   VALE_CONDICOES_WORLD,
   NINHO_LISTAS_WORLD,
@@ -36,6 +63,8 @@ export const WORLDS: World[] = [
   SINTETIZADOR_LINGUAGEM_WORLD,
   ORACULO_GENERATIVO_WORLD,
 ];
+
+export const WORLDS: World[] = applyProgressiveUnlockRequirements(WORLD_SEQUENCE);
 
 export function getAllChallenges(): Challenge[] {
   return WORLDS.flatMap((w) => w.challenges);
