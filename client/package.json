@@ -17,8 +17,9 @@
   "build": {
     "appId": "com.thiagoramos.pythonquest",
     "productName": "Python Quest",
+    "asar": false,
     "directories": {
-      "output": "release"
+      "output": "release/steam"
     },
     "files": [
       "dist/**/*",
