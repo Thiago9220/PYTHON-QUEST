@@ -331,9 +331,11 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" onClick={logout} className="h-9 w-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors">
-              <LogOut className="w-4 h-4" />
-            </Button>
+            {!isSteamMode() && (
+              <Button variant="ghost" size="icon" onClick={logout} className="h-9 w-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors">
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </header>

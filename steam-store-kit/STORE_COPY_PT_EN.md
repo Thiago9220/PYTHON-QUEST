@@ -99,3 +99,4 @@ Aqui não existe questionário passivo de múltipla escolha — você programa d
   - Gere o build final com `npm --prefix "C:\Users\thiag\PYTHON-QUEST\PYTHON-QUEST\client" run steam:exe`
   - Envie a pasta `client/release/steam/win-unpacked`
   - Garanta que **não existe** `steam_appid.txt` dentro da pasta enviada para a loja (esse arquivo serve apenas para testes locais com o Steam Client aberto).
+

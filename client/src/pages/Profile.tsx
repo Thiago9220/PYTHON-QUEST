@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGame } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getLocalizedLevelTitle, getLocalizedTitleReward } from "@/lib/i18n/localize";
+import { isSteamMode } from "@/lib/platform";
 
 type Props = {
   onBack: () => void;
@@ -213,14 +214,16 @@ export default function Profile({ onBack }: Props) {
               <BookOpen className="h-5 w-5" />
             </Button>
             <VolumeControl isMuted={state.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-            <Button
-              variant="ghost"
-              onClick={logout}
-              className="text-rose-300/80 hover:text-rose-200 hover:bg-rose-500/10 font-mono text-xs uppercase tracking-widest"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("profLogout")}
-            </Button>
+            {!isSteamMode() && (
+              <Button
+                variant="ghost"
+                onClick={logout}
+                className="text-rose-300/80 hover:text-rose-200 hover:bg-rose-500/10 font-mono text-xs uppercase tracking-widest"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t("profLogout")}
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -325,7 +328,7 @@ export default function Profile({ onBack }: Props) {
 {`# brief
   target:   ${t("profBriefTarget")}
   pending:  ${challengesLeft} ${t("profBriefPendingSuffix")}
-  link:     uplink @ supabase//sync_ok`}
+  link:     uplink @ ${isSteamMode() ? "steam_cloud//local_save_ok" : "supabase//sync_ok"}`}
                 </pre>
               </div>
 
@@ -559,13 +562,17 @@ export default function Profile({ onBack }: Props) {
                     </button>
                   ))}
                 </div>
-                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">{t("profCustomUrl")}</label>
-                <Input
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="bg-black/40 border-cyan-500/30 text-cyan-100 rounded-none font-mono focus:border-cyan-300"
-                />
+                {!isSteamMode() && (
+                  <>
+                    <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">{t("profCustomUrl")}</label>
+                    <Input
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="bg-black/40 border-cyan-500/30 text-cyan-100 rounded-none font-mono focus:border-cyan-300"
+                    />
+                  </>
+                )}
               </div>
             </div>
 

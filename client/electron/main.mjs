@@ -177,6 +177,11 @@ function getAppIconPath() {
 
     mainWindow.setMenuBarVisibility(false);
 
+    // Nega permissões web desnecessárias (câmera, microfone, geolocalização, notificações)
+    mainWindow.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => {
+      callback(false);
+    });
+
     let allowedOrigin = "";
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
       if (url.startsWith("https://")) {
@@ -280,8 +285,10 @@ function getAppIconPath() {
   ipcMain.handle("steam:write-save", async (_event, data) => {
     try {
       const filePath = getSaveFilePath();
+      const tmpPath = `${filePath}.tmp`;
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+      fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8");
+      fs.renameSync(tmpPath, filePath);
       return true;
     } catch (err) {
       console.error("Erro ao gravar save local:", err);
