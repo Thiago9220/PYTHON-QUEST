@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Network as NetworkIcon, Globe, Shield, Terminal, X, Zap, 
-  History, Flame, LayoutList, Split, Cpu, BookOpen, Search,
-  RefreshCw, RotateCcw, Settings, FileCode, Copy, Play, Boxes, HardDrive,
-  Wifi, Router, Laptop, ShieldAlert, FileSearch, Flag, Crosshair, Radar
+  Network as NetworkIcon, Globe, Shield, Terminal, X, 
+  Flame, BookOpen, Search,
+  Copy, Play,
+  Wifi, Crosshair, Radar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -192,13 +192,14 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
       case "post_ex":
       case "defense":
         const rituals = RITUALS[activeTab as keyof typeof RITUALS];
-        const tabDesc = {
+        const tabDescriptions: Record<string, string> = {
           recon: "Mapeie o terreno externo antes de qualquer ação direta. Silêncio é a chave.",
           scanning: "Várzea as portas do alvo para descobrir serviços, versões e falhas óbvias.",
           exploitation: "O momento da brecha. Use ferramentas para ganhar acesso inicial ao sistema.",
           post_ex: "Você entrou. Agora escale privilégios e vasculhe por informações críticas.",
           defense: "Proteja seu ambiente: monitore tráfego, filtre pacotes e aplique hardening."
-        }[activeTab as keyof typeof RITUALS];
+        };
+        const tabDesc = tabDescriptions[activeTab];
 
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

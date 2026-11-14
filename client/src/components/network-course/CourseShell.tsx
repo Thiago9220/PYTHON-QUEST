@@ -447,7 +447,7 @@ function QuizView({ questions, onPass }: { questions: QuizQuestion[]; onPass: (s
 
   const q = questions[idx];
   const score = useMemo(() =>
-    answers.reduce((acc, a, i) => a === questions[i].correct ? acc + 1 : acc, 0),
+    answers.reduce<number>((acc, a, i) => a === questions[i].correct ? acc + 1 : acc, 0),
   [answers, questions]);
   const passingScore = Math.ceil(questions.length * 0.7);
   const passed = score >= passingScore;

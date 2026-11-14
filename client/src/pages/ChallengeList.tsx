@@ -6,7 +6,6 @@ import {
   Circle,
   Flame,
   Lock,
-  LogOut,
   Star,
   Trophy,
   ChevronRight,
@@ -40,7 +39,7 @@ type Props = {
 
 export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss, onBack, onBackToHome, onOpenProfile }: Props) {
   const { isChallengeCompleted, isBossDefeated, isBossUnlocked, state, getPlayerLevel, dispatch } = useGame();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const world = getWorldById(worldId);
   const nextChallengeRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +50,6 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
   const remaining = world.challenges.length - completedCount;
   const nextIncompleteIdx = world.challenges.findIndex((c) => !isChallengeCompleted(c.id));
   const { level, title, progress } = getPlayerLevel();
-  const unlockedAchievements = state.achievements.filter((a) => a.unlocked);
   
   const themeColor = world.color || "#0EA5E9";
 

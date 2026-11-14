@@ -7,7 +7,6 @@ import {
   Lightbulb, 
   Play, 
   RotateCcw, 
-  Star, 
   Trophy,
   Zap,
   Terminal
@@ -22,7 +21,7 @@ import { getChallengeById, getWorldById } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
 import { AnswerRevealModal } from "@/components/AnswerRevealModal";
 import { WorldCompletionModal } from "@/components/WorldCompletionModal";
-import TutorialTour, { TourStep } from "@/components/TutorialTour";
+import TutorialTour from "@/components/TutorialTour";
 import { soundManager } from "@/lib/sounds";
 import { toast } from "sonner";
 import { useChallengeEngine } from "@/hooks/useChallengeEngine";

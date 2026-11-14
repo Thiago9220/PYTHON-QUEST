@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Lock, Trophy, X, Zap, Award, BookOpen } from "lucide-react";
+import { Check, Lock, Trophy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
 
@@ -12,7 +12,6 @@ type Props = {
 export function AchievementsModal({ isOpen, onClose }: Props) {
   const { state, dispatch } = useGame();
   const unlockedAchievements = state.achievements.filter((a) => a.unlocked);
-  const lockedAchievements = state.achievements.filter((a) => !a.unlocked);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -22,13 +21,6 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
       document.body.style.overflow = originalStyle;
     };
   }, [isOpen]);
-
-  const getFallbackIcon = (id: string) => {
-    if (id.includes("xp")) return <Zap className="h-8 w-8 text-amber-400" />;
-    if (id.includes("world")) return <Award className="h-8 w-8 text-sky-400" />;
-    if (id.includes("hint")) return <BookOpen className="h-8 w-8 text-emerald-400" />;
-    return <Trophy className="h-8 w-8 text-slate-400" />;
-  };
 
   return (
     <AnimatePresence>

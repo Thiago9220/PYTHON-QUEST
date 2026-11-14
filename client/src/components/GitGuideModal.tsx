@@ -160,7 +160,7 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
           </div>
         </motion.div>
       </div>
-      <GitSimulator isOpen={simOpen} onClose={() => setSimOpen(false)} />
+      {simOpen && <GitSimulator onBack={() => setSimOpen(false)} />}
     </AnimatePresence>
   );
 }

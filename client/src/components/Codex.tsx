@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Book, BookOpen, Code2, Copy, Play, X, Zap, History, Flame, LayoutList, Split, Terminal, Cpu
+  BookOpen, Code2, Copy, Play, X, Zap, History, Flame, LayoutList, Split, Terminal, Cpu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

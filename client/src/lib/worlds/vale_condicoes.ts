@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { SENTINEL_CONDICOES_BOSS } from "../bosses/sentinel_condicoes";
 
 export const VALE_CONDICOES_WORLD: World = {
   id: "vale-condicoes",
@@ -9,6 +10,7 @@ export const VALE_CONDICOES_WORLD: World = {
   bgImage: "/assets/images/worlds/conditions.png",
   lore: "No Nó de Roteamento, o Sistema Central testa sua lógica. O código não flui apenas em linha reta; ele deve decidir qual trilha seguir baseado em condições pré-definidas.",
   unlockRequirement: 1500,
+  boss: SENTINEL_CONDICOES_BOSS,
   challenges: [
     {
       id: "py-cond-01",

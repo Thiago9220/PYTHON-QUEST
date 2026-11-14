@@ -4,7 +4,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Code2, Compass, Map, Play, Terminal, Trophy, Zap } from "lucide-react";
+import { Compass, Map, Play, Terminal, Trophy, Zap } from "lucide-react";
 import { WORLDS, getAllChallenges } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
 

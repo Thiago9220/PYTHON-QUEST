@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  GitBranch, GitCommit, GitMerge, Github, Terminal, X, Zap, 
-  History, Flame, LayoutList, Split, Cpu, BookOpen, Search,
-  RefreshCw, RotateCcw, Cloud, Settings, FileCode, Copy, Play
+  GitBranch, GitCommit, Github, Terminal, X, Zap, 
+  Flame, Split, BookOpen,
+  RefreshCw, RotateCcw, Cloud, Settings, Copy, Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

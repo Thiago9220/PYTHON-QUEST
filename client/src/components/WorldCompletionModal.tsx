@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Trophy, Star, ArrowRight, Code2, Cpu, Database, Terminal } from "lucide-react";
+import { Trophy, Star, ArrowRight, Code2, Cpu, Database, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { World } from "@/lib/types";
 

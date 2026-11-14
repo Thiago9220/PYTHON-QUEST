@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { GameProvider, useGame } from "./contexts/GameContext";
@@ -7,17 +7,27 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthPage from "./pages/AuthPage";
 import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
-import ChallengeList from "./pages/ChallengeList";
-import GameArena from "./pages/GameArena";
-import BossArena from "./pages/BossArena";
-import Profile from "./pages/Profile";
-import { GitSimulator } from "./components/GitSimulator";
-import { DockerSimulator } from "./components/DockerSimulator";
-import { NetworkSimulator } from "./components/NetworkSimulator";
-import { CyberSecSimulator } from "./components/CyberSecSimulator";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 import { DevPanel } from "./components/DevPanel";
+
+// Code splitting for heavy screens & interactive simulators
+const ChallengeList = lazy(() => import("./pages/ChallengeList"));
+const GameArena = lazy(() => import("./pages/GameArena"));
+const BossArena = lazy(() => import("./pages/BossArena"));
+const Profile = lazy(() => import("./pages/Profile"));
+const GitSimulator = lazy(() =>
+  import("./components/GitSimulator").then((m) => ({ default: m.GitSimulator }))
+);
+const DockerSimulator = lazy(() =>
+  import("./components/DockerSimulator").then((m) => ({ default: m.DockerSimulator }))
+);
+const NetworkSimulator = lazy(() =>
+  import("./components/NetworkSimulator").then((m) => ({ default: m.NetworkSimulator }))
+);
+const CyberSecSimulator = lazy(() =>
+  import("./components/CyberSecSimulator").then((m) => ({ default: m.CyberSecSimulator }))
+);
 
 type View =
   | { name: "welcome" }
@@ -31,19 +41,60 @@ type View =
   | { name: "network-simulator" }
   | { name: "cybersec-simulator" };
 
+function ViewFallback() {
+  return (
+    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center gap-3 text-slate-300">
+      <Loader2 className="size-7 animate-spin text-sky-400" />
+      <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-400">
+        Carregando Módulo...
+      </span>
+    </div>
+  );
+}
+
 function AppContent() {
   const { state, hasHydrated } = useGame();
-  const [view, setView] = useState<View>(() => {
+  const [view, setViewState] = useState<View>(() => {
+    if (typeof window !== "undefined" && window.history.state?.pythonQuestView) {
+      return window.history.state.pythonQuestView as View;
+    }
     const saved = localStorage.getItem("python_quest_current_view");
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         return { name: "welcome" };
       }
     }
     return { name: "welcome" };
   });
+
+  const navigate = useCallback((nextView: View, replace = false) => {
+    setViewState(nextView);
+    if (typeof window !== "undefined") {
+      if (replace) {
+        window.history.replaceState({ pythonQuestView: nextView }, "");
+      } else {
+        window.history.pushState({ pythonQuestView: nextView }, "");
+      }
+    }
+  }, []);
+
+  // Ensure initial history state is populated and listen for browser Back/Forward buttons
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.history.state?.pythonQuestView) {
+      window.history.replaceState({ pythonQuestView: view }, "");
+    }
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.pythonQuestView) {
+        setViewState(event.state.pythonQuestView as View);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist view changes
   useEffect(() => {
@@ -54,70 +105,72 @@ function AppContent() {
   // Handle initial redirection se o usuario ja viu a introducao
   useEffect(() => {
     if (hasHydrated && state.hasSeenTutorial && view.name === "welcome") {
-      setView({ name: "map" });
+      navigate({ name: "map" }, true);
     }
-  }, [hasHydrated, state.hasSeenTutorial, view.name]);
+  }, [hasHydrated, state.hasSeenTutorial, view.name, navigate]);
 
-  const goWelcome = () => setView({ name: "welcome" });
-  const goMap = () => setView({ name: "map" });
-  const goProfile = () => setView({ name: "profile" });
-  const goList = (worldId: string) => setView({ name: "list", worldId });
+  const goWelcome = () => navigate({ name: "welcome" });
+  const goMap = () => navigate({ name: "map" });
+  const goProfile = () => navigate({ name: "profile" });
+  const goList = (worldId: string) => navigate({ name: "list", worldId });
   const goArena = (challengeId: string, worldId: string) =>
-    setView({ name: "arena", challengeId, worldId });
-  const goBoss = (worldId: string) => setView({ name: "boss", worldId });
+    navigate({ name: "arena", challengeId, worldId });
+  const goBoss = (worldId: string) => navigate({ name: "boss", worldId });
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-      {view.name === "welcome" && <Welcome onStart={goMap} />}
+      <Suspense fallback={<ViewFallback />}>
+        {view.name === "welcome" && <Welcome onStart={goMap} />}
 
-      {view.name === "map" && (
-        <WorldMap
-          onSelectWorld={goList}
-          onOpenProfile={goProfile}
-          onOpenGitSimulator={() => setView({ name: "git-simulator" })}
-          onOpenDockerSimulator={() => setView({ name: "docker-simulator" })}
-          onOpenNetworkSimulator={() => setView({ name: "network-simulator" })}
-          onOpenCyberSecSimulator={() => setView({ name: "cybersec-simulator" })}
-        />
-      )}
+        {view.name === "map" && (
+          <WorldMap
+            onSelectWorld={goList}
+            onOpenProfile={goProfile}
+            onOpenGitSimulator={() => navigate({ name: "git-simulator" })}
+            onOpenDockerSimulator={() => navigate({ name: "docker-simulator" })}
+            onOpenNetworkSimulator={() => navigate({ name: "network-simulator" })}
+            onOpenCyberSecSimulator={() => navigate({ name: "cybersec-simulator" })}
+          />
+        )}
 
-      {view.name === "git-simulator" && <GitSimulator onBack={goMap} />}
+        {view.name === "git-simulator" && <GitSimulator onBack={goMap} />}
 
-      {view.name === "docker-simulator" && <DockerSimulator onBack={goMap} />}
-      
-      {view.name === "network-simulator" && <NetworkSimulator onBack={goMap} />}
-      {view.name === "cybersec-simulator" && <CyberSecSimulator onBack={goMap} />}
+        {view.name === "docker-simulator" && <DockerSimulator onBack={goMap} />}
 
-      {view.name === "list" && (
-        <ChallengeList
-          worldId={view.worldId}
-          onSelectChallenge={(id) => goArena(id, view.worldId)}
-          onSelectBoss={() => goBoss(view.worldId)}
-          onBack={goMap}
-          onBackToHome={goWelcome}
-          onOpenProfile={goProfile}
-        />
-      )}
+        {view.name === "network-simulator" && <NetworkSimulator onBack={goMap} />}
+        {view.name === "cybersec-simulator" && <CyberSecSimulator onBack={goMap} />}
 
-      {view.name === "boss" && (
-        <BossArena
-          worldId={view.worldId}
-          onBack={() => goList(view.worldId)}
-        />
-      )}
+        {view.name === "list" && (
+          <ChallengeList
+            worldId={view.worldId}
+            onSelectChallenge={(id) => goArena(id, view.worldId)}
+            onSelectBoss={() => goBoss(view.worldId)}
+            onBack={goMap}
+            onBackToHome={goWelcome}
+            onOpenProfile={goProfile}
+          />
+        )}
 
-      {view.name === "arena" && (
-        <GameArena
-          challengeId={view.challengeId}
-          onBack={() => goList(view.worldId)}
-          onBackToHome={goWelcome}
-          onNext={(nextId) =>
-            nextId ? goArena(nextId, view.worldId) : goList(view.worldId)
-          }
-        />
-      )}
+        {view.name === "boss" && (
+          <BossArena
+            worldId={view.worldId}
+            onBack={() => goList(view.worldId)}
+          />
+        )}
 
-      {view.name === "profile" && <Profile onBack={goMap} />}
+        {view.name === "arena" && (
+          <GameArena
+            challengeId={view.challengeId}
+            onBack={() => goList(view.worldId)}
+            onBackToHome={goWelcome}
+            onNext={(nextId) =>
+              nextId ? goArena(nextId, view.worldId) : goList(view.worldId)
+            }
+          />
+        )}
+
+        {view.name === "profile" && <Profile onBack={goMap} />}
+      </Suspense>
 
       {view.name !== "welcome" && <PomodoroTimer />}
 
@@ -150,7 +203,7 @@ function AppContentWrapper() {
     <GameProvider userId={user?.id}>
       <PomodoroProvider>
         <AppContent />
-        <DevPanel />
+        {import.meta.env.DEV && <DevPanel />}
       </PomodoroProvider>
     </GameProvider>
   );

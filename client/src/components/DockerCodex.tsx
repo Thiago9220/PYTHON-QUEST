@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Container as ContainerIcon, Package, Cloud, Terminal, X, Zap, 
-  History, Flame, LayoutList, Split, Cpu, BookOpen, Search,
-  RefreshCw, RotateCcw, Settings, FileCode, Copy, Play, Boxes, HardDrive, Network, Server
+  Container as ContainerIcon, X, Zap, 
+  Flame, Cpu, BookOpen,
+  RefreshCw, Settings, Copy, Play, Boxes, Network, Server
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

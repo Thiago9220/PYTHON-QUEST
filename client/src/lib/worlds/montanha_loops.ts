@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { CHRONOS_LOOPS_BOSS } from "../bosses/chronos_loops";
 
 export const MONTANHA_LOOPS_WORLD: World = {
   id: "montanha-loops",
@@ -9,6 +10,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
   bgImage: "/assets/images/worlds/loops.png",
   lore: "No Setor de Iteração, o tempo é medido em ciclos de CPU. Aqui, você deve aprender a dominar os Loops de Processamento para executar tarefas repetitivas em escala massiva com um único script.",
   unlockRequirement: 0,
+  boss: CHRONOS_LOOPS_BOSS,
   challenges: [
     {
       id: "py-loop-01",

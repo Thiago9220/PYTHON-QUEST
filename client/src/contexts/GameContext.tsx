@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useContext,
   useEffect,
@@ -11,11 +11,6 @@ import {
 import { soundManager } from "@/lib/sounds";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { 
-  Trophy, Terminal, Zap, Award, BookOpen, Compass, 
-  MapPin, RefreshCw, Layers, Flame, Ghost, Sparkles, Cpu, Target, 
-  HelpCircle, Shield, BrainCircuit, Infinity, Crown, EyeOff
-} from "lucide-react";
 
 // Refactored Modules
 import { GameState, GameAction, ChallengeProgress } from "@/lib/gameTypes";
@@ -407,7 +402,7 @@ export function GameProvider({
     userId,
   ]);
 
-  // 3. ACHIEVEMENT MONITORING (Queued — max 1 toast at a time)
+  // 3. ACHIEVEMENT MONITORING (Queued â€” max 1 toast at a time)
   const achievementQueueRef = useRef<string[]>([]);
   const processedAchievementsRef = useRef<Set<string>>(new Set());
   const queueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

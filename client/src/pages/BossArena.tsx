@@ -19,6 +19,7 @@ import { useBossEngine } from "@/hooks/useBossEngine";
 import { getWorldById } from "@/lib/challenges";
 import { BossIntroModal } from "@/components/BossIntroModal";
 import { BossVictoryModal } from "@/components/BossVictoryModal";
+import PythonEditor from "@/components/PythonEditor";
 
 interface Props {
   worldId: string;
@@ -412,29 +413,14 @@ export default function BossArena({ worldId, onBack }: Props) {
                 </span>
               </div>
             </div>
-            <textarea
-              value={engine.actCodes[engine.currentActIndex] ?? ""}
-              onChange={(e) =>
-                engine.setActCode(engine.currentActIndex, e.target.value)
+            <PythonEditor
+              code={engine.actCodes[engine.currentActIndex] ?? ""}
+              onChange={(newCode) =>
+                engine.setActCode(engine.currentActIndex, newCode)
               }
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  const target = e.currentTarget;
-                  const start = target.selectionStart;
-                  const end = target.selectionEnd;
-                  const current = engine.actCodes[engine.currentActIndex] ?? "";
-                  const newCode =
-                    current.substring(0, start) + "    " + current.substring(end);
-                  engine.setActCode(engine.currentActIndex, newCode);
-                  setTimeout(() => {
-                    target.selectionStart = target.selectionEnd = start + 4;
-                  }, 0);
-                }
-              }}
-              spellCheck={false}
-              disabled={!engine.pythonReady || engine.isRunning}
-              className="flex-1 w-full p-5 bg-transparent text-sky-100 font-mono text-sm resize-none focus:outline-none placeholder:text-slate-600"
+              onRun={engine.handleRun}
+              isRunning={engine.isRunning}
+              pythonReady={engine.pythonReady}
               placeholder="# Escreva o código deste ato aqui..."
             />
           </div>
