@@ -2,6 +2,8 @@
   "name": "python-quest",
   "private": true,
   "version": "0.1.0",
+  "description": "Python Quest: The Rise of the Scriptweaver — Interactive Python, Data Science, Git, Docker, Networking & Cybersecurity RPG.",
+  "author": "Thiago Ramos",
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
@@ -30,7 +32,7 @@
         "dir",
         "nsis"
       ],
-      "icon": "public/assets/images/python-protocol-mark.png"
+      "icon": "public/assets/images/python-protocol-mark.ico"
     }
   },
   "dependencies": {
@@ -46,6 +48,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sonner": "^1.5.0",
+    "steamworks.js": "^0.4.0",
     "tailwind-merge": "^2.2.1",
     "tw-animate-css": "^1.2.0"
   },

@@ -85,14 +85,14 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                       className={`group relative flex flex-col gap-5 rounded-3xl border p-6 transition-all duration-300 ${
                         isUnlocked 
                           ? "border-emerald-500/20 bg-slate-900/40 shadow-lg shadow-black/20" 
-                          : "border-white/5 bg-white/[0.01] opacity-40"
+                          : "border-white/5 bg-white/[0.01] opacity-65"
                       }`}
                     >
                       <div className="flex items-start gap-4">
                         <div className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
                           isUnlocked 
                             ? "border-sky-500/20 bg-slate-900 shadow-[0_0_15px_rgba(14,165,233,0.15)]" 
-                            : "border-white/5 bg-slate-950"
+                            : "border-white/10 bg-slate-950"
                         }`}>
                           {isUnlocked ? (
                             ach.icon.startsWith("/") ? (
@@ -106,9 +106,19 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                               <span className="text-4xl">{ach.icon}</span>
                             )
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                              <Lock className="h-8 w-8 text-slate-700" />
-                            </div>
+                            <>
+                              {ach.icon.startsWith("/") && (
+                                <img
+                                  src={ach.icon}
+                                  alt={ach.title}
+                                  className="h-full w-full object-cover grayscale opacity-35 brightness-75"
+                                  loading="lazy"
+                                />
+                              )}
+                              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/45">
+                                <Lock className="h-6 w-6 text-slate-300/80 drop-shadow" />
+                              </div>
+                            </>
                           )}
                         </div>
                         <div className="min-w-0">

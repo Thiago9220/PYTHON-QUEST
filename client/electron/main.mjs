@@ -11,13 +11,68 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import http from "node:http";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow = null;
 let staticServer = null;
+let steamClient = null;
+
+function resolveLocalSteamAppId() {
+  if (process.env.STEAM_APP_ID) {
+    const parsed = Number.parseInt(process.env.STEAM_APP_ID, 10);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  const candidates = [
+    path.join(path.dirname(process.execPath), "steam_appid.txt"),
+    path.join(process.resourcesPath || "", "steam_appid.txt"),
+    path.join(__dirname, "..", "steam_appid.txt"),
+    path.join(process.cwd(), "steam_appid.txt"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (file && fs.existsSync(file)) {
+        const parsed = Number.parseInt(fs.readFileSync(file, "utf-8").trim(), 10);
+        if (Number.isFinite(parsed) && parsed > 0) return parsed;
+      }
+    } catch {
+      // ignore invalid steam_appid.txt
+    }
+  }
+  return undefined;
+}
+
+function initSteamworks() {
+  if (steamClient) return steamClient;
+  try {
+    const steamworks = require("steamworks.js");
+    const appId = resolveLocalSteamAppId();
+    steamClient = appId ? steamworks.init(appId) : steamworks.init();
+    try {
+      steamworks.electronEnableSteamOverlay();
+    } catch (overlayErr) {
+      console.warn("[Steamworks] Overlay unavailable:", overlayErr?.message || overlayErr);
+    }
+    console.log(
+      `[Steamworks] Connected as "${steamClient.localplayer.getName()}" (${steamClient.localplayer
+        .getSteamId()
+        .steamId64.toString()})`
+    );
+    return steamClient;
+  } catch (err) {
+    console.info(
+      `[Steamworks] Running in standalone offline mode (${err?.message || "Steam client not active"})`
+    );
+    steamClient = null;
+    return null;
+  }
+}
+
+initSteamworks();
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -39,6 +94,8 @@ const MIME_TYPES = {
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
   ".wasm": "application/wasm",
+  ".whl": "application/zip",
+  ".zip": "application/zip",
 };
 
 function startLocalStaticServer(distDir) {
@@ -91,6 +148,8 @@ function getSaveFilePath() {
 
 function getAppIconPath() {
   const candidates = [
+    path.join(__dirname, "..", "public", "assets", "images", "python-protocol-mark.ico"),
+    path.join(__dirname, "..", "dist", "assets", "images", "python-protocol-mark.ico"),
     path.join(__dirname, "..", "public", "assets", "images", "python-protocol-mark.png"),
     path.join(__dirname, "..", "dist", "assets", "images", "python-protocol-mark.png"),
   ];
@@ -117,13 +176,6 @@ function getAppIconPath() {
     });
 
     mainWindow.setMenuBarVisibility(false);
-
-    mainWindow.webContents.on("before-input-event", (event, input) => {
-      if (input.type === "keyDown" && input.key === "F11") {
-        event.preventDefault();
-        mainWindow.setFullScreen(!mainWindow.isFullScreen());
-      }
-    });
 
     let allowedOrigin = "";
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -194,6 +246,17 @@ function getAppIconPath() {
 
   // IPC Handlers para o jogo
   ipcMain.handle("steam:get-profile", async () => {
+    if (steamClient) {
+      try {
+        return {
+          id: steamClient.localplayer.getSteamId().steamId64.toString(),
+          displayName: steamClient.localplayer.getName() || os.userInfo().username || "Operador Steam",
+          avatarEmoji: "/avatars/hacker.webp",
+        };
+      } catch (err) {
+        console.warn("[Steamworks] Failed to read profile:", err?.message || err);
+      }
+    }
     const username = os.userInfo().username || "Operador Steam";
     return {
       id: "steam-local-player",
@@ -227,7 +290,20 @@ function getAppIconPath() {
   });
 
   ipcMain.handle("steam:unlock-achievement", async (_event, achievementId) => {
-    console.log(`[Steamworks] Achievement unlocked: ${achievementId}`);
+    if (steamClient && typeof achievementId === "string" && achievementId.trim()) {
+      try {
+        if (!steamClient.achievement.isActivated(achievementId)) {
+          const ok = steamClient.achievement.activate(achievementId);
+          console.log(`[Steamworks] Achievement activate("${achievementId}") -> ${ok}`);
+          return ok;
+        }
+        return true;
+      } catch (err) {
+        console.warn(`[Steamworks] Failed to unlock "${achievementId}":`, err?.message || err);
+        return false;
+      }
+    }
+    console.log(`[Steamworks] Achievement unlocked (local): ${achievementId}`);
     return true;
   });
 
