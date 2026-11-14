@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GitBranch, GitCommit, GitMerge, GitPullRequest, Github, X, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GitSimulator } from "./GitSimulator";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { GIT_GUIDE_EN } from "@/lib/i18n/git_en";
 
 interface Props {
   isOpen: boolean;
@@ -11,7 +13,44 @@ interface Props {
 
 export function GitGuideModal({ isOpen, onClose }: Props) {
   const [simOpen, setSimOpen] = useState(false);
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   if (!isOpen) return null;
+
+  const stepIcons = [
+    { icon: GitBranch, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
+    { icon: GitPullRequest, color: "text-sky-400", bg: "bg-sky-400/10", border: "border-sky-400/20" },
+    { icon: GitCommit, color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
+    { icon: GitMerge, color: "text-fuchsia-400", bg: "bg-fuchsia-400/10", border: "border-fuchsia-400/20" },
+  ];
+
+  const ptSteps = [
+    {
+      cmd: "git init",
+      title: "Inicializar Repositório",
+      desc: "Transforma uma pasta comum do seu PC em um cofre monitorado pelo Git.",
+    },
+    {
+      cmd: "git add .",
+      title: "Adicionar ao Palco (Stage)",
+      desc: "Avisa o Git quais arquivos alterados você quer incluir na próxima fotografia.",
+    },
+    {
+      cmd: 'git commit -m "mensagem"',
+      title: "Tirar a Fotografia (Commit)",
+      desc: "Salva permanentemente o estado dos arquivos com uma mensagem descrevendo o que você fez.",
+    },
+    {
+      cmd: "git push origin main",
+      title: "Enviar para o Mainframe (Push)",
+      desc: "Faz o upload dos seus commits locais para a nuvem do GitHub.",
+    },
+  ];
+
+  const steps = (isEn ? GIT_GUIDE_EN.steps : ptSteps).map((s, i) => ({
+    ...s,
+    ...stepIcons[i],
+  }));
 
   return (
     <AnimatePresence>
@@ -39,8 +78,12 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                 <GitBranch className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase tracking-wider">Protocolo Git & GitHub</h2>
-                <p className="text-xs text-emerald-400 font-mono uppercase tracking-[0.2em]">Sincronização de Mainframe</p>
+                <h2 className="text-xl font-black text-white uppercase tracking-wider">
+                  {isEn ? GIT_GUIDE_EN.headerTitle : "Protocolo Git & GitHub"}
+                </h2>
+                <p className="text-xs text-emerald-400 font-mono uppercase tracking-[0.2em]">
+                  {isEn ? GIT_GUIDE_EN.headerSubtitle : "Sincronização de Mainframe"}
+                </p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-white rounded-full">
@@ -54,9 +97,23 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
             {/* Intro */}
             <div className="mb-12 text-center max-w-3xl mx-auto">
               <Github className="w-16 h-16 text-white mx-auto mb-6 opacity-80" />
-              <h3 className="text-4xl font-black text-white mb-4">A Máquina do Tempo do Código</h3>
+              <h3 className="text-4xl font-black text-white mb-4">
+                {isEn ? GIT_GUIDE_EN.introTitle : "A Máquina do Tempo do Código"}
+              </h3>
               <p className="text-slate-400 leading-relaxed text-xl">
-                No mundo hacker, perder um script é fatal. O <strong>Git</strong> é o seu sistema de backup temporal, permitindo salvar versões do seu código e voltar no tempo se algo der errado. O <strong>GitHub</strong> é o mainframe global onde você armazena esses backups e colabora com outros operadores.
+                {isEn ? (
+                  <>
+                    {GIT_GUIDE_EN.introBodyPrefix}
+                    <strong>{GIT_GUIDE_EN.introBodyGit}</strong>
+                    {GIT_GUIDE_EN.introBodyMid}
+                    <strong>{GIT_GUIDE_EN.introBodyGitHub}</strong>
+                    {GIT_GUIDE_EN.introBodySuffix}
+                  </>
+                ) : (
+                  <>
+                    No mundo hacker, perder um script é fatal. O <strong>Git</strong> é o seu sistema de backup temporal, permitindo salvar versões do seu código e voltar no tempo se algo der errado. O <strong>GitHub</strong> é o mainframe global onde você armazena esses backups e colabora com outros operadores.
+                  </>
+                )}
               </p>
             </div>
 
@@ -65,72 +122,41 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
               <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
                 <h4 className="flex items-center gap-2 text-xl font-bold text-white mb-4">
                   <Terminal className="w-5 h-5 text-emerald-400" />
-                  O que é Git?
+                  {isEn ? GIT_GUIDE_EN.whatIsGitTitle : "O que é Git?"}
                 </h4>
                 <p className="text-slate-400 text-base leading-relaxed mb-4">
-                  É um programa instalado no seu terminal (computador local). Ele cria uma "fotografia" do seu projeto a cada alteração importante que você faz.
+                  {isEn
+                    ? GIT_GUIDE_EN.whatIsGitDesc
+                    : 'É um programa instalado no seu terminal (computador local). Ele cria uma "fotografia" do seu projeto a cada alteração importante que você faz.'}
                 </p>
                 <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-sm text-emerald-300">
-                  Sem internet • Roda no seu PC • Linha de comando
+                  {isEn ? GIT_GUIDE_EN.whatIsGitBadge : "Sem internet • Roda no seu PC • Linha de comando"}
                 </div>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
                 <h4 className="flex items-center gap-2 text-xl font-bold text-white mb-4">
                   <Github className="w-5 h-5 text-sky-400" />
-                  O que é GitHub?
+                  {isEn ? GIT_GUIDE_EN.whatIsGitHubTitle : "O que é GitHub?"}
                 </h4>
                 <p className="text-slate-400 text-base leading-relaxed mb-4">
-                  É um site (nuvem) que hospeda seus repositórios Git. Serve como um portfólio para mostrar seus projetos para empresas e outros programadores.
+                  {isEn
+                    ? GIT_GUIDE_EN.whatIsGitHubDesc
+                    : "É um site (nuvem) que hospeda seus repositórios Git. Serve como um portfólio para mostrar seus projetos para empresas e outros programadores."}
                 </p>
                 <div className="p-3 bg-slate-950 rounded-xl border border-white/5 font-mono text-sm text-sky-300">
-                  Precisa de internet • Hospedagem • Rede Social Dev
+                  {isEn ? GIT_GUIDE_EN.whatIsGitHubBadge : "Precisa de internet • Hospedagem • Rede Social Dev"}
                 </div>
               </div>
             </div>
 
             {/* Commands */}
-            <h3 className="text-xl font-black text-white mb-6 uppercase tracking-widest text-center">Comandos de Invasão (Fluxo Básico)</h3>
+            <h3 className="text-xl font-black text-white mb-6 uppercase tracking-widest text-center">
+              {isEn ? GIT_GUIDE_EN.commandsHeading : "Comandos de Invasão (Fluxo Básico)"}
+            </h3>
             
             <div className="space-y-4 max-w-4xl mx-auto">
-              {[
-                {
-                  cmd: "git init",
-                  icon: GitBranch,
-                  color: "text-amber-400",
-                  bg: "bg-amber-400/10",
-                  border: "border-amber-400/20",
-                  title: "Inicializar Repositório",
-                  desc: "Transforma uma pasta comum do seu PC em um cofre monitorado pelo Git."
-                },
-                {
-                  cmd: "git add .",
-                  icon: GitPullRequest,
-                  color: "text-sky-400",
-                  bg: "bg-sky-400/10",
-                  border: "border-sky-400/20",
-                  title: "Adicionar ao Palco (Stage)",
-                  desc: "Avisa o Git quais arquivos alterados você quer incluir na próxima fotografia."
-                },
-                {
-                  cmd: 'git commit -m "mensagem"',
-                  icon: GitCommit,
-                  color: "text-emerald-400",
-                  bg: "bg-emerald-400/10",
-                  border: "border-emerald-400/20",
-                  title: "Tirar a Fotografia (Commit)",
-                  desc: "Salva permanentemente o estado dos arquivos com uma mensagem descrevendo o que você fez."
-                },
-                {
-                  cmd: "git push origin main",
-                  icon: GitMerge,
-                  color: "text-fuchsia-400",
-                  bg: "bg-fuchsia-400/10",
-                  border: "border-fuchsia-400/20",
-                  title: "Enviar para o Mainframe (Push)",
-                  desc: "Faz o upload dos seus commits locais para a nuvem do GitHub."
-                }
-              ].map((step, i) => (
+              {steps.map((step, i) => (
                 <div key={i} className="flex flex-col md:flex-row items-center gap-4 bg-slate-900/50 border border-white/5 rounded-2xl p-4 transition-all hover:bg-slate-800/50">
                   <div className={`p-4 rounded-xl border ${step.bg} ${step.border} ${step.color} shrink-0`}>
                     <step.icon className="w-6 h-6" />
@@ -148,12 +174,26 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
 
             {/* Outro */}
             <div className="mt-12 bg-gradient-to-r from-emerald-900/20 to-sky-900/20 border border-emerald-500/20 rounded-3xl p-8 text-center max-w-3xl mx-auto">
-              <h4 className="text-emerald-400 text-lg font-bold mb-3">Próximos Passos</h4>
+              <h4 className="text-emerald-400 text-lg font-bold mb-3">
+                {isEn ? GIT_GUIDE_EN.nextStepsTitle : "Próximos Passos"}
+              </h4>
               <p className="text-slate-300 text-base leading-relaxed mb-6">
-                Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Protocol na nuvem!
+                {isEn ? (
+                  <>
+                    {GIT_GUIDE_EN.nextStepsPrefix}
+                    <strong>github.com</strong>
+                    {GIT_GUIDE_EN.nextStepsMid}
+                    <strong>Git</strong>
+                    {GIT_GUIDE_EN.nextStepsSuffix}
+                  </>
+                ) : (
+                  <>
+                    Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Protocol na nuvem!
+                  </>
+                )}
               </p>
               <Button onClick={() => setSimOpen(true)} className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 font-black uppercase tracking-widest">
-                <Terminal className="w-4 h-4 mr-1" /> Abrir Simulador
+                <Terminal className="w-4 h-4 mr-1" /> {isEn ? GIT_GUIDE_EN.openSimulatorBtn : "Abrir Simulador"}
               </Button>
             </div>
 

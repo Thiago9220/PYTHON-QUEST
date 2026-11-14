@@ -1,4 +1,5 @@
 import React from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   concept: string;
@@ -105,6 +106,7 @@ export function ConceptExplanation({
   text,
   themeColor = "#38BDF8",
 }: Props) {
+  const { t } = useLanguage();
   const blocks = parseExplanation(text);
 
   return (
@@ -121,7 +123,7 @@ export function ConceptExplanation({
           className="h-1.5 w-1.5 rounded-full animate-pulse"
           style={{ backgroundColor: themeColor }}
         />
-        Conceito: {concept}
+        {t("conceptTab")}: {concept}
       </div>
 
       <div className="space-y-4 text-slate-300 text-[14.5px]">

@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { HYDRA_LISTAS_BOSS } from "../bosses/hydra_listas";
 
 export const NINHO_LISTAS_WORLD: World = {
   id: "ninho-listas",
@@ -9,6 +10,7 @@ export const NINHO_LISTAS_WORLD: World = {
   bgImage: "/assets/images/worlds/lists.png",
   lore: "O tráfego de dados no Core não viaja sozinho; ele flui em fluxos massivos e estruturados. No Ninho das Listas, você aprenderá a agrupar pacotes, fatiar buffers de memória e gerenciar coleções de informações para ataques em larga escala.",
   unlockRequirement: 0,
+  boss: HYDRA_LISTAS_BOSS,
   challenges: [
     {
       id: "li-01",

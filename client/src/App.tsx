@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { GameProvider, useGame } from "./contexts/GameContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import AuthPage from "./pages/AuthPage";
 import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
@@ -43,11 +44,12 @@ type View =
   | { name: "cybersec-simulator" };
 
 function ViewFallback() {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center gap-3 text-slate-300">
       <Loader2 className="size-7 animate-spin text-sky-400" />
       <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-400">
-        Carregando Módulo...
+        {t("loadingModule")}
       </span>
     </div>
   );
@@ -214,9 +216,11 @@ function AppContentWrapper() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark">
-      <AuthProvider>
-        <AppContentWrapper />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AppContentWrapper />
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

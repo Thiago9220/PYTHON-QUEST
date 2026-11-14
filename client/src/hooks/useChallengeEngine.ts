@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { initPython, validatePythonChallenge } from "@/lib/pythonEngine";
+import { getSavedLanguage } from "@/contexts/LanguageContext";
 import { soundManager } from "@/lib/sounds";
 import confetti from "canvas-confetti";
 import { Challenge } from "@/lib/types";
@@ -83,7 +84,7 @@ export function useChallengeEngine(
         await initPython();
         setState((prev) => ({ ...prev, pythonReady: true }));
       } catch {
-        toast.error("Erro ao inicializar o motor Python");
+        toast.error(getSavedLanguage() === "en" ? "Error initializing Python engine" : "Erro ao inicializar o motor Python");
       }
     }
     init();
@@ -137,10 +138,11 @@ export function useChallengeEngine(
         soundManager.playError();
       }
     } catch {
+      soundManager.playError();
       setState((prev) => ({
         ...prev,
         isRunning: false,
-        feedback: "Erro ao executar o codigo.",
+        feedback: getSavedLanguage() === "en" ? "Error executing code." : "Erro ao executar o codigo.",
       }));
     }
   }, [challenge, state.code, state.isRunning, state.wasAlreadyCompleted, state.hintsUsed, state.attempts, dispatch]);
@@ -198,7 +200,9 @@ export function useChallengeEngine(
       setState((prev) => ({
         ...prev,
         isCorrect: true,
-        feedback: "Incrível! Seu código funcionou perfeitamente. (DEV BYPASS)",
+        feedback: getSavedLanguage() === "en"
+        ? "Awesome! Your code worked perfectly. (DEV BYPASS)"
+        : "Incrível! Seu código funcionou perfeitamente. (DEV BYPASS)",
         output: challenge.expectedOutput || "Bypass Output",
       }));
       setTimeout(() => {

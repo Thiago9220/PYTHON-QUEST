@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, ChevronRight, Star, Clock, Zap } from "lucide-react";
 import { BossChallenge } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   boss: BossChallenge;
@@ -19,6 +20,7 @@ export function BossVictoryModal({
   hintsUsed,
   onClose,
 }: Props) {
+  const { t } = useLanguage();
   const [revealed, setRevealed] = useState(0);
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export function BossVictoryModal({
               className="text-[10px] font-black uppercase tracking-[0.35em] mb-3"
               style={{ color: themeColor }}
             >
-              // Boss Defeated
+              {t("bossDefeatedTag")}
             </div>
             <h2 className="text-5xl font-black text-white mb-1 tracking-tight leading-none">
               {boss.title}
@@ -112,7 +114,7 @@ export function BossVictoryModal({
                   <Zap className="w-4 h-4" style={{ color: themeColor }} />
                 </div>
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  XP Ganho
+                  {t("bossXpEarnedLabel")}
                 </div>
                 <div className="text-xl font-black" style={{ color: themeColor }}>
                   +{boss.xpReward.toLocaleString()}
@@ -123,7 +125,7 @@ export function BossVictoryModal({
                   <Clock className="w-4 h-4 text-amber-400" />
                 </div>
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  Tempo
+                  {t("bossTimeLabel")}
                 </div>
                 <div className="text-xl font-black text-white">
                   {minutes}m {seconds}s
@@ -134,7 +136,7 @@ export function BossVictoryModal({
                   <Star className="w-4 h-4 text-fuchsia-400" />
                 </div>
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  Hints
+                  {t("bossHintsLabel")}
                 </div>
                 <div className="text-xl font-black text-white">{hintsUsed}</div>
               </div>
@@ -148,7 +150,7 @@ export function BossVictoryModal({
                 className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black text-[10px] uppercase tracking-widest"
               >
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                Badge Bônus: BlackBox Speedrun
+                {t("bossSpeedrunBadge")}
               </motion.div>
             )}
 
@@ -157,7 +159,7 @@ export function BossVictoryModal({
               className="w-full h-12 text-white rounded-xl font-black uppercase tracking-widest text-[11px] shadow-lg"
               style={{ backgroundColor: themeColor }}
             >
-              Retornar ao Mundo <ChevronRight className="w-4 h-4 ml-2" />
+              {t("bossReturnWorldBtn")} <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </motion.div>

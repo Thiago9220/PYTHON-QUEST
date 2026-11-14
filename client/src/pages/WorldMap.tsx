@@ -1,12 +1,15 @@
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Star, Trophy, HelpCircle, Container, Database, Wifi, ShieldAlert } from "lucide-react";
+import { BookOpen, ChevronRight, GitBranch, Lock, LogOut, Settings, Star, Trophy, HelpCircle, Container, Database, Wifi, ShieldAlert } from "lucide-react";
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { WORLDS } from "@/lib/challenges";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedLevelTitle, getLocalizedWorld, getLocalizedWorldTag } from "@/lib/i18n/localize";
 import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
+import { SettingsModal } from "@/components/SettingsModal";
 import TutorialTour, { TourStep } from "@/components/TutorialTour";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -62,10 +65,13 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
     hasHydrated,
   } = useGame();
   const { user, logout } = useAuth();
+  const { t, lang } = useLanguage();
   const { level, title, progress } = getPlayerLevel();
+  const localizedTitle = getLocalizedLevelTitle(title, lang);
   const unlockedAchievements = state.achievements.filter((a) => a.unlocked);
   const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
@@ -74,38 +80,71 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
     }
   }, [hasHydrated, state.hasSeenTutorial]);
 
-  const TOUR_STEPS: TourStep[] = [
-    {
-      targetId: "tutorial-intro",
-      title: "Protocolo Python",
-      content: "Bem-vindo ao sistema. Aqui você não apenas aprende Python, mas domina as ferramentas que sustentam a internet moderna.",
-    },
-    {
-      targetId: "tutorial-worlds",
-      title: "Núcleos Python",
-      content: "Explore as ilhas para aprender lógica, loops e funções. Cada node invadido libera novos conhecimentos.",
-    },
-    {
-      targetId: "tutorial-ds",
-      title: "Ciência de Dados",
-      content: "Desbloqueie os módulos de Ciência de Dados e Machine Learning (IA) ao acumular XP e subir seu Nível de Acesso.",
-    },
-    {
-      targetId: "tutorial-simulators",
-      title: "Módulos Táticos",
-      content: "O diferencial: Simuladores reais de Git, Docker e Redes. Pratique comandos reais sem instalar nada.",
-    },
-    {
-      targetId: "tutorial-codex",
-      title: "Banco de Dados",
-      content: "O Codex contém toda a documentação técnica necessária para suas missões. Consulte sempre que precisar.",
-    },
-    {
-      targetId: "tutorial-profile",
-      title: "Nível de Acesso",
-      content: "Ganhe XP e conquistas para subir seu nível de Operador e desbloquear novos setores.",
-    },
-  ];
+  const TOUR_STEPS: TourStep[] = lang === "en"
+    ? [
+        {
+          targetId: "tutorial-intro",
+          title: "Python Protocol",
+          content: "Welcome to the system. Here you don't just learn Python — you master the tools powering the modern internet.",
+        },
+        {
+          targetId: "tutorial-worlds",
+          title: "Python Cores",
+          content: "Explore each sector to master logic, loops, and functions. Every breached node unlocks deeper knowledge.",
+        },
+        {
+          targetId: "tutorial-ds",
+          title: "Data Science",
+          content: "Unlock Data Science and Machine Learning (AI) modules as you gain XP and raise your Access Level.",
+        },
+        {
+          targetId: "tutorial-simulators",
+          title: "Tactical Modules",
+          content: "The edge: live interactive simulators for Git, Docker, Networking, and CyberSec — zero setup required.",
+        },
+        {
+          targetId: "tutorial-codex",
+          title: "Knowledge Base",
+          content: "The Codex holds all the technical reference you need for your missions. Consult it anytime.",
+        },
+        {
+          targetId: "tutorial-profile",
+          title: "Access Level",
+          content: "Earn XP and achievements to rank up as an Operator and unlock new sectors.",
+        },
+      ]
+    : [
+        {
+          targetId: "tutorial-intro",
+          title: "Protocolo Python",
+          content: "Bem-vindo ao sistema. Aqui você não apenas aprende Python, mas domina as ferramentas que sustentam a internet moderna.",
+        },
+        {
+          targetId: "tutorial-worlds",
+          title: "Núcleos Python",
+          content: "Explore as ilhas para aprender lógica, loops e funções. Cada node invadido libera novos conhecimentos.",
+        },
+        {
+          targetId: "tutorial-ds",
+          title: "Ciência de Dados",
+          content: "Desbloqueie os módulos de Ciência de Dados e Machine Learning (IA) ao acumular XP e subir seu Nível de Acesso.",
+        },
+        {
+          targetId: "tutorial-simulators",
+          title: "Módulos Táticos",
+          content: "O diferencial: Simuladores reais de Git, Docker e Redes. Pratique comandos reais sem instalar nada.",
+        },
+        {
+          targetId: "tutorial-codex",
+          title: "Banco de Dados",
+          content: "O Codex contém toda a documentação técnica necessária para suas missões. Consulte sempre que precisar.",
+        },
+        {
+          targetId: "tutorial-profile",
+          title: "Nível de Acesso",
+          content: "Ganhe XP e conquistas para subir seu nível de Operador e desbloquear novos setores.",
+        },
+      ];
 
   const handleFinishTour = () => {
     setShowTour(false);
@@ -114,9 +153,9 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
   const showLockedToast = (xpRequired: number) => {
     toast.custom(
-      (t) => (
+      (toastId) => (
         <div
-          onClick={() => toast.dismiss(t)}
+          onClick={() => toast.dismiss(toastId)}
           className="flex min-w-[320px] cursor-pointer items-start gap-3 rounded-xl border border-rose-400/40 bg-slate-950/95 px-4 py-3 shadow-[0_0_30px_rgba(244,63,94,0.2)] backdrop-blur-xl"
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-400/30 bg-rose-400/10">
@@ -124,11 +163,17 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
           </div>
           <div className="flex-1 leading-tight">
             <div className="text-[10px] font-black uppercase tracking-[0.25em] text-rose-400 mb-1">
-              // Acesso Negado
+              {lang === "en" ? "// Access Denied" : "// Acesso Negado"}
             </div>
-            <div className="text-sm font-black text-white mb-0.5">Setor Bloqueado</div>
+            <div className="text-sm font-black text-white mb-0.5">
+              {lang === "en" ? "Sector Locked" : "Setor Bloqueado"}
+            </div>
             <div className="text-[11px] font-mono text-slate-400">
-              Requer <span className="text-rose-300 font-bold">{xpRequired.toLocaleString()} XP</span> para invadir este núcleo.
+              {lang === "en" ? (
+                <>Requires <span className="text-rose-300 font-bold">{xpRequired.toLocaleString()} XP</span> to breach this core.</>
+              ) : (
+                <>Requer <span className="text-rose-300 font-bold">{xpRequired.toLocaleString()} XP</span> para invadir este núcleo.</>
+              )}
             </div>
           </div>
         </div>
@@ -142,19 +187,19 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
       {/* Cinematic Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Subtle Sharp Background Image Layer */}
-        <div 
+        <div
           className="absolute inset-0 z-0 bg-cover bg-center opacity-[0.15] blur-[4px]"
           style={{ backgroundImage: 'url("/assets/images/map_bg.png")' }}
         />
-        
+
         <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(14,165,233,0.1),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(16,185,129,0.08),transparent_50%)]" />
-        
-        <motion.div 
+
+        <motion.div
           animate={{ opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 8, repeat: Infinity }}
-          className="absolute -left-[10%] top-0 h-[500px] w-[500px] rounded-full bg-sky-500/10 blur-[120px] z-10" 
+          className="absolute -left-[10%] top-0 h-[500px] w-[500px] rounded-full bg-sky-500/10 blur-[120px] z-10"
         />
-        
+
         <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px] z-20" />
       </div>
 
@@ -177,12 +222,15 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
           <div className="flex items-center gap-3 md:gap-4">
             <div className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-xl p-1 shadow-sm mr-2 backdrop-blur-md">
-              <Button variant="ghost" size="icon" onClick={() => setShowTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title="Tutorial">
+              <Button variant="ghost" size="icon" onClick={() => setShowTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title={lang === "en" ? "Tutorial" : "Tutorial"}>
                 <HelpCircle className="w-4 h-4" />
               </Button>
               <VolumeControl isMuted={state.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-              <Button id="tutorial-codex" variant="ghost" size="icon" onClick={() => setIsCodexOpen(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title="Guia Python">
+              <Button id="tutorial-codex" variant="ghost" size="icon" onClick={() => setIsCodexOpen(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10" title={lang === "en" ? "Python Guide" : "Guia Python"}>
                 <BookOpen className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="h-8 w-8 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10" title={t("settingsTooltip")}>
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
 
@@ -201,7 +249,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 size="icon"
                 onClick={onOpenGitSimulator}
                 className="h-9 w-9 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-                title="Aprender Git & GitHub"
+                title={lang === "en" ? "Learn Git & GitHub" : "Aprender Git & GitHub"}
               >
                 <GitBranch className="w-4 h-4" />
               </Button>
@@ -212,7 +260,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 size="icon"
                 onClick={onOpenDockerSimulator}
                 className="h-9 w-9 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-                title="Aprender Docker"
+                title={lang === "en" ? "Learn Docker" : "Aprender Docker"}
               >
                 <Container className="w-4 h-4" />
               </Button>
@@ -223,7 +271,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 size="icon"
                 onClick={onOpenNetworkSimulator}
                 className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-                title="Aprender Redes"
+                title={lang === "en" ? "Learn Networking" : "Aprender Redes"}
               >
                 <Wifi className="w-4 h-4" />
               </Button>
@@ -234,7 +282,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 size="icon"
                 onClick={onOpenCyberSecSimulator}
                 className="h-9 w-9 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-                title="Aprender CyberSegurança"
+                title={lang === "en" ? "Learn CyberSecurity" : "Aprender CyberSegurança"}
               >
                 <ShieldAlert className="w-4 h-4" />
               </Button>
@@ -245,7 +293,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               size="icon"
               asChild
               className="h-9 w-9 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-              title="Aprender SQL (Query Quest)"
+              title={lang === "en" ? "Learn SQL (Query Quest)" : "Aprender SQL (Query Quest)"}
             >
               <a href="https://queryquest.com.br/" target="_blank" rel="noopener noreferrer">
                 <Database className="w-4 h-4" />
@@ -261,7 +309,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
             >
               <div className="text-right hidden md:flex flex-col justify-center">
                 <div className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">
-                  {title}
+                  {localizedTitle}
                 </div>
                 <div className="flex items-center justify-end gap-3">
                   <span className="text-[12px] font-black text-white tracking-tighter">
@@ -292,19 +340,20 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-[10px] font-black uppercase tracking-widest text-sky-400 mb-6 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-              Protocolo Principal
+              {t("mainProtocol")}
             </div>
             <h1 id="tutorial-intro" className="text-2xl md:text-3xl font-black text-white mb-1 leading-tight tracking-tight">
-              Acesso Autorizado, <span className="bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">{state.playerName || "Operador"}</span>.
+              {t("accessGranted")} <span className="bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">{state.playerName || t("operator")}</span>.
             </h1>
             <p className="text-slate-400 text-xs md:text-sm font-mono uppercase tracking-[0.2em] opacity-80">
-              Sua jornada como Operador continua: <span className="text-white font-bold">{getCompletedCount()}</span> de {getTotalChallenges()} Sistemas Comprometidos.
+              {t("journeyStatusPrefix")} <span className="text-white font-bold">{getCompletedCount()}</span> {t("of")} {getTotalChallenges()} {t("systemsCompromised")}
             </p>
           </div>
         </div>
 
         <div id="tutorial-worlds" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {WORLDS.filter((w) => !DS_WORLD_IDS.has(w.id)).map((world, idx) => {
+          {WORLDS.filter((w) => !DS_WORLD_IDS.has(w.id)).map((rawWorld, idx) => {
+            const world = getLocalizedWorld(rawWorld, lang);
             const unlocked = isWorldUnlocked(world.id);
             const total = world.challenges.length;
             const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
@@ -325,12 +374,11 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                     showLockedToast(world.unlockRequirement);
                   }
                 }}
-                className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${
-                  unlocked 
-                    ? "glass-dark hover:-translate-y-2 cursor-pointer" 
+                className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${unlocked
+                    ? "glass-dark hover:-translate-y-2 cursor-pointer"
                     : "border-white/5 opacity-50 hover:border-white/20 cursor-pointer bg-slate-900/50"
-                }`}
-                style={{ 
+                  }`}
+                style={{
                   borderColor: unlocked ? `${themeColor}40` : undefined,
                   boxShadow: unlocked ? `0 10px 30px -10px ${themeColor}20` : undefined
                 }}
@@ -338,27 +386,27 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 <div className="h-48 relative overflow-hidden">
                   {/* World Background Image */}
                   {world.bgImage ? (
-                    <img 
-                      src={world.bgImage} 
-                      alt={world.title} 
+                    <img
+                      src={world.bgImage}
+                      alt={world.title}
                       className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-slate-900" />
                   )}
-                  
+
                   {/* Glowing overlay */}
-                  <div 
+                  <div
                     className="absolute inset-0 opacity-40 mix-blend-overlay"
                     style={{ backgroundImage: `radial-gradient(circle at 50% 120%, ${themeColor}, transparent 70%)` }}
                   />
                   {/* Holographic Overlays */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 mix-blend-overlay" style={{ backgroundImage: `linear-gradient(to top right, transparent, ${themeColor})` }} />
-                  
+
                   <div className="absolute top-5 left-5 inline-flex items-center gap-2 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 shadow-sm">
                     <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
-                      {WORLD_TAGS[world.id] || "Python"}
+                      {getLocalizedWorldTag(world.id, WORLD_TAGS[world.id] || "Python", lang)}
                     </span>
                   </div>
 
@@ -367,7 +415,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                       <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
                         <Lock className="w-6 h-6 text-slate-400" />
                       </div>
-                      <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} XP REQUERIDO</span>
+                      <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} {t("xpRequired")}</span>
                     </div>
                   )}
 
@@ -380,7 +428,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                       {completedAll && (
                         <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 text-[8px] font-black uppercase tracking-widest text-emerald-300">
                           <Star className="h-3 w-3 fill-emerald-300" />
-                          Mestre
+                          {t("masterBadge")}
                         </span>
                       )}
                     </div>
@@ -393,15 +441,15 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
                   <div className="space-y-3 pt-4">
                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      <span>Progresso</span>
+                      <span>{t("progressLabel")}</span>
                       <span className="text-white">{completed}/{total} - {worldProgress}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${worldProgress}%` }}
                         transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]" 
+                        className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                         style={{ backgroundColor: themeColor }}
                       />
                     </div>
@@ -409,20 +457,20 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
                   <div className="pt-4">
                     {unlocked ? (
-                      <Button 
+                      <Button
                         className="w-full h-12 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all border group-hover:-translate-y-0.5"
-                        style={{ 
+                        style={{
                           backgroundColor: `${themeColor}20`,
                           borderColor: `${themeColor}40`,
                           color: themeColor
                         }}
                       >
-                        {completed === 0 ? "Iniciar Desafio" : completedAll ? "Revisitar" : "Continuar Jornada"}
+                        {completed === 0 ? t("startChallenge") : completedAll ? t("revisit") : t("continueJourney")}
                         <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     ) : (
                       <div className="text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] border-2 border-dashed border-white/10 rounded-xl h-12 flex items-center justify-center bg-white/5">
-                        <Lock className="w-3 h-3 mr-2" /> Selado
+                        <Lock className="w-3 h-3 mr-2" /> {t("sealed")}
                       </div>
                     )}
                   </div>
@@ -438,19 +486,20 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-[10px] font-black uppercase tracking-widest text-fuchsia-400 mb-6 backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse" />
-                Protocolo Avançado
+                {t("advancedProtocol")}
               </div>
               <h2 className="text-2xl md:text-3xl font-black text-white mb-1 leading-tight tracking-tight">
-                Ciência de Dados <span className="bg-gradient-to-r from-fuchsia-400 to-amber-400 bg-clip-text text-transparent">&amp; Machine Learning</span>
+                {t("dsTitle")} <span className="bg-gradient-to-r from-fuchsia-400 to-amber-400 bg-clip-text text-transparent">{t("dsTitleHighlight")}</span>
               </h2>
               <p className="text-slate-400 text-xs md:text-sm font-mono uppercase tracking-[0.2em] opacity-80">
-                Domine análise de dados, ML e Deep Learning. <span className="text-white font-bold">Acesso liberado por XP.</span>
+                {t("dsSubtitle")} <span className="text-white font-bold">{t("dsUnlockedByXp")}</span>
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WORLDS.filter((w) => DS_WORLD_IDS.has(w.id)).map((world, idx) => {
+            {WORLDS.filter((w) => DS_WORLD_IDS.has(w.id)).map((rawWorld, idx) => {
+              const world = getLocalizedWorld(rawWorld, lang);
               const unlocked = isWorldUnlocked(world.id);
               const total = world.challenges.length;
               const completed = world.challenges.filter((c) => isChallengeCompleted(c.id)).length;
@@ -471,11 +520,10 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                       showLockedToast(world.unlockRequirement);
                     }
                   }}
-                  className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${
-                    unlocked
+                  className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 ${unlocked
                       ? "glass-dark hover:-translate-y-2 cursor-pointer"
                       : "border-white/5 opacity-50 hover:border-white/20 cursor-pointer bg-slate-900/50"
-                  }`}
+                    }`}
                   style={{
                     borderColor: unlocked ? `${themeColor}40` : undefined,
                     boxShadow: unlocked ? `0 10px 30px -10px ${themeColor}20` : undefined,
@@ -501,7 +549,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                     <div className="absolute top-5 left-5 inline-flex items-center gap-2 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 shadow-sm">
                       <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
-                        {WORLD_TAGS[world.id] || "Python"}
+                        {getLocalizedWorldTag(world.id, WORLD_TAGS[world.id] || "Python", lang)}
                       </span>
                     </div>
 
@@ -510,7 +558,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                         <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
                           <Lock className="w-6 h-6 text-slate-400" />
                         </div>
-                        <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} XP REQUERIDO</span>
+                        <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} {t("xpRequired")}</span>
                       </div>
                     )}
 
@@ -523,7 +571,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                         {completedAll && (
                           <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 text-[8px] font-black uppercase tracking-widest text-emerald-300">
                             <Star className="h-3 w-3 fill-emerald-300" />
-                            Mestre
+                            {t("masterBadge")}
                           </span>
                         )}
                       </div>
@@ -536,7 +584,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
                     <div className="space-y-3 pt-4">
                       <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
-                        <span>Progresso</span>
+                        <span>{t("progressLabel")}</span>
                         <span className="text-white">{completed}/{total} - {worldProgress}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -560,12 +608,12 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                             color: themeColor,
                           }}
                         >
-                          {completed === 0 ? "Iniciar Desafio" : completedAll ? "Revisitar" : "Continuar Jornada"}
+                          {completed === 0 ? t("startChallenge") : completedAll ? t("revisit") : t("continueJourney")}
                           <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       ) : (
                         <div className="text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] border-2 border-dashed border-white/10 rounded-xl h-12 flex items-center justify-center bg-white/5">
-                          <Lock className="w-3 h-3 mr-2" /> Selado
+                          <Lock className="w-3 h-3 mr-2" /> {t("sealed")}
                         </div>
                       )}
                     </div>
@@ -579,6 +627,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
 
       <Codex isOpen={isCodexOpen} onClose={() => setIsCodexOpen(false)} />
       <AchievementsModal isOpen={isAchievementsOpen} onClose={() => setIsAchievementsOpen(false)} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <TutorialTour steps={TOUR_STEPS} isOpen={showTour} onClose={handleFinishTour} />
     </div>
   );

@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { TITAN_OOP_BOSS } from "../bosses/titan_oop";
 
 export const FORTALEZA_OOP_WORLD: World = {
   id: "fortaleza-oop",
@@ -9,6 +10,7 @@ export const FORTALEZA_OOP_WORLD: World = {
   bgImage: "/assets/images/worlds/oop.png",
   lore: "A Fortaleza dos Objetos protege a estrutura central. Aqui, códigos isolados não sobrevivem; você deve construir Classes e Objetos — entidades autossuficientes com suas próprias memórias e habilidades para invadir a fortaleza.",
   unlockRequirement: 0,
+  boss: TITAN_OOP_BOSS,
   challenges: [
     {
       id: "py-oop-01",

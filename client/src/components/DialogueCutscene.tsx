@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   npc: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function DialogueCutscene({ npc, text, onComplete, avatar = "PY", themeColor = "#0ea5e9" }: Props) {
+  const { t } = useLanguage();
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [imgError, setImgError] = useState(false);
@@ -103,7 +105,7 @@ export function DialogueCutscene({ npc, text, onComplete, avatar = "PY", themeCo
                 className="inline-block rounded-full px-2.5 py-0.5 text-[7px] font-black uppercase tracking-[0.2em] text-white"
                 style={{ backgroundColor: `${themeColor}33` }} // 20% opacity hex
               >
-                Transmissão
+                {t("cutsceneTransmission")}
               </div>
               <div className="mt-2 text-base font-black text-white leading-tight">{npc}</div>
             </div>
@@ -137,7 +139,7 @@ export function DialogueCutscene({ npc, text, onComplete, avatar = "PY", themeCo
                 onClick={handleNext}
                 className="group h-7 rounded-lg bg-white/10 px-3 text-[9px] font-black uppercase tracking-widest text-slate-300 border border-white/10 transition-all hover:bg-white hover:text-slate-900"
               >
-                {isTyping ? "Pular" : "Continuar"}
+                {isTyping ? t("cutsceneSkip") : t("cutsceneContinue")}
                 <ChevronRight size={12} className="ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>

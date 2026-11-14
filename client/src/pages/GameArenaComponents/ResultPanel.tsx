@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Terminal, Maximize2, Minimize2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   isExpanded: boolean;
@@ -31,6 +32,7 @@ export function ResultPanel({
   hasNextChallenge,
   wasAlreadyCompleted = false,
 }: Props) {
+  const { t } = useLanguage();
   const showNextButton = isCorrect || wasAlreadyCompleted;
 
   return (
@@ -38,12 +40,12 @@ export function ResultPanel({
       <div className="flex items-center justify-between px-4 py-3 bg-slate-950 text-sky-100 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Terminal size={14} className="text-sky-400" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Console Terminal</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t("consoleTerminal")}</span>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-slate-500 hover:text-white transition-colors"
-          title={isExpanded ? "Reduzir console" : "Expandir console"}
+          title={isExpanded ? "Minimize" : "Maximize"}
         >
           {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </button>
@@ -53,7 +55,7 @@ export function ResultPanel({
         {output ? (
           <pre className="whitespace-pre-wrap leading-relaxed">{output}</pre>
         ) : (
-          <div className="text-slate-600 italic animate-pulse">Aguardando execução dos rituais...</div>
+          <div className="text-slate-600 italic animate-pulse">{t("waitingExecutionOutput")}</div>
         )}
       </div>
 
@@ -70,7 +72,7 @@ export function ResultPanel({
           >
             <div className="flex items-center gap-2 mb-1.5 font-black text-xs uppercase tracking-wider">
               {isCorrect ? <CheckCircle2 size={16} className="animate-bounce" /> : <XCircle size={16} />}
-              <span>{isCorrect ? "Acesso Root Concedido" : "Erro na Frequência"}</span>
+              <span>{isCorrect ? t("systemIntactSuccess") : t("compilationFailed")}</span>
             </div>
             <p className="text-xs font-medium leading-relaxed opacity-90">{feedback}</p>
           </motion.div>
@@ -78,15 +80,15 @@ export function ResultPanel({
 
         <div className="grid grid-cols-3 gap-2 text-center mb-4">
           <div className="rounded-xl bg-white/5 border border-white/5 p-2.5 transition-colors hover:bg-white/10">
-            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">TENTATIVAS</div>
+            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("attemptsCount")}</div>
             <div className="text-sm font-black text-white">{attempts}</div>
           </div>
           <div className="rounded-xl bg-white/5 border border-white/5 p-2.5 transition-colors hover:bg-white/10">
-            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">DICAS</div>
+            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("hintsCount")}</div>
             <div className="text-sm font-black text-amber-400">{hintsUsed}</div>
           </div>
           <div className="rounded-xl bg-white/5 border border-white/5 p-2.5 transition-colors hover:bg-white/10">
-            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">RECOMPENSA</div>
+            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("rewardCount")}</div>
             <div className="text-sm font-black text-emerald-400">{xpEarned} XP</div>
           </div>
         </div>
@@ -96,7 +98,7 @@ export function ResultPanel({
             onClick={hasNextChallenge ? onNext : onBack} 
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95 animate-pulse"
           >
-            {hasNextChallenge ? "PRÓXIMO MÓDULO" : "VOLTAR AO TERMINAL"}
+            {hasNextChallenge ? t("nextModuleBtn") : t("backToListBtn")}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}

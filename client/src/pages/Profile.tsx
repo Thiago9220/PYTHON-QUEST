@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGame } from "@/contexts/GameContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedLevelTitle, getLocalizedTitleReward } from "@/lib/i18n/localize";
 
 type Props = {
   onBack: () => void;
@@ -48,7 +50,10 @@ const PREDEFINED_AVATARS = [
 export default function Profile({ onBack }: Props) {
   const { state, dispatch, getPlayerLevel, getCompletedCount, getTotalChallenges } = useGame();
   const { user, logout, updateProfile } = useAuth();
-  const { level, title, progress, nextLevelXP, isMaxLevel } = getPlayerLevel();
+  const { lang, t } = useLanguage();
+  const { level, title: rawTitle, progress, nextLevelXP, isMaxLevel } = getPlayerLevel();
+  const title = getLocalizedLevelTitle(rawTitle, lang);
+  const localizedEquippedTitle = getLocalizedTitleReward(state.equippedTitle, lang);
 
   const completedCount = getCompletedCount();
   const totalCount = getTotalChallenges();
@@ -56,7 +61,7 @@ export default function Profile({ onBack }: Props) {
   const completionPercent = totalCount > 0 ? completedCount / totalCount : 0;
   const isCertificateReady = completionPercent >= 0.8;
   const challengesLeft = Math.max(totalCount - completedCount, 0);
-  const displayTitle = state.equippedTitle ? `${title} :: ${state.equippedTitle}` : title;
+  const displayTitle = localizedEquippedTitle ? `${title} :: ${localizedEquippedTitle}` : title;
 
   const [showAchievements, setShowAchievements] = useState(false);
   const [showCodex, setShowCodex] = useState(false);
@@ -85,7 +90,7 @@ export default function Profile({ onBack }: Props) {
   const handleSaveProfile = async () => {
     const nextName = displayName.trim();
     if (nextName.length < 2) {
-      toast.error("Use pelo menos 2 caracteres no nome.");
+      toast.error(t("profNameTooShort"));
       return;
     }
     dispatch({ type: "SET_PLAYER_NAME", name: nextName });
@@ -94,12 +99,12 @@ export default function Profile({ onBack }: Props) {
       avatarUrl: avatarUrl.trim() || null,
     });
     setShowEditProfile(false);
-    toast.success("Perfil atualizado.");
+    toast.success(t("profUpdated"));
   };
 
   const handleOpenCertificate = () => {
     if (!isCertificateReady) {
-      toast.error("Conclua pelo menos 80% dos desafios para liberar o certificado.");
+      toast.error(t("profCertRequirementError"));
       return;
     }
     if (savedCertName) {
@@ -113,7 +118,7 @@ export default function Profile({ onBack }: Props) {
   const handleConfirmCertificateName = () => {
     const nextName = fullName.trim();
     if (nextName.length < 4) {
-      toast.error("Informe seu nome completo.");
+      toast.error(t("profCertFullNameError"));
       return;
     }
     if (certNameStorageKey) localStorage.setItem(certNameStorageKey, nextName);
@@ -127,7 +132,7 @@ export default function Profile({ onBack }: Props) {
       key: "missions",
       label: "MISSIONS_CLEARED",
       value: `${completedCount.toString().padStart(3, "0")} / ${totalCount.toString().padStart(3, "0")}`,
-      helper: challengesLeft > 0 ? `${challengesLeft} pendentes` : "trilha concluida",
+      helper: challengesLeft > 0 ? `${challengesLeft} ${t("profPending")}` : t("profTrackDone"),
       icon: Target,
       tone: "text-cyan-400",
       bar: completionPercent * 100,
@@ -136,7 +141,7 @@ export default function Profile({ onBack }: Props) {
       key: "trophies",
       label: "TROPHY_PROTOCOL",
       value: `${unlockedAchievements.length.toString().padStart(2, "0")} / ${state.achievements.length.toString().padStart(2, "0")}`,
-      helper: "selos desbloqueados",
+      helper: t("profBadgesUnlocked"),
       icon: Trophy,
       tone: "text-amber-400",
       bar: state.achievements.length > 0 ? (unlockedAchievements.length / state.achievements.length) * 100 : 0,
@@ -145,7 +150,7 @@ export default function Profile({ onBack }: Props) {
       key: "streak",
       label: "STREAK_DAYS",
       value: state.streak.toString().padStart(2, "0"),
-      helper: "dias consecutivos",
+      helper: t("profConsecutiveDays"),
       icon: Flame,
       tone: "text-orange-400",
       bar: Math.min(100, state.streak * 10),
@@ -156,8 +161,8 @@ export default function Profile({ onBack }: Props) {
   const telemetry = [
     { label: "XP.TOTAL", value: state.totalXP.toLocaleString(), unit: "pts", tone: "text-cyan-300" },
     { label: "RANK.CURRENT", value: `R-${level.toString().padStart(2, "0")}`, unit: title, tone: "text-emerald-300" },
-    { label: "TITLE.ACTIVE", value: state.equippedTitle || "—", unit: "equip", tone: "text-amber-300" },
-    { label: "SESSION.LAST", value: state.lastPlayedAt ? new Date(state.lastPlayedAt).toLocaleDateString("pt-BR") : "—", unit: "log", tone: "text-fuchsia-300" },
+    { label: "TITLE.ACTIVE", value: localizedEquippedTitle || "—", unit: "equip", tone: "text-amber-300" },
+    { label: "SESSION.LAST", value: state.lastPlayedAt ? new Date(state.lastPlayedAt).toLocaleDateString(lang === "en" ? "en-US" : "pt-BR") : "—", unit: "log", tone: "text-fuchsia-300" },
   ];
 
   return (
@@ -203,7 +208,7 @@ export default function Profile({ onBack }: Props) {
               size="icon"
               onClick={() => setShowCodex(true)}
               className="text-cyan-400 hover:text-cyan-200 hover:bg-cyan-500/10"
-              title="Códice"
+              title={t("codexTooltip")}
             >
               <BookOpen className="h-5 w-5" />
             </Button>
@@ -214,7 +219,7 @@ export default function Profile({ onBack }: Props) {
               className="text-rose-300/80 hover:text-rose-200 hover:bg-rose-500/10 font-mono text-xs uppercase tracking-widest"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              logout
+              {t("profLogout")}
             </Button>
           </div>
         </div>
@@ -318,9 +323,9 @@ export default function Profile({ onBack }: Props) {
 
                 <pre className="mt-4 text-[11px] leading-relaxed text-slate-400 max-w-2xl whitespace-pre-wrap">
 {`# brief
-  alvo:   conclusao do protocolo central
-  pendente: ${challengesLeft} missoes restantes
-  link:   uplink @ supabase//sync_ok`}
+  target:   ${t("profBriefTarget")}
+  pending:  ${challengesLeft} ${t("profBriefPendingSuffix")}
+  link:     uplink @ supabase//sync_ok`}
                 </pre>
               </div>
 
@@ -361,14 +366,14 @@ export default function Profile({ onBack }: Props) {
                   className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 border border-cyan-400/50 rounded-none font-mono text-xs uppercase tracking-widest shadow-[0_0_18px_rgba(34,211,238,0.15)]"
                 >
                   <Trophy className="mr-2 h-4 w-4" />
-                  ./open conquistas
+                  {t("profOpenAchievements")}
                 </Button>
                 <Button
                   onClick={() => setShowCodex(true)}
                   className="bg-transparent hover:bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-400/40 rounded-none font-mono text-xs uppercase tracking-widest"
                 >
                   <BookOpen className="mr-2 h-4 w-4" />
-                  ./read codex
+                  {t("profReadCodex")}
                 </Button>
               </div>
             </div>
@@ -434,10 +439,10 @@ export default function Profile({ onBack }: Props) {
                   <Award className="h-7 w-7" />
                 </div>
                 <div className="max-w-xl">
-                  <h3 className="text-lg text-white font-bold tracking-tight">Certificado de Acesso Root</h3>
+                  <h3 className="text-lg text-white font-bold tracking-tight">{t("profCertTitle")}</h3>
                   <pre className="mt-2 text-[11px] text-slate-400 leading-relaxed whitespace-pre-wrap">
-{`# requisito
-  >= 80% das missoes concluidas
+{`${t("profCertReqHeader")}
+  ${t("profCertReqLine")}
 # status
   ${Math.round(completionPercent * 100)}% / 80%`}
                   </pre>
@@ -449,7 +454,7 @@ export default function Profile({ onBack }: Props) {
                 disabled={!isCertificateReady}
                 className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 disabled:border-slate-700 disabled:text-slate-600 disabled:bg-transparent rounded-none font-mono text-xs uppercase tracking-widest h-11"
               >
-                {isCertificateReady ? "./claim seal" : "[locked]"}
+                {isCertificateReady ? t("profCertClaim") : t("profCertLocked")}
               </Button>
             </div>
 
@@ -483,12 +488,12 @@ export default function Profile({ onBack }: Props) {
             </div>
 
             <div className="p-5 space-y-3">
-              {telemetry.map((t) => (
-                <div key={t.label} className="flex items-baseline justify-between gap-3 border-b border-fuchsia-500/10 last:border-0 pb-2 last:pb-0">
-                  <span className="text-[10px] tracking-[0.25em] text-slate-500 whitespace-nowrap">{t.label}</span>
+              {telemetry.map((item) => (
+                <div key={item.label} className="flex items-baseline justify-between gap-3 border-b border-fuchsia-500/10 last:border-0 pb-2 last:pb-0">
+                  <span className="text-[10px] tracking-[0.25em] text-slate-500 whitespace-nowrap">{item.label}</span>
                   <div className="text-right min-w-0">
-                    <div className={`text-sm font-bold truncate ${t.tone}`}>{t.value}</div>
-                    <div className="text-[9px] uppercase tracking-widest text-slate-600">{t.unit}</div>
+                    <div className={`text-sm font-bold truncate ${item.tone}`}>{item.value}</div>
+                    <div className="text-[9px] uppercase tracking-widest text-slate-600">{item.unit}</div>
                   </div>
                 </div>
               ))}
@@ -521,7 +526,7 @@ export default function Profile({ onBack }: Props) {
             <span className="absolute -bottom-px -right-px w-3 h-3 border-b-2 border-r-2 border-cyan-400" />
 
             <div className="border-b border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-2 flex items-center justify-between">
-              <span className="text-[10px] tracking-[0.3em] text-cyan-300">// reforjar_perfil.exe</span>
+              <span className="text-[10px] tracking-[0.3em] text-cyan-300">{t("profEditTitle")}</span>
               <button onClick={() => setShowEditProfile(false)} className="text-slate-400 hover:text-cyan-300">
                 <X className="h-4 w-4" />
               </button>
@@ -529,7 +534,7 @@ export default function Profile({ onBack }: Props) {
 
             <div className="p-6 space-y-5">
               <div>
-                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">CODINOME</label>
+                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">{t("profCodename")}</label>
                 <Input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -538,7 +543,7 @@ export default function Profile({ onBack }: Props) {
                 />
               </div>
               <div>
-                <label className="mb-2 block text-[10px] tracking-[0.25em] text-cyan-400/80">SELECIONAR AVATAR</label>
+                <label className="mb-2 block text-[10px] tracking-[0.25em] text-cyan-400/80">{t("profSelectAvatar")}</label>
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   {PREDEFINED_AVATARS.map((url) => (
                     <button
@@ -554,7 +559,7 @@ export default function Profile({ onBack }: Props) {
                     </button>
                   ))}
                 </div>
-                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">OU URL CUSTOMIZADA</label>
+                <label className="mb-1.5 block text-[10px] tracking-[0.25em] text-cyan-400/80">{t("profCustomUrl")}</label>
                 <Input
                   value={avatarUrl}
                   onChange={(e) => setAvatarUrl(e.target.value)}
@@ -570,13 +575,13 @@ export default function Profile({ onBack }: Props) {
                 onClick={() => setShowEditProfile(false)}
                 className="flex-1 text-slate-400 hover:text-white hover:bg-white/5 rounded-none font-mono text-xs uppercase tracking-widest"
               >
-                cancel
+                {t("cancel")}
               </Button>
               <Button
                 onClick={handleSaveProfile}
                 className="flex-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 border border-cyan-400/50 rounded-none font-mono text-xs uppercase tracking-widest"
               >
-                ./save
+                {t("profSave")}
               </Button>
             </div>
           </motion.div>
@@ -603,17 +608,17 @@ export default function Profile({ onBack }: Props) {
             <span className="absolute -bottom-px -right-px w-3 h-3 border-b-2 border-r-2 border-emerald-400" />
 
             <div className="border-b border-emerald-500/20 bg-emerald-500/[0.04] px-4 py-2 text-[10px] tracking-[0.3em] text-emerald-300">
-              // selar_certificado.bin
+              {t("profCertModalHeader")}
             </div>
             <div className="p-6">
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Informe seu nome completo para selar o certificado.
+                {t("profCertInputPrompt")}
               </p>
               <Input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="mt-4 bg-black/40 border-emerald-500/30 text-emerald-100 h-12 text-center rounded-none font-mono focus:border-emerald-300"
-                placeholder="nome.completo"
+                placeholder={t("profCertPlaceholder")}
               />
             </div>
             <div className="border-t border-emerald-500/20 p-4 flex gap-3">
@@ -622,13 +627,13 @@ export default function Profile({ onBack }: Props) {
                 onClick={() => setShowNameInput(false)}
                 className="flex-1 text-slate-400 hover:text-white hover:bg-white/5 rounded-none font-mono text-xs uppercase tracking-widest"
               >
-                voltar
+                {t("profBack")}
               </Button>
               <Button
                 onClick={handleConfirmCertificateName}
                 className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 rounded-none font-mono text-xs uppercase tracking-widest"
               >
-                ./confirm
+                {t("profConfirm")}
               </Button>
             </div>
           </motion.div>
@@ -638,7 +643,7 @@ export default function Profile({ onBack }: Props) {
       {showCertificate && (
         <Certificate
           fullName={savedCertName || displayName}
-          completionDate={new Date().toLocaleDateString("pt-BR")}
+          completionDate={new Date().toLocaleDateString(lang === "en" ? "en-US" : "pt-BR")}
           totalXP={state.totalXP}
           challengesCompleted={completedCount}
           onClose={() => setShowCertificate(false)}

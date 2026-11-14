@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { DOCKER_CODEX_EN } from "@/lib/i18n/docker_en";
 
 type Props = {
   isOpen: boolean;
@@ -62,8 +64,15 @@ const RITUALS = {
 };
 
 export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   const [activeTab, setActiveTab] = useState<TabId>("concepts");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const tabs = TABS.map((t) => ({
+    ...t,
+    title: isEn ? DOCKER_CODEX_EN.tabs[t.id] : t.title,
+  }));
 
   useEffect(() => {
     if (isOpen) {
@@ -89,7 +98,7 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success("Comando copiado.");
+    toast.success(isEn ? DOCKER_CODEX_EN.ui.copiedToast : "Comando copiado.");
   };
 
   const renderContent = () => {
@@ -102,25 +111,29 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                 <Boxes size={120} />
               </div>
               <h3 className="text-2xl font-black text-white flex items-center gap-3 mb-4 relative font-serif">
-                <ContainerIcon className="text-sky-400" /> A Revolução dos Containers
+                <ContainerIcon className="text-sky-400" /> {isEn ? DOCKER_CODEX_EN.ui.conceptsTitle : "A Revolução dos Containers"}
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium text-lg relative">
-                O Docker resolve o clássico problema do <em className="text-white italic">"na minha máquina funciona"</em>. Ele empacota o software com todas as suas dependências em uma unidade padronizada chamada <strong className="text-sky-400">Container</strong>.
+                {isEn ? DOCKER_CODEX_EN.ui.conceptsBodyPrefix : "O Docker resolve o clássico problema do "}
+                <em className="text-white italic">{isEn ? DOCKER_CODEX_EN.ui.conceptsBodyQuote : '"na minha máquina funciona"'}</em>
+                {isEn ? DOCKER_CODEX_EN.ui.conceptsBodyMid : ". Ele empacota o software com todas as suas dependências em uma unidade padronizada chamada "}
+                <strong className="text-sky-400">{isEn ? DOCKER_CODEX_EN.ui.conceptsBodyStrong : "Container"}</strong>
+                {isEn ? DOCKER_CODEX_EN.ui.conceptsBodySuffix : "."}
               </p>
             </div>
             
             <div className="p-6 md:p-8 border border-white/5 rounded-[1.5rem] bg-slate-900/50">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-400 mb-6 flex items-center gap-2">
-                <Zap size={16} /> Imagem vs Container
+                <Zap size={16} /> {isEn ? DOCKER_CODEX_EN.ui.imageVsContainer : "Imagem vs Container"}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-3">Imagem (A Receita)</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">Um arquivo imutável que contém o código, bibliotecas e configurações. É o molde estático.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-3">{isEn ? DOCKER_CODEX_EN.ui.imageRecipeTitle : "Imagem (A Receita)"}</h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">{isEn ? DOCKER_CODEX_EN.ui.imageRecipeDesc : "Um arquivo imutável que contém o código, bibliotecas e configurações. É o molde estático."}</p>
                 </div>
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-3">Container (O Bolo)</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">A instância viva e em execução da imagem. É isolada, leve e pode ser destruída e recriada em segundos.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-3">{isEn ? DOCKER_CODEX_EN.ui.containerCakeTitle : "Container (O Bolo)"}</h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">{isEn ? DOCKER_CODEX_EN.ui.containerCakeDesc : "A instância viva e em execução da imagem. É isolada, leve e pode ser destruída e recriada em segundos."}</p>
                 </div>
               </div>
             </div>
@@ -132,39 +145,43 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 md:p-8 border border-amber-500/20 rounded-[1.5rem] bg-amber-500/5 relative overflow-hidden">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-400 mb-4 flex items-center gap-2">
-                <Flame size={16} /> Imagens Obesas
+                <Flame size={16} /> {isEn ? DOCKER_CODEX_EN.ui.bloatedImagesTitle : "Imagens Obesas"}
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium italic text-lg">
-                "Uma imagem de 1GB para um app de 10MB é um pecado contra a infraestrutura."
+                {isEn ? DOCKER_CODEX_EN.ui.bloatedImagesQuote : '"Uma imagem de 1GB para um app de 10MB é um pecado contra a infraestrutura."'}
                 <br/><br/>
-                Imagens grandes demoram para subir, baixar e iniciar. Em produção, cada megabyte conta para a agilidade do sistema.
+                {isEn ? DOCKER_CODEX_EN.ui.bloatedImagesDesc : "Imagens grandes demoram para subir, baixar e iniciar. Em produção, cada megabyte conta para a agilidade do sistema."}
               </p>
             </div>
             
             <div className="p-6 md:p-8 border border-sky-500/20 rounded-[1.5rem] bg-sky-500/5">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-400 mb-6 flex items-center gap-2">
-                <Cpu size={16} /> Protocolos de Otimização
+                <Cpu size={16} /> {isEn ? DOCKER_CODEX_EN.ui.optProtocolsTitle : "Protocolos de Otimização"}
               </h3>
               <ul className="space-y-6">
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-sky-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                   <div>
-                    <h4 className="text-sky-300 font-bold mb-1">Use Imagens Alpine</h4>
-                    <p className="text-slate-300 leading-relaxed">Sempre que possível, use tags <code className="text-white">-alpine</code>. Elas são versões minimalistas (baseadas em musl e busybox) que reduzem o tamanho da imagem de 800MB para 50MB.</p>
+                    <h4 className="text-sky-300 font-bold mb-1">{isEn ? DOCKER_CODEX_EN.ui.alpineTitle : "Use Imagens Alpine"}</h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {isEn ? DOCKER_CODEX_EN.ui.alpineDescPrefix : "Sempre que possível, use tags "}
+                      <code className="text-white">-alpine</code>
+                      {isEn ? DOCKER_CODEX_EN.ui.alpineDescSuffix : ". Elas são versões minimalistas (baseadas em musl e busybox) que reduzem o tamanho da imagem de 800MB para 50MB."}
+                    </p>
                   </div>
                 </li>
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-sky-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                   <div>
-                    <h4 className="text-sky-300 font-bold mb-1">Multi-stage Builds</h4>
-                    <p className="text-slate-300 leading-relaxed">Use uma imagem pesada para compilar (build) e copie apenas o binário final para uma imagem leve. Isso descarta ferramentas de build desnecessárias em produção.</p>
+                    <h4 className="text-sky-300 font-bold mb-1">{isEn ? DOCKER_CODEX_EN.ui.multiStageTitle : "Multi-stage Builds"}</h4>
+                    <p className="text-slate-300 leading-relaxed">{isEn ? DOCKER_CODEX_EN.ui.multiStageDesc : "Use uma imagem pesada para compilar (build) e copie apenas o binário final para uma imagem leve. Isso descarta ferramentas de build desnecessárias em produção."}</p>
                   </div>
                 </li>
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-sky-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                   <div>
-                    <h4 className="text-sky-300 font-bold mb-1">Caching de Layers</h4>
-                    <p className="text-slate-300 leading-relaxed">Copie o arquivo de dependências (package.json) e instale-as ANTES de copiar o resto do código. Isso evita reinstalar tudo a cada pequena mudança no código.</p>
+                    <h4 className="text-sky-300 font-bold mb-1">{isEn ? DOCKER_CODEX_EN.ui.layerCacheTitle : "Caching de Layers"}</h4>
+                    <p className="text-slate-300 leading-relaxed">{isEn ? DOCKER_CODEX_EN.ui.layerCacheDesc : "Copie o arquivo de dependências (package.json) e instale-as ANTES de copiar o resto do código. Isso evita reinstalar tudo a cada pequena mudança no código."}</p>
                   </div>
                 </li>
               </ul>
@@ -177,15 +194,19 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
       case "build":
       case "infra":
       case "compose":
-        const rituals = RITUALS[activeTab as keyof typeof RITUALS];
+        const rituals = isEn
+          ? DOCKER_CODEX_EN.rituals[activeTab as keyof typeof RITUALS]
+          : RITUALS[activeTab as keyof typeof RITUALS];
         
-        const tabDesc = {
-          basics: "Comandos essenciais para interagir com o Docker Hub e rodar seus primeiros containers.",
-          management: "Ferramentas para monitorar, depurar e limpar containers e imagens no seu ambiente local.",
-          build: "Transforme seu código em uma infraestrutura portável criando suas próprias imagens.",
-          infra: "Configure o isolamento e a persistência: conecte containers e salve dados além do reboot.",
-          compose: "Orquestre múltiplos serviços complexos usando um único arquivo de configuração declarativo."
-        }[activeTab as keyof typeof RITUALS];
+        const tabDesc = isEn
+          ? DOCKER_CODEX_EN.tabDesc[activeTab as keyof typeof RITUALS]
+          : {
+              basics: "Comandos essenciais para interagir com o Docker Hub e rodar seus primeiros containers.",
+              management: "Ferramentas para monitorar, depurar e limpar containers e imagens no seu ambiente local.",
+              build: "Transforme seu código em uma infraestrutura portável criando suas próprias imagens.",
+              infra: "Configure o isolamento e a persistência: conecte containers e salve dados além do reboot.",
+              compose: "Orquestre múltiplos serviços complexos usando um único arquivo de configuração declarativo."
+            }[activeTab as keyof typeof RITUALS];
 
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -206,7 +227,7 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                           onSendToTerminal(r.code.split('\n')[0]);
                           onClose();
                         }} className="h-8 bg-sky-600 hover:bg-sky-500 text-white text-[10px] font-black uppercase tracking-widest px-3 rounded-lg shadow-lg shadow-sky-900/20">
-                          <Play size={12} className="mr-1.5" /> Injetar
+                          <Play size={12} className="mr-1.5" /> {isEn ? DOCKER_CODEX_EN.ui.inject : "Injetar"}
                         </Button>
                       )}
                     </div>
@@ -248,11 +269,11 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                 <div className="w-12 h-12 rounded-xl border border-sky-500/30 bg-sky-500/10 flex items-center justify-center text-sky-400">
                   <ContainerIcon className="w-6 h-6" />
                 </div>
-                <h2 className="text-3xl font-black text-white font-mono tracking-tight uppercase">Manual.🐳</h2>
+                <h2 className="text-3xl font-black text-white font-mono tracking-tight uppercase">{isEn ? DOCKER_CODEX_EN.ui.manualTitle : "Manual.🐳"}</h2>
               </div>
               
               <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2">
-                {TABS.map((tab) => {
+                {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
                   const Icon = tab.icon;
                   return (
@@ -275,7 +296,7 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
               <div className="p-6 mt-auto border-t border-white/5 hidden md:block">
                 <div className="flex items-center gap-3 text-sky-500/50 hover:text-sky-400 transition-colors cursor-default">
                   <Server className="w-4 h-4 shrink-0" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Core Engine Active</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{isEn ? DOCKER_CODEX_EN.ui.coreEngineActive : "Core Engine Active"}</span>
                 </div>
               </div>
             </div>
@@ -286,16 +307,16 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
                     {(() => {
-                      const ActiveIcon = TABS.find(t => t.id === activeTab)?.icon || BookOpen;
+                      const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || BookOpen;
                       return <ActiveIcon size={20} />;
                     })()}
                   </div>
                   <div>
                     <h2 className="text-3xl font-black text-white font-mono tracking-tight">
-                      {TABS.find(t => t.id === activeTab)?.title}
+                      {tabs.find(t => t.id === activeTab)?.title}
                     </h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-500/50 mt-1">
-                      Módulo de Simulação
+                      {isEn ? DOCKER_CODEX_EN.ui.simModule : "Módulo de Simulação"}
                     </p>
                   </div>
                 </div>
@@ -315,7 +336,7 @@ export function DockerCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                   onClick={onClose}
                   className="bg-sky-600 hover:bg-sky-500 text-white font-black px-8 py-6 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)] transition-all hover:scale-105 active:scale-95 text-sm"
                 >
-                  Fechar Manual
+                  {isEn ? DOCKER_CODEX_EN.ui.closeManual : "Fechar Manual"}
                 </Button>
               </div>
             </div>

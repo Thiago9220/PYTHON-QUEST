@@ -4,44 +4,75 @@ import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Compass, Map, Play, Terminal, Trophy, Zap } from "lucide-react";
+import { Compass, Map, Play, Terminal, Trophy, Zap, Globe } from "lucide-react";
 import { WORLDS, getAllChallenges } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Welcome({ onStart }: { onStart: () => void }) {
   const { dispatch } = useGame();
+  const { lang, toggleLang } = useLanguage();
+  const isEn = lang === "en";
   const { user } = useAuth();
   const [name, setName] = useState(user?.displayName || "");
   const [step, setStep] = useState<"hero" | "intro" | "name">("hero");
   const [introIndex, setIntroIndex] = useState(0);
 
-  const introDialogs = [
-    {
-      npc: "AI-7",
-      text: "Conexão estabelecida, Operador. O Mainframe da cidade está instável e o Core central foi isolado pelo sistema de defesa.",
-      avatar: "PY",
-    },
-    {
-      npc: "AI-7",
-      text: "Para contornar o firewall, você deve dominar a linguagem Python. Cada setor guarda um módulo corrompido que precisa ser reescrito.",
-      avatar: "PY",
-    },
-    {
-      npc: "AI-7",
-      text: "Seu primeiro destino é o Terminal Alpha. Lá, você aprenderá a alocar memória e a executar seus primeiros scripts de invasão.",
-      avatar: "PY",
-    },
-    {
-      npc: "AI-7",
-      text: "Mais tarde, caso obtenha XP suficiente, seu Nível de Acesso permitirá explorar os protocolos avançados de Ciência de Dados e Machine Learning.",
-      avatar: "PY",
-    },
-    {
-      npc: "AI-7",
-      text: "O console será sua principal interface. Diga-me, qual será o seu codinome nos registros da rede?",
-      avatar: "PY",
-    },
-  ];
+  const introDialogs = isEn
+    ? [
+        {
+          npc: "AI-7",
+          text: "Connection established, Operator. The city Mainframe is unstable and the central Core has been isolated by defense protocols.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "To bypass the firewall, you must master Python. Every sector contains a corrupted module that must be rewritten.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "Your first destination is Terminal Alpha. There you will learn memory allocation and run your first intrusion scripts.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "Later, once you earn enough XP, your Clearance Level will unlock the advanced Data Science and Machine Learning protocols.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "The console will be your primary interface. Tell me — what codename shall we log in the network?",
+          avatar: "PY",
+        },
+      ]
+    : [
+        {
+          npc: "AI-7",
+          text: "Conexão estabelecida, Operador. O Mainframe da cidade está instável e o Core central foi isolado pelo sistema de defesa.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "Para contornar o firewall, você deve dominar a linguagem Python. Cada setor guarda um módulo corrompido que precisa ser reescrito.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "Seu primeiro destino é o Terminal Alpha. Lá, você aprenderá a alocar memória e a executar seus primeiros scripts de invasão.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "Mais tarde, caso obtenha XP suficiente, seu Nível de Acesso permitirá explorar os protocolos avançados de Ciência de Dados e Machine Learning.",
+          avatar: "PY",
+        },
+        {
+          npc: "AI-7",
+          text: "O console será sua principal interface. Diga-me, qual será o seu codinome nos registros da rede?",
+          avatar: "PY",
+        },
+      ];
 
   const handleStart = () => {
     if (name.trim().length < 2) return;
@@ -64,6 +95,15 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
         <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:60px_60px]" />
       </div>
 
+      <button
+        type="button"
+        onClick={toggleLang}
+        className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-sky-500/30 bg-slate-900/80 px-3 py-2 text-xs font-black uppercase tracking-widest text-sky-300 backdrop-blur-md hover:border-sky-400 hover:bg-slate-800 transition-all"
+      >
+        <Globe className="w-3.5 h-3.5" />
+        {lang === "pt" ? "PT-BR" : "EN-US"}
+      </button>
+
       <div className="relative z-10 min-h-screen flex items-center px-6 py-12 md:px-12">
         {step === "hero" && (
           <div className="mx-auto grid w-full max-w-7xl items-center gap-16 lg:grid-cols-[1.1fr_0.9fr]">
@@ -76,20 +116,28 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
               <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-2 backdrop-blur-md shadow-2xl">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
                 <span className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-sky-200/80">
-                  Sistema Iniciado: Hacker Protocol
+                  {isEn ? "System Online: Hacker Protocol" : "Sistema Iniciado: Hacker Protocol"}
                 </span>
               </div>
 
-              <h2 className="text-xl font-bold text-white mb-2">Conexão Estabelecida, Operador</h2>
+              <h2 className="text-xl font-bold text-white mb-2">
+                {isEn ? "Connection Established, Operator" : "Conexão Estabelecida, Operador"}
+              </h2>
               <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                O Mainframe da cidade está instável. O Core central do sistema foi comprometido e apenas você, através da engenharia reversa do Python, pode restaurá-lo.
+                {isEn
+                  ? "The city Mainframe is unstable. The central Core has been compromised and only you, through Python reverse engineering, can restore it."
+                  : "O Mainframe da cidade está instável. O Core central do sistema foi comprometido e apenas você, através da engenharia reversa do Python, pode restaurá-lo."}
               </p>
               
               <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5 mb-6">
                 <div className="flex items-start gap-3">
                   <Terminal className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    A Rede clama por sua presença. Quebre os firewalls, recupere o <span className="text-white font-bold">Core do Sistema</span> dominando a lógica da programação e torne-se um Operador Elite.
+                    {isEn ? (
+                      <>The Network calls for you. Breach the firewalls, restore the <span className="text-white font-bold">System Core</span> by mastering programming logic, and become an Elite Operator.</>
+                    ) : (
+                      <>A Rede clama por sua presença. Quebre os firewalls, recupere o <span className="text-white font-bold">Core do Sistema</span> dominando a lógica da programação e torne-se um Operador Elite.</>
+                    )}
                   </p>
                 </div>
               </div>
@@ -102,13 +150,13 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                 className="w-full h-12 bg-sky-600 hover:bg-sky-500 text-white font-black tracking-widest text-[10px] uppercase rounded-xl transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)]"
               >
                 <Zap className="w-4 h-4 mr-2" />
-                Iniciar Conexão
+                {isEn ? "Initiate Connection" : "Iniciar Conexão"}
               </Button>
 
               <div className="mt-12 grid max-w-xl grid-cols-3 gap-4">
                 {[
                   { icon: Compass, label: `${getAllChallenges().length}`, sub: "Nodes" },
-                  { icon: Map, label: `${WORLDS.length}`, sub: "Setores" },
+                  { icon: Map, label: `${WORLDS.length}`, sub: isEn ? "Sectors" : "Setores" },
                   { icon: Zap, label: "Py", sub: "Engine" },
                 ].map(({ icon: Icon, label, sub }) => (
                   <div key={sub} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:bg-white/10 hover:border-white/20">
@@ -130,7 +178,7 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                   className="h-16 rounded-2xl bg-sky-600 px-10 text-lg font-black text-white shadow-[0_20px_40px_-10px_rgba(14,165,233,0.5)] transition-all hover:bg-sky-500 hover:-translate-y-1 active:translate-y-0"
                 >
                   <Play className="mr-3 h-5 w-5 fill-current" />
-                  Iniciar Ritual
+                  {isEn ? "Start Protocol" : "Iniciar Ritual"}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -138,7 +186,7 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                   onClick={() => setStep("name")} 
                   className="h-16 rounded-2xl border-white/10 bg-white/5 px-10 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20"
                 >
-                  Ir ao Mapa das Ilhas
+                  {isEn ? "Go to World Map" : "Ir ao Mapa das Ilhas"}
                 </Button>
               </div>
             </motion.section>
@@ -162,7 +210,7 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                 { name: "Terminal", top: "15%", left: "8%", color: "from-sky-300 to-cyan-100", active: true },
                 { name: "Nodes", top: "36%", left: "45%", color: "from-emerald-300 to-lime-100" },
                 { name: "Loops", top: "57%", left: "18%", color: "from-amber-300 to-orange-100" },
-                { name: "Modulos", top: "18%", left: "68%", color: "from-violet-300 to-fuchsia-100" },
+                { name: isEn ? "Modules" : "Modulos", top: "18%", left: "68%", color: "from-violet-300 to-fuchsia-100" },
               ].map((island, index) => (
                 <motion.div
                   key={island.name}
@@ -198,7 +246,12 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                   </div>
                 </div>
                 <pre className="p-5 font-mono text-sm leading-relaxed text-sky-50">
-{`nome = "Aurora"
+{isEn
+  ? `name = "Aurora"
+print(f"Hello, {name}!")
+
+> Hello, Aurora!`
+  : `nome = "Aurora"
 print(f"Ola, {nome}!")
 
 > Ola, Aurora!`}
@@ -207,8 +260,8 @@ print(f"Ola, {nome}!")
 
               <div className="absolute bottom-28 left-2 rounded-3xl border border-sky-100 bg-white/90 p-5 shadow-xl shadow-sky-950/10 backdrop-blur">
                 <Trophy className="mb-3 h-6 w-6 text-emerald-600" />
-                <div className="text-sm font-black text-slate-950">Progresso salvo</div>
-                <div className="mt-1 text-xs text-slate-500">XP, setores e permissões</div>
+                <div className="text-sm font-black text-slate-950">{isEn ? "Progress saved" : "Progresso salvo"}</div>
+                <div className="mt-1 text-xs text-slate-500">{isEn ? "XP, sectors and clearances" : "XP, setores e permissões"}</div>
               </div>
             </motion.section>
           </div>
@@ -242,15 +295,15 @@ print(f"Ola, {nome}!")
                   PY
                 </div>
                 
-                <h2 className="mb-2 text-3xl font-black text-white tracking-tight">Identificação</h2>
-                <p className="mb-8 text-sm text-slate-400 font-medium">Informe seu codinome para os registros da rede.</p>
+                <h2 className="mb-2 text-3xl font-black text-white tracking-tight">{isEn ? "Identification" : "Identificação"}</h2>
+                <p className="mb-8 text-sm text-slate-400 font-medium">{isEn ? "Enter your codename for the network logs." : "Informe seu codinome para os registros da rede."}</p>
 
                 <div className="relative mb-8">
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleStart()}
-                    placeholder="Codinome do Operador..."
+                    placeholder={isEn ? "Operator Codename..." : "Codinome do Operador..."}
                     maxLength={20}
                     className="h-14 border-white/10 bg-white/5 py-6 text-center text-lg text-white placeholder:text-slate-600 focus:border-sky-500 focus:ring-sky-500/20 rounded-xl transition-all"
                     autoFocus
@@ -264,14 +317,14 @@ print(f"Ola, {nome}!")
                     onClick={() => setStep("hero")} 
                     className="flex-1 border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 h-12 rounded-xl font-bold transition-all"
                   >
-                    Voltar
+                    {isEn ? "Back" : "Voltar"}
                   </Button>
                   <Button 
                     onClick={handleStart} 
                     disabled={name.trim().length < 2} 
                     className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-xl shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)] transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
                   >
-                    INICIAR BYPASS
+                    {isEn ? "INITIATE BYPASS" : "INICIAR BYPASS"}
                   </Button>
                 </div>
               </div>

@@ -16,6 +16,8 @@ import {
 import { VolumeControl } from "@/components/VolumeControl";
 import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedLevelTitle, getLocalizedWorld } from "@/lib/i18n/localize";
 import { getWorldById } from "@/lib/challenges";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -40,7 +42,9 @@ type Props = {
 export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss, onBack, onBackToHome, onOpenProfile }: Props) {
   const { isChallengeCompleted, isBossDefeated, isBossUnlocked, state, getPlayerLevel, dispatch } = useGame();
   const { user } = useAuth();
-  const world = getWorldById(worldId);
+  const { t, lang } = useLanguage();
+  const rawWorld = getWorldById(worldId);
+  const world = rawWorld ? getLocalizedWorld(rawWorld, lang) : rawWorld;
   const nextChallengeRef = useRef<HTMLDivElement>(null);
 
   if (!world) return null;
@@ -50,10 +54,18 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
   const remaining = world.challenges.length - completedCount;
   const nextIncompleteIdx = world.challenges.findIndex((c) => !isChallengeCompleted(c.id));
   const { level, title, progress } = getPlayerLevel();
-  
+  const localizedTitle = getLocalizedLevelTitle(title, lang);
+
   const themeColor = world.color || "#0EA5E9";
 
   const motivationalMessage = (() => {
+    if (lang === "en") {
+      if (completedCount === 0) return "Initiate the breach protocol and restore the system Core.";
+      if (completionPct === 100) return "Full sector mastery achieved! All modules have been rewritten.";
+      if (completionPct >= 75) return `Almost there: only ${remaining} script${remaining > 1 ? "s" : ""} left for the final bypass.`;
+      if (completionPct >= 50) return "Your sync with the Protocol is growing stronger.";
+      return "A solid start. Python knowledge awaits your determination.";
+    }
     if (completedCount === 0) return "Inicie o protocolo de invasão e restaure o Core do sistema.";
     if (completionPct === 100) return "Domínio total do setor alcançado! Todos os módulos foram reescritos.";
     if (completionPct >= 75) return `Quase lá: restam apenas ${remaining} script${remaining > 1 ? "s" : ""} para o bypass final.`;
@@ -65,16 +77,16 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-sky-500/30 overflow-x-hidden">
       {/* Cinematic Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div 
-          className="absolute inset-0 opacity-20 transition-colors duration-1000" 
-          style={{ 
-            backgroundImage: `radial-gradient(circle at 20% 30%, ${themeColor}33, transparent 50%), radial-gradient(circle at 80% 70%, ${themeColor}22, transparent 50%)` 
-          }} 
+        <div
+          className="absolute inset-0 opacity-20 transition-colors duration-1000"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 30%, ${themeColor}33, transparent 50%), radial-gradient(circle at 80% 70%, ${themeColor}22, transparent 50%)`
+          }}
         />
-        
+
         {/* Animated Scanning Lines */}
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
-          <motion.div 
+          <motion.div
             animate={{ y: ["0%", "100%"] }}
             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
             className="w-full h-[100px] bg-gradient-to-b from-transparent via-white to-transparent"
@@ -87,17 +99,17 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/60 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-6">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack} 
+            <Button
+              variant="ghost"
+              onClick={onBack}
               className="text-slate-400 hover:text-white hover:bg-white/5 transition-all"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Mapa
+              {t("mapBack")}
             </Button>
             <div className="hidden h-6 w-px bg-white/10 sm:block" />
-            <button 
-              className="hidden sm:block text-sm font-black uppercase tracking-[0.2em] text-sky-400 hover:text-sky-300 transition-colors" 
+            <button
+              className="hidden sm:block text-sm font-black uppercase tracking-[0.2em] text-sky-400 hover:text-sky-300 transition-colors"
               onClick={onBackToHome}
             >
               Python Protocol
@@ -112,14 +124,14 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
               </div>
             )}
             <VolumeControl isMuted={state.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-            
+
             <div
               className="flex bg-white/5 pl-4 py-1 pr-1 rounded-full border border-white/10 items-center gap-3 cursor-pointer hover:bg-white/10 transition-all hover:border-white/20"
               onClick={onOpenProfile}
             >
               <div className="hidden md:block text-right">
                 <div className="text-[8px] uppercase font-black text-slate-500 tracking-widest leading-none mb-1">
-                  {title}
+                  {localizedTitle}
                 </div>
                 <div className="flex items-center justify-end gap-3">
                   <span className="text-[11px] font-black text-white tracking-tighter">
@@ -147,12 +159,12 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
           {/* World Background Image with mask */}
           {world.bgImage && (
             <div className="absolute inset-0 z-0 overflow-hidden">
-              <motion.img 
+              <motion.img
                 initial={{ scale: 1.1, opacity: 0 }}
                 animate={{ scale: 1, opacity: 0.15 }}
                 transition={{ duration: 2 }}
-                src={world.bgImage} 
-                alt={world.title} 
+                src={world.bgImage}
+                alt={world.title}
                 className="absolute inset-0 w-full h-full object-cover grayscale brightness-50"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/80 to-slate-950" />
@@ -168,11 +180,13 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
             >
               <div className="inline-flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-4 py-1 backdrop-blur-md mb-4">
                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` }} />
-                <span className="font-mono text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Setor Identificado: {worldId.replace(/-/g, '_').toUpperCase()}</span>
+                <span className="font-mono text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">
+                  {lang === "en" ? "Sector Identified" : "Setor Identificado"}: {worldId.replace(/-/g, '_').toUpperCase()}
+                </span>
               </div>
               <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-none relative group cursor-default">
                 <span className="relative z-10">{world.title}</span>
-                <motion.span 
+                <motion.span
                   className="absolute inset-0 z-0 opacity-20 blur-sm pointer-events-none group-hover:opacity-40 transition-opacity"
                   style={{ color: themeColor }}
                   animate={{ x: [-1, 1, -1], y: [1, -1, 1] }}
@@ -186,7 +200,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
               </p>
             </motion.div>
           </div>
-          
+
           {/* HUD Decorative Elements */}
           <div className="absolute top-10 right-10 hidden lg:block opacity-20 font-mono text-[10px] text-slate-500 pointer-events-none">
             <div className="flex items-center gap-2 mb-1">
@@ -208,7 +222,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
         <section className="max-w-4xl mx-auto px-6 pb-32">
           {/* Progress Card */}
           {/* Progress Card (Diagnostic View) */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="relative rounded-2xl border border-white/10 bg-slate-900/40 p-5 md:p-6 mb-10 shadow-2xl backdrop-blur-xl overflow-hidden group"
@@ -226,28 +240,34 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                     <BookOpen className="w-4 h-4" style={{ color: themeColor }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Relatório de Diagnóstico</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
+                      {lang === "en" ? "Diagnostic Report" : "Relatório de Diagnóstico"}
+                    </p>
                     <h3 className="text-sm font-bold text-white uppercase tracking-tight">{motivationalMessage}</h3>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                    <span className="text-slate-400">Progresso de Infiltração</span>
-                    <span className="text-white font-mono">{completedCount}/{world.challenges.length} NODES SINCRO</span>
+                    <span className="text-slate-400">
+                      {lang === "en" ? "Infiltration Progress" : "Progresso de Infiltração"}
+                    </span>
+                    <span className="text-white font-mono">
+                      {completedCount}/{world.challenges.length} {lang === "en" ? "NODES SYNCED" : "NODES SINCRO"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
                       {/* Grid background on progress bar */}
                       <div className="absolute inset-0 opacity-20 [background-size:10px_100%] [background-image:linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)]" />
-                      <motion.div 
-                        className="h-full rounded-full relative z-10" 
-                        style={{ 
+                      <motion.div
+                        className="h-full rounded-full relative z-10"
+                        style={{
                           backgroundColor: themeColor,
                           boxShadow: `0 0 15px ${themeColor}80`
                         }}
                         initial={{ width: 0 }}
-                        animate={{ width: `${completionPct}%` }} 
+                        animate={{ width: `${completionPct}%` }}
                         transition={{ duration: 1.5, ease: "circOut" }}
                       />
                     </div>
@@ -257,19 +277,21 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                   </div>
                 </div>
               </div>
-              
+
               {nextIncompleteIdx !== -1 && (
-                <Button 
-                  onClick={() => nextChallengeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} 
+                <Button
+                  onClick={() => nextChallengeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
                   className="w-full md:w-auto h-14 px-10 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] shadow-lg transition-all border group-hover:-translate-y-0.5 active:translate-y-0"
-                  style={{ 
+                  style={{
                     backgroundColor: `${themeColor}20`,
                     borderColor: `${themeColor}40`,
                     color: themeColor,
                     boxShadow: `0 0 20px ${themeColor}20`
                   }}
                 >
-                  {completedCount === 0 ? "INICIAR PROTOCOLO" : `BYPASS NODE #${nextIncompleteIdx + 1}`}
+                  {completedCount === 0
+                    ? (lang === "en" ? "START PROTOCOL" : "INICIAR PROTOCOLO")
+                    : `BYPASS NODE #${nextIncompleteIdx + 1}`}
                   <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
@@ -278,7 +300,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
 
           {/* List */}
           <div className="space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6 pl-4 border-l-2 border-white/10">Scripts Disponíveis</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6 pl-4 border-l-2 border-white/10">{t("availableScripts")}</h2>
             {world.challenges.map((challenge, idx) => {
               const completed = isChallengeCompleted(challenge.id);
               const progressState = state.challengeProgress[challenge.id];
@@ -293,18 +315,21 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                     transition={{ delay: (idx % 10) * 0.05 }}
                     onClick={() => {
                       if (isLocked) {
-                        toast.error("Este conhecimento ainda está selado. Complete o ritual anterior.");
+                        toast.error(
+                          lang === "en"
+                            ? "This knowledge is still sealed. Complete the previous ritual."
+                            : "Este conhecimento ainda está selado. Complete o ritual anterior."
+                        );
                         return;
                       }
                       onSelectChallenge(challenge.id);
                     }}
-                    className={`group relative flex items-center gap-4 sm:gap-6 rounded-2xl p-5 sm:p-6 transition-all border backdrop-blur-sm ${
-                      completed
+                    className={`group relative flex items-center gap-4 sm:gap-6 rounded-2xl p-5 sm:p-6 transition-all border backdrop-blur-sm ${completed
                         ? "border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 cursor-pointer"
                         : isLocked
                           ? "border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed"
                           : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 cursor-pointer shadow-xl"
-                    }`}
+                      }`}
                   >
                     <div className="shrink-0 relative">
                       {completed ? (
@@ -335,13 +360,21 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                         </h3>
                         {!isLocked && (
                           <span className={`text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest ${DIFFICULTY_COLORS[challenge.difficulty]}`}>
-                            {challenge.difficulty}
+                            {lang === "en"
+                              ? ({
+                                  iniciante: "Beginner",
+                                  intermediario: "Intermediate",
+                                  avancado: "Advanced",
+                                  epico: "Epic",
+                                  lendario: "Legendary",
+                                }[challenge.difficulty] ?? challenge.difficulty)
+                              : challenge.difficulty}
                           </span>
                         )}
                       </div>
-                      
+
                       <p className={`text-sm leading-relaxed truncate font-medium ${isLocked ? "text-slate-700" : "text-slate-400"}`}>
-                        {isLocked ? "Complete o script anterior para desbloquear este módulo." : challenge.description}
+                        {isLocked ? t("lockedChallengeDesc") : challenge.description}
                       </p>
 
                       {!isLocked && (
@@ -355,7 +388,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                           </div>
                           {progressState && (
                             <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-500 italic">
-                              {progressState.attempts} tentativas
+                              {progressState.attempts} {t("attemptsLabel")}
                             </div>
                           )}
                         </div>
@@ -367,7 +400,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                         <ChevronRight className={`w-6 h-6 ${completed ? "text-emerald-500" : "text-slate-700 group-hover:text-white"}`} />
                       </div>
                     )}
-                    
+
                     {completed && (
                       <div className="absolute right-4 top-4">
                         <Star className="w-4 h-4 text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
@@ -390,20 +423,24 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                   viewport={{ once: true }}
                   onClick={() => {
                     if (!bossUnlocked) {
-                      toast.error(`Complete ${threshold}% dos desafios para liberar o boss.`, {
-                        description: `Progresso atual: ${currentPct}%`,
-                      });
+                      toast.error(
+                        lang === "en"
+                          ? `Complete ${threshold}% of challenges to unlock the boss.`
+                          : `Complete ${threshold}% dos desafios para liberar o boss.`,
+                        {
+                          description: `${lang === "en" ? "Current progress" : "Progresso atual"}: ${currentPct}%`,
+                        }
+                      );
                       return;
                     }
                     onSelectBoss();
                   }}
-                  className={`group relative mt-8 flex items-center gap-4 sm:gap-6 rounded-2xl p-6 sm:p-7 transition-all border-2 backdrop-blur-sm cursor-pointer ${
-                    bossDefeated
+                  className={`group relative mt-8 flex items-center gap-4 sm:gap-6 rounded-2xl p-6 sm:p-7 transition-all border-2 backdrop-blur-sm cursor-pointer ${bossDefeated
                       ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent"
                       : bossUnlocked
                         ? "hover:scale-[1.01] shadow-2xl"
                         : "opacity-60 cursor-not-allowed"
-                  }`}
+                    }`}
                   style={{
                     borderColor: bossDefeated
                       ? undefined
@@ -453,13 +490,13 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                       </span>
                       {bossDefeated && (
                         <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black uppercase tracking-widest">
-                          Derrotado
+                          {t("bossDefeated")}
                         </span>
                       )}
                       {!bossUnlocked && (
                         <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black uppercase tracking-widest flex items-center gap-1">
                           <Lock className="w-2.5 h-2.5" />
-                          {threshold}% requerido
+                          {threshold}% {t("bossRequired")}
                         </span>
                       )}
                     </div>
@@ -472,7 +509,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-300">
                         <Skull className="w-3 h-3" style={{ color: themeColor }} />
-                        {world.boss.acts.length} atos
+                        {world.boss.acts.length} {t("bossActs")}
                       </div>
                       <div
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest"
@@ -487,7 +524,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
                       </div>
                       {!bossUnlocked && (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                          Atual: {currentPct}%
+                          {lang === "en" ? "Current" : "Atual"}: {currentPct}%
                         </div>
                       )}
                     </div>

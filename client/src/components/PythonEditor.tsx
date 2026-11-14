@@ -1,4 +1,5 @@
 import { useRef, useState, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   code: string;
@@ -88,8 +89,10 @@ export default function PythonEditor({
   onRun,
   isRunning,
   pythonReady,
-  placeholder = "# Invoque seus comandos aqui...",
+  placeholder,
 }: Props) {
+  const { t } = useLanguage();
+  const effectivePlaceholder = placeholder ?? t("editorPlaceholder");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
@@ -231,12 +234,12 @@ export default function PythonEditor({
             }`}
           />
           <span className="text-[10px] font-mono text-sky-200/60 uppercase tracking-[0.2em]">
-            {pythonReady ? "Python 3.11 • Pyodide Worker Ready" : "Inicializando Motor Python..."}
+            {pythonReady ? t("editorReady") : t("editorLoading")}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:inline text-[10px] font-mono text-slate-500">
-            Ctrl + Enter para executar
+            {t("editorShortcut")}
           </span>
           <div className="flex gap-1.5 opacity-60">
             <div className="w-2.5 h-2.5 rounded-full bg-rose-500/40" />
@@ -290,7 +293,7 @@ export default function PythonEditor({
             autoComplete="off"
             autoCorrect="off"
             wrap="off"
-            placeholder={placeholder}
+            placeholder={effectivePlaceholder}
             disabled={!pythonReady || isRunning}
             className="relative z-10 w-full h-full py-5 px-5 bg-transparent text-transparent caret-sky-400 font-mono text-sm leading-6 resize-none focus:outline-none selection:bg-sky-500/30 placeholder:text-slate-600 overflow-auto"
           />

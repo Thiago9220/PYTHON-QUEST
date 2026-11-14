@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, X, CheckCircle2, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type TourStep = {
   targetId: string;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function TutorialTour({ steps, isOpen, onClose }: Props) {
+  const { t } = useLanguage();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [hasMeasuredTarget, setHasMeasuredTarget] = useState(false);
@@ -119,14 +121,14 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
                 : "bg-sky-500 hover:bg-sky-400 px-4"
             }`}
           >
-            Continuar <ChevronRight className="w-3 h-3 ml-1" />
+            {t("tourContinue")} <ChevronRight className="w-3 h-3 ml-1" />
           </Button>
         ) : (
           <Button 
             onClick={onClose}
             className="bg-emerald-600 hover:bg-emerald-500 text-emerald-950 rounded-full h-8 px-5 text-xs font-bold"
           >
-            Começar Jornada <CheckCircle2 className="w-3 h-3 ml-1" />
+            {t("tourStartJourney")} <CheckCircle2 className="w-3 h-3 ml-1" />
           </Button>
         )}
       </div>
@@ -212,7 +214,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
                     Python Protocol
                   </h2>
                   <p className="text-[11px] uppercase tracking-[0.25em] text-sky-500/70 font-mono font-bold drop-shadow-sm">
-                    Operação: Domínio Digital
+                    {t("tourSubtitle")}
                   </p>
                 </div>
 

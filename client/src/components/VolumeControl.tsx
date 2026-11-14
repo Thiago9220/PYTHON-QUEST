@@ -3,6 +3,7 @@ import { Volume2, VolumeX, Volume1 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { soundManager } from "@/lib/sounds";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Props = {
   isMuted: boolean;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function VolumeControl({ isMuted, onToggleMute, className = "" }: Props) {
+  const { lang } = useLanguage();
   const [volume, setVolume] = useState(() => Math.round(soundManager.volume * 100));
   const [showSlider, setShowSlider] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,7 +63,7 @@ export function VolumeControl({ isMuted, onToggleMute, className = "" }: Props) 
                 onToggleMute();
               }}
               className="text-slate-400 hover:text-sky-400 transition-colors flex-shrink-0"
-              title={isMuted ? "Ativar som" : "Silenciar"}
+              title={isMuted ? (lang === "en" ? "Unmute" : "Ativar som") : (lang === "en" ? "Mute" : "Silenciar")}
             >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
@@ -94,7 +96,7 @@ export function VolumeControl({ isMuted, onToggleMute, className = "" }: Props) 
         onClick={() => setShowSlider((v) => !v)}
         onMouseEnter={() => { cancelHide(); setShowSlider(true); }}
         className="text-slate-400 hover:text-white hover:bg-white/5 w-8 h-8 flex-shrink-0 rounded-lg transition-all"
-        title="Controle de volume"
+        title={lang === "en" ? "Volume control" : "Controle de volume"}
       >
         <Icon className="w-4 h-4" />
       </Button>

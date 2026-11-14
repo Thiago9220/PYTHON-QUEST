@@ -1,3 +1,5 @@
+import { getSavedLanguage, type AppLanguage } from "@/contexts/LanguageContext";
+
 /**
  * PYTHON-QUEST — Motor Python (Web Worker + Fallback)
  * Executa Python real no navegador via Pyodide em um Web Worker dedicado,
@@ -32,13 +34,27 @@ const WORKER_SCRIPT = `
 let pyodide = null;
 let initPromise = null;
 
-async function ensurePyodide() {
+async function ensurePyodide(localBaseUrl) {
   if (pyodide) return pyodide;
   if (!initPromise) {
     initPromise = (async () => {
-      importScripts("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js");
+      const cdnBaseUrl = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/";
+      let activeBaseUrl = cdnBaseUrl;
+
+      if (localBaseUrl) {
+        try {
+          importScripts(localBaseUrl + "pyodide.js");
+          activeBaseUrl = localBaseUrl;
+        } catch (_localErr) {
+          importScripts(cdnBaseUrl + "pyodide.js");
+          activeBaseUrl = cdnBaseUrl;
+        }
+      } else {
+        importScripts(cdnBaseUrl + "pyodide.js");
+      }
+
       pyodide = await self.loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/",
+        indexURL: activeBaseUrl,
       });
       // Snapshot initial globals to clean between runs
       await pyodide.runPythonAsync(\`
@@ -56,14 +72,19 @@ def _reset_globals():
   return initPromise;
 }
 
-function formatPythonError(err) {
-  if (!err || !err.message) return "Erro desconhecido durante a execução.";
+function formatPythonError(err, lang = "pt") {
+  if (!err || !err.message) {
+    return lang === "en"
+      ? "Unknown error during execution."
+      : "Erro desconhecido durante a execução.";
+  }
   const lines = String(err.message).trim().split("\\n");
   // Extract the last meaningful lines of the Python traceback
   const lastLine = lines[lines.length - 1] || err.message;
   const lineMatch = String(err.message).match(/File "<exec>", line (\\d+)/g);
   if (lineMatch && lineMatch.length > 0) {
-    const lastLoc = lineMatch[lineMatch.length - 1].replace('File "<exec>", line ', 'Linha ');
+    const linePrefix = lang === "en" ? "Line " : "Linha ";
+    const lastLoc = lineMatch[lineMatch.length - 1].replace('File "<exec>", line ', linePrefix);
     return \`\${lastLoc}: \${lastLine}\`;
   }
   return lastLine;
@@ -71,9 +92,10 @@ function formatPythonError(err) {
 
 self.onmessage = async (event) => {
   const { id, type, payload } = event.data;
+  const lang = payload?.lang === "en" ? "en" : "pt";
 
   try {
-    const py = await ensurePyodide();
+    const py = await ensurePyodide(payload?.localBaseUrl);
 
     if (type === "INIT") {
       self.postMessage({ id, result: { ready: true } });
@@ -106,7 +128,7 @@ self.onmessage = async (event) => {
           result: {
             success: false,
             output: "",
-            error: formatPythonError(err),
+            error: formatPythonError(err, lang),
             executionTime: performance.now() - start,
           },
         });
@@ -129,11 +151,14 @@ self.onmessage = async (event) => {
         await py.runPythonAsync(userCode);
         userOutput = await py.runPythonAsync("sys.stdout.getvalue()");
       } catch (err) {
+        const formattedErr = formatPythonError(err, lang);
         self.postMessage({
           id,
           result: {
             correct: false,
-            feedback: \`Erro de sintaxe ou execução (\${formatPythonError(err)})\`,
+            feedback: lang === "en"
+              ? \`Syntax or runtime error (\${formattedErr})\`
+              : \`Erro de sintaxe ou execução (\${formattedErr})\`,
             output: "",
           },
         });
@@ -148,12 +173,14 @@ self.onmessage = async (event) => {
           id,
           result: {
             correct: true,
-            feedback: "Incrível! Seu código funcionou perfeitamente.",
+            feedback: lang === "en"
+              ? "Awesome! Your code worked perfectly."
+              : "Incrível! Seu código funcionou perfeitamente.",
             output: userOutput,
           },
         });
       } catch (err) {
-        const msg = formatPythonError(err);
+        const msg = formatPythonError(err, lang);
         const customDetail =
           msg.includes("AssertionError:") && msg.split("AssertionError:")[1]?.trim()
             ? msg.split("AssertionError:")[1].trim()
@@ -163,8 +190,10 @@ self.onmessage = async (event) => {
           result: {
             correct: false,
             feedback: customDetail
-              ? \`Quase lá: \${customDetail}\`
-              : "O código rodou, mas o resultado não é o esperado. Verifique a saída e os requisitos da missão!",
+              ? (lang === "en" ? \`Almost there: \${customDetail}\` : \`Quase lá: \${customDetail}\`)
+              : (lang === "en"
+                  ? "Code ran, but the output did not match expectations. Check your output and mission requirements!"
+                  : "O código rodou, mas o resultado não é o esperado. Verifique a saída e os requisitos da missão!"),
             output: userOutput,
           },
         });
@@ -199,7 +228,7 @@ self.onmessage = async (event) => {
               index: i,
               label: obj.label,
               passed: false,
-              error: formatPythonError(e),
+              error: formatPythonError(e, lang),
             });
           }
         }
@@ -214,7 +243,7 @@ self.onmessage = async (event) => {
           result: {
             success: false,
             output: "",
-            error: formatPythonError(err),
+            error: formatPythonError(err, lang),
             results: objectives.map((o, i) => ({
               index: i,
               label: o.label,
@@ -228,7 +257,7 @@ self.onmessage = async (event) => {
   } catch (fatalErr) {
     self.postMessage({
       id,
-      error: fatalErr?.message || "Falha ao inicializar Pyodide no Worker",
+      error: fatalErr?.message || (lang === "en" ? "Failed to initialize Pyodide in Worker" : "Falha ao inicializar Pyodide no Worker"),
     });
   }
 };
@@ -279,7 +308,7 @@ function terminateAndResetWorker() {
   }
   pendingCallbacks.clear();
   // Pré-aquece novo worker em background
-  initPython().catch(() => {});
+  initPython().catch(() => { });
 }
 
 function callWorker<T>(
@@ -293,12 +322,15 @@ function callWorker<T>(
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     if (timeoutMs !== null) {
+      const lang: AppLanguage = payload?.lang || getSavedLanguage();
       timer = setTimeout(() => {
         pendingCallbacks.delete(id);
         terminateAndResetWorker();
         reject(
           new Error(
-            "Tempo limite de execução excedido (6s). Verifique se há um loop infinito (ex: while True sem break)."
+            lang === "en"
+              ? "Execution timeout exceeded (6s). Check for an infinite loop (e.g. while True without break)."
+              : "Tempo limite de execução excedido (6s). Verifique se há um loop infinito (ex: while True sem break)."
           )
         );
       }, timeoutMs);
@@ -310,17 +342,22 @@ function callWorker<T>(
 }
 
 export async function initPython(): Promise<boolean> {
+  const localBaseUrl =
+    typeof window !== "undefined" && window.location.origin.startsWith("http")
+      ? `${window.location.origin}/pyodide/`
+      : undefined;
   // Inicialização pode baixar o runtime Pyodide da CDN na 1ª vez, então sem timeout curto
-  await callWorker("INIT", {}, null);
+  await callWorker("INIT", { localBaseUrl }, null);
   return true;
 }
 
 export async function runPythonCode(
   code: string,
-  setupCode: string = ""
+  setupCode: string = "",
+  lang: AppLanguage = getSavedLanguage()
 ): Promise<PythonResult> {
   try {
-    return await callWorker<PythonResult>("RUN_CODE", { code, setupCode });
+    return await callWorker<PythonResult>("RUN_CODE", { code, setupCode, lang });
   } catch (err: any) {
     return {
       success: false,
@@ -332,13 +369,15 @@ export async function runPythonCode(
 
 export async function validatePythonChallenge(
   userCode: string,
-  challenge: { setupCode: string; testCode: string; expectedOutput: string }
+  challenge: { setupCode: string; testCode: string; expectedOutput: string },
+  lang: AppLanguage = getSavedLanguage()
 ): Promise<{ correct: boolean; feedback: string; output: string }> {
   try {
     return await callWorker<{ correct: boolean; feedback: string; output: string }>(
       "VALIDATE_CHALLENGE",
       {
         userCode,
+        lang,
         challenge: {
           setupCode: challenge.setupCode,
           testCode: challenge.testCode,
@@ -349,7 +388,7 @@ export async function validatePythonChallenge(
   } catch (err: any) {
     return {
       correct: false,
-      feedback: `Erro de execução: ${err.message}`,
+      feedback: lang === "en" ? `Execution error: ${err.message}` : `Erro de execução: ${err.message}`,
       output: "",
     };
   }
@@ -358,13 +397,15 @@ export async function validatePythonChallenge(
 export async function runBossExecution(
   accumulatedSetup: string,
   userCode: string,
-  objectives: { label: string; check: string }[]
+  objectives: { label: string; check: string }[],
+  lang: AppLanguage = getSavedLanguage()
 ): Promise<BossExecutionResult> {
   try {
     return await callWorker<BossExecutionResult>("RUN_BOSS", {
       accumulatedSetup,
       userCode,
       objectives,
+      lang,
     });
   } catch (err: any) {
     return {

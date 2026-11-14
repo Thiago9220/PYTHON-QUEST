@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { VAULT_DICIONARIOS_BOSS } from "../bosses/vault_dicionarios";
 
 export const CRIPTA_DICIONARIOS_WORLD: World = {
   id: "cripta-dicionarios",
@@ -9,6 +10,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
   bgImage: "/assets/images/worlds/dictionaries.png",
   lore: "Na Cripta Hash, as informações não são sequenciais. Aqui, os dados são mapeados em pares de chave e valor, garantindo acesso instantâneo. Domine Dicionários e Conjuntos para otimizar a velocidade de busca na rede.",
   unlockRequirement: 0,
+  boss: VAULT_DICIONARIOS_BOSS,
   challenges: [
     {
       id: "py-dict-01",

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Skull, ChevronRight, X } from "lucide-react";
 import { BossChallenge } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   boss: BossChallenge;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) {
+  const { t } = useLanguage();
   const [revealed, setRevealed] = useState(0);
 
   useEffect(() => {
@@ -74,10 +76,10 @@ export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) 
                   className="text-[10px] font-black uppercase tracking-[0.35em]"
                   style={{ color: themeColor }}
                 >
-                  // Boss Encounter
+                  {t("bossEncounterTag")}
                 </div>
                 <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">
-                  Classified Operation
+                  {t("bossClassifiedOp")}
                 </div>
               </div>
             </div>
@@ -107,13 +109,13 @@ export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) 
             <div className="grid grid-cols-3 gap-3 mb-8">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  Atos
+                  {t("bossActsLabel")}
                 </div>
                 <div className="text-2xl font-black text-white">{boss.acts.length}</div>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  XP Reward
+                  {t("bossXpRewardLabel")}
                 </div>
                 <div className="text-2xl font-black" style={{ color: themeColor }}>
                   {boss.xpReward.toLocaleString()}
@@ -121,7 +123,7 @@ export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) 
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                  Tempo Est.
+                  {t("bossEstTimeLabel")}
                 </div>
                 <div className="text-2xl font-black text-white">~30m</div>
               </div>
@@ -133,7 +135,7 @@ export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) 
                 variant="ghost"
                 className="flex-1 h-12 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-black uppercase tracking-widest text-[10px] border border-white/10"
               >
-                Recusar Missão
+                {t("bossDeclineBtn")}
               </Button>
               <Button
                 onClick={onAccept}
@@ -141,7 +143,7 @@ export function BossIntroModal({ boss, themeColor, onAccept, onCancel }: Props) 
                 className="flex-1 h-12 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg transition disabled:opacity-50"
                 style={{ backgroundColor: themeColor }}
               >
-                Aceitar Operação <ChevronRight className="w-4 h-4 ml-2" />
+                {t("bossAcceptBtn")} <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { soundManager } from "@/lib/sounds";
+import { getSavedLanguage } from "./LanguageContext";
 
 export type PomodoroMode = "focus" | "shortBreak" | "longBreak";
 
@@ -77,20 +78,25 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
     soundManager.playAchievement();
 
     const currentMode = modeRef.current;
+    const isEn = getSavedLanguage() === "en";
     if (currentMode === "focus") {
       const next = completedFocusRef.current + 1;
       setCompletedFocus(next);
       const nextMode: PomodoroMode = next % 4 === 0 ? "longBreak" : "shortBreak";
-      toast.success("É hora de descansar, guerreiro!", {
-        description: `Você concluiu uma sessão de foco. Tempo para ${
-          nextMode === "longBreak" ? "uma pausa longa" : "uma pausa curta"
-        }.`,
+      toast.success(isEn ? "Time to take a break, warrior!" : "É hora de descansar, guerreiro!", {
+        description: isEn
+          ? `You finished a focus session. Time for a ${nextMode === "longBreak" ? "long break" : "short break"}.`
+          : `Você concluiu uma sessão de foco. Tempo para ${
+              nextMode === "longBreak" ? "uma pausa longa" : "uma pausa curta"
+            }.`,
       });
       setMode(nextMode);
       setSecondsLeft(POMODORO_DURATIONS[nextMode]);
     } else {
-      toast.success("Pausa concluída!", {
-        description: "Volte ao foco quando estiver pronto, guerreiro.",
+      toast.success(isEn ? "Break finished!" : "Pausa concluída!", {
+        description: isEn
+          ? "Get back to focus when you're ready, warrior."
+          : "Volte ao foco quando estiver pronto, guerreiro.",
       });
       setMode("focus");
       setSecondsLeft(POMODORO_DURATIONS.focus);

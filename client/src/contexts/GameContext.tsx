@@ -27,6 +27,8 @@ import {
   persistSteamSaveSnapshot,
   notifySteamAchievement,
 } from "@/lib/platform";
+import { getSavedLanguage } from "./LanguageContext";
+import { getLocalizedAchievement } from "@/lib/i18n/localize";
 
 type GameContextType = {
   state: GameState;
@@ -485,11 +487,13 @@ export function GameProvider({
           queueTimerRef.current = null;
           return;
         }
-        const ach = ACHIEVEMENTS_ROOT.find(a => a.id === nextId);
-        if (ach) {
+        const rawAch = ACHIEVEMENTS_ROOT.find(a => a.id === nextId);
+        if (rawAch) {
+          const lang = getSavedLanguage();
+          const ach = getLocalizedAchievement(rawAch, lang);
           soundManager.playAchievement();
           
-          toast(`Conquista Desbloqueada: ${ach.title}`, {
+          toast(`${lang === "en" ? "Achievement Unlocked:" : "Conquista Desbloqueada:"} ${ach.title}`, {
             description: ach.description,
             icon: ach.icon.startsWith("/") ? (
               <img 
@@ -552,7 +556,7 @@ export function GameProvider({
     if (isSteamMode()) {
       dispatch({ type: "RESET_STATE" });
       await persistSteamSaveSnapshot({ state: INITIAL_STATE, purchasedWorlds: [] });
-      toast.success("Progresso local da Steam zerado!");
+      toast.success(getSavedLanguage() === "en" ? "Local Steam progress reset!" : "Progresso local da Steam zerado!");
       return;
     }
     try {

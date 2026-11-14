@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { ORACULO_FUNCOES_BOSS } from "../bosses/oraculo_funcoes";
 
 export const FLORESTA_FUNCOES_WORLD: World = {
   id: "floresta-funcoes",
@@ -9,6 +10,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
   bgImage: "/assets/images/worlds/functions.png",
   lore: "No Repositório Central, os Hackers aprendem a otimizar scripts encapsulando rotinas em blocos reutilizáveis chamados Funções.",
   unlockRequirement: 0,
+  boss: ORACULO_FUNCOES_BOSS,
   challenges: [
     {
       id: "py-func-01",

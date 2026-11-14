@@ -3,6 +3,7 @@ import { BookOpen, ClipboardList, Lightbulb, ChevronLeft, ChevronRight } from "l
 import { motion } from "framer-motion";
 import { Challenge } from "@/lib/types";
 import { ConceptExplanation } from "./ConceptExplanation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   challenge: Challenge;
@@ -19,6 +20,7 @@ export function MissionPanel({
   themeColor = "#0ea5e9", 
   hintsUsed = 0,
 }: Props) {
+  const { t } = useLanguage();
   return (
     <div id="arena-mission" className="flex flex-col glass-dark overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl">
       <div className="flex bg-slate-900/60 border-b border-white/5 backdrop-blur-md">
@@ -31,7 +33,7 @@ export function MissionPanel({
           }}
         >
           <ClipboardList size={14} className={activeTab === "mission" ? "" : "text-slate-600"} />
-          Missão
+          {t("missionTab")}
         </button>
         <button
           onClick={() => setActiveTab("concept")}
@@ -42,7 +44,7 @@ export function MissionPanel({
           }}
         >
           <BookOpen size={14} className={activeTab === "concept" ? "" : "text-slate-600"} />
-          Conceito
+          {t("conceptTab")}
         </button>
       </div>
 
@@ -52,7 +54,7 @@ export function MissionPanel({
             <div className="relative">
               <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-3 flex items-center gap-2" style={{ color: themeColor }}>
                 <span className="h-1 w-3 rounded-full" style={{ backgroundColor: themeColor }} />
-                Contexto Narrativo
+                {t("narrativeLabel")}
               </h3>
               <p className="text-slate-300 leading-relaxed text-sm font-medium pl-5 border-l border-white/10 italic">
                 "{challenge.narrative}"
@@ -64,7 +66,7 @@ export function MissionPanel({
                 className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity"
                 style={{ backgroundImage: `linear-gradient(to bottom right, ${themeColor}, transparent)` }}
               />
-              <h3 className="text-white/50 text-[9px] font-black uppercase tracking-[0.25em] mb-2">Diretriz do Operador</h3>
+              <h3 className="text-white/50 text-[9px] font-black uppercase tracking-[0.25em] mb-2">{t("operatorDirectiveLabel")}</h3>
               <p className="text-white leading-relaxed font-bold text-base tracking-tight">{challenge.description}</p>
             </div>
 
@@ -85,6 +87,7 @@ export function MissionPanel({
 }
 
 function HintCarousel({ hints }: { hints: { text: string }[] }) {
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(hints.length - 1);
 
   // Update index when new hint arrives
@@ -110,7 +113,7 @@ function HintCarousel({ hints }: { hints: { text: string }[] }) {
             <Lightbulb className="text-amber-400" size={14} />
           </div>
           <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
-            Arquivo de Ajuda {currentIndex + 1} de {hints.length}
+            {t("hintsHeader")} {currentIndex + 1} {t("of")} {hints.length}
           </span>
         </div>
         

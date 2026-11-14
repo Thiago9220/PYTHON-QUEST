@@ -8,6 +8,8 @@
     "build": "npm --prefix client run build",
     "steam:window": "npm --prefix client run steam:window",
     "steam:build": "npm --prefix client run steam:build",
+    "steam:exe": "npm --prefix client run steam:exe",
+    "steam:installer": "npm --prefix client run steam:installer",
     "preview": "npm --prefix client run preview -- --host",
     "check": "tsc --project client/tsconfig.json --noEmit",
     "format": "prettier --write ."

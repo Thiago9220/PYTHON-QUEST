@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { NETWORK_CODEX_I18N, type CodexTabId } from "@/lib/i18n/network_en";
 
 type Props = {
   isOpen: boolean;
@@ -16,57 +18,20 @@ type Props = {
   primaryColor?: "cyan" | "rose" | "emerald" | "sky" | "amber";
 };
 
-type TabId = "net101" | "recon" | "scanning" | "exploitation" | "post_ex" | "defense";
+type TabId = CodexTabId;
 
-const TABS = [
-  { id: "net101", title: "Redes 101", icon: Wifi },
-  { id: "recon", title: "Reconhecimento", icon: Radar },
-  { id: "scanning", title: "Escaneamento", icon: Search },
-  { id: "exploitation", title: "Exploração", icon: Flame },
-  { id: "post_ex", title: "Pós-Acesso", icon: Crosshair },
-  { id: "defense", title: "Defesa (Blue)", icon: Shield },
+const TAB_DEFS = [
+  { id: "net101", icon: Wifi },
+  { id: "recon", icon: Radar },
+  { id: "scanning", icon: Search },
+  { id: "exploitation", icon: Flame },
+  { id: "post_ex", icon: Crosshair },
+  { id: "defense", icon: Shield },
 ] as const;
 
-const RITUALS = {
-  net101: [
-    { title: "ifconfig / ip a", desc: "Mostra seu endereço IP local e interfaces de rede.", code: "ifconfig" },
-    { title: "Gateway Padrão", desc: "O IP do roteador que te conecta ao mundo externo.", code: "192.168.1.1" },
-    { title: "DNS (Domain Name System)", desc: "Traduz nomes legíveis (google.com) em IPs numéricos.", code: "nslookup google.com" },
-    { title: "Subnetting", desc: "Define o tamanho da rede. /24 significa 254 IPs possíveis.", code: "192.168.1.0/24" },
-  ],
-  recon: [
-    { title: "ping", desc: "Verifica se um host está vivo e medindo a latência.", code: "ping 192.168.1.1" },
-    { title: "traceroute", desc: "Mapeia todos os saltos (roteadores) entre você e o alvo.", code: "traceroute 8.8.8.8" },
-    { title: "whois", desc: "Consulta informações de registro de um domínio externo.", code: "whois corp.local" },
-    { title: "dig", desc: "Interroga servidores DNS por registros específicos (A, MX, TXT).", code: "dig TXT corp.local" },
-  ],
-  scanning: [
-    { title: "nmap -sn", desc: "Ping sweep: descobre quais hosts estão ligados na rede sem scaneá-los.", code: "nmap -sn 192.168.1.0/24" },
-    { title: "nmap -sV", desc: "Scan de Versão: tenta descobrir qual software e versão rodam em cada porta.", code: "nmap -sV 192.168.1.50" },
-    { title: "nmap -A", desc: "Scan Agressivo: habilita detecção de OS, versão e scripts padrão.", code: "nmap -A 192.168.1.100" },
-    { title: "nmap --script vuln", desc: "Verifica automaticamente se o alvo possui vulnerabilidades conhecidas.", code: "nmap --script vuln 192.168.1.100" },
-  ],
-  exploitation: [
-    { title: "nc (Netcat)", desc: "O 'canivete suíço' da rede. Conecta, escuta e transfere dados.", code: "nc 192.168.1.100 21" },
-    { title: "hydra", desc: "Ferramenta de força bruta para quebrar senhas de SSH, HTTP, FTP, etc.", code: "hydra -l admin -P rockyou.txt ssh://192.168.1.50" },
-    { title: "smbclient", desc: "Interage com compartilhamentos de arquivos do Windows (SMB).", code: "smbclient -L //192.168.1.100 -N" },
-    { title: "searchsploit", desc: "Busca exploits conhecidos no banco de dados do Exploit-DB.", code: "searchsploit vsftpd 2.3.4" },
-  ],
-  post_ex: [
-    { title: "sudo -l", desc: "Lista quais comandos seu usuário atual pode rodar como root.", code: "sudo -l" },
-    { title: "find SUID", desc: "Busca arquivos com a flag SUID que podem levar a escalação de privilégio.", code: "find / -perm -4000 2>/dev/null" },
-    { title: "GTFOBins", desc: "Técnica para abusar de binários legítimos para ganhar shell de root.", code: "sudo find . -exec /bin/sh \\; -quit" },
-    { title: "Looting", desc: "Buscar por arquivos sensíveis: .env, .bash_history, backups, chaves SSH.", code: "cat /home/user/.bash_history" },
-  ],
-  defense: [
-    { title: "iptables", desc: "Configura as regras de firewall do kernel Linux.", code: "iptables -A INPUT -p tcp --dport 22 -j DROP" },
-    { title: "tcpdump", desc: "Captura e analisa pacotes de rede em tempo real no terminal.", code: "tcpdump -i eth0 host 192.168.1.50" },
-    { title: "netstat", desc: "Lista todas as conexões ativas e portas abertas no seu sistema.", code: "netstat -tuln" },
-    { title: "wireshark", desc: "Analisador visual de tráfego de rede (GUI para arquivos .pcap).", code: "wireshark" },
-  ]
-};
-
 export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor = "cyan" }: Props) {
+  const { lang } = useLanguage();
+  const copy = NETWORK_CODEX_I18N[lang];
   const [activeTab, setActiveTab] = useState<TabId>("net101");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -153,7 +118,7 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success("Copiado para o clipboard.");
+    toast.success(copy.copiedToast);
   };
 
   const renderContent = () => {
@@ -166,21 +131,21 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                 <NetworkIcon size={120} />
               </div>
               <h3 className="text-2xl font-black text-white flex items-center gap-3 mb-4 relative font-serif">
-                <Globe className={colors.text} /> O Sistema Nervoso Digital
+                <Globe className={colors.text} /> {copy.net101.heading}
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium text-lg relative">
-                Toda invasão ou defesa começa com a compreensão de como os dados viajam. Uma rede é um conjunto de dispositivos (nós) conversando via protocolos padronizados.
+                {copy.net101.intro}
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-6 border border-white/5 rounded-2xl bg-white/5">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-sky-400 mb-3">IP (Internet Protocol)</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">Seu endereço na rede. No IPv4, são 4 números de 0 a 255. IPs privados (ex: 192.168.x.x) não são roteáveis na internet pública.</p>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-sky-400 mb-3">{copy.net101.ipTitle}</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">{copy.net101.ipDesc}</p>
               </div>
               <div className="p-6 border border-white/5 rounded-2xl bg-white/5">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-3">Portas (Serviços)</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">Imagine o IP como o prédio e a Porta como o apartamento. Cada serviço (Web, SSH, DB) escuta em uma porta específica.</p>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-3">{copy.net101.portsTitle}</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">{copy.net101.portsDesc}</p>
               </div>
             </div>
           </div>
@@ -191,15 +156,8 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
       case "exploitation":
       case "post_ex":
       case "defense":
-        const rituals = RITUALS[activeTab as keyof typeof RITUALS];
-        const tabDescriptions: Record<string, string> = {
-          recon: "Mapeie o terreno externo antes de qualquer ação direta. Silêncio é a chave.",
-          scanning: "Várzea as portas do alvo para descobrir serviços, versões e falhas óbvias.",
-          exploitation: "O momento da brecha. Use ferramentas para ganhar acesso inicial ao sistema.",
-          post_ex: "Você entrou. Agora escale privilégios e vasculhe por informações críticas.",
-          defense: "Proteja seu ambiente: monitore tráfego, filtre pacotes e aplique hardening."
-        };
-        const tabDesc = tabDescriptions[activeTab];
+        const rituals = copy.rituals[activeTab];
+        const tabDesc = copy.tabDescriptions[activeTab];
 
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -220,7 +178,7 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                           onSendToTerminal(r.code);
                           onClose();
                         }} className={`h-8 ${colors.accent} text-white text-[10px] font-black uppercase tracking-widest px-3 rounded-lg shadow-lg ${colors.shadow}`}>
-                          <Play size={12} className="mr-1.5" /> Injetar
+                          <Play size={12} className="mr-1.5" /> {copy.injectBtn}
                         </Button>
                       )}
                     </div>
@@ -262,11 +220,11 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                 <div className={`w-12 h-12 rounded-xl border ${colors.border.replace('20', '30')} ${colors.bg.replace('5', '10')} flex items-center justify-center ${colors.text}`}>
                   <Wifi className="w-6 h-6" />
                 </div>
-                <h2 className="text-3xl font-black text-white font-mono tracking-tight uppercase leading-none">Rede.<span className={colors.text}>{primaryColor === 'rose' ? 'Sec' : 'Ops'}</span></h2>
+                <h2 className="text-3xl font-black text-white font-mono tracking-tight uppercase leading-none">{copy.brandPrefix}<span className={colors.text}>{primaryColor === 'rose' ? 'Sec' : 'Ops'}</span></h2>
               </div>
               
               <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2">
-                {TABS.map((tab) => {
+                {TAB_DEFS.map((tab) => {
                   const isActive = activeTab === tab.id;
                   const Icon = tab.icon;
                   return (
@@ -280,7 +238,7 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                       }`}
                     >
                       <Icon size={18} className={isActive ? "text-white" : colors.text} />
-                      <span className="font-bold text-[15px]">{tab.title}</span>
+                      <span className="font-bold text-[15px]">{copy.tabs[tab.id]}</span>
                     </button>
                   );
                 })}
@@ -289,7 +247,7 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
               <div className="p-6 mt-auto border-t border-white/5 hidden md:block">
                 <div className={`flex items-center gap-3 ${colors.text} opacity-50 hover:opacity-100 transition-colors cursor-default`}>
                   <Terminal className="w-4 h-4 shrink-0" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Network Intercept Active</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{copy.interceptActive}</span>
                 </div>
               </div>
             </div>
@@ -300,16 +258,16 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
                     {(() => {
-                      const ActiveIcon = TABS.find(t => t.id === activeTab)?.icon || BookOpen;
+                      const ActiveIcon = TAB_DEFS.find(t => t.id === activeTab)?.icon || BookOpen;
                       return <ActiveIcon size={20} />;
                     })()}
                   </div>
                   <div>
                     <h2 className="text-3xl font-black text-white font-mono tracking-tight">
-                      {TABS.find(t => t.id === activeTab)?.title}
+                      {copy.tabs[activeTab]}
                     </h2>
                     <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${colors.text} opacity-50 mt-1`}>
-                      {primaryColor === 'rose' ? 'SOC & Pentest Protocol' : 'Manual de Rede & Pentest'}
+                      {primaryColor === 'rose' ? copy.subtitleRose : copy.subtitleDefault}
                     </p>
                   </div>
                 </div>
@@ -329,7 +287,7 @@ export function NetworkCodex({ isOpen, onClose, onSendToTerminal, primaryColor =
                   onClick={onClose}
                   className={`${colors.accent} text-white font-black px-8 py-6 rounded-xl ${colors.glow} transition-all hover:scale-105 active:scale-95 text-sm`}
                 >
-                  Fechar Manual
+                  {copy.closeBtn}
                 </Button>
               </div>
             </div>

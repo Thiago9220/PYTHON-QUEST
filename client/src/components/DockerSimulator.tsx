@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DockerCodex } from "./DockerCodex";
+import { useLanguage, type AppLanguage } from "@/contexts/LanguageContext";
+import { DOCKER_SIM_EN } from "@/lib/i18n/docker_en";
 
 interface Props {
   onBack: () => void;
@@ -73,7 +75,7 @@ interface LevelDef {
   id: number;
   title: string;
   briefing: string;
-  starter: () => State;
+  starter: (lang?: AppLanguage) => State;
   missions: { id: string; title: string; hint: string; check: (s: State) => boolean }[];
 }
 
@@ -280,7 +282,7 @@ const LEVELS: LevelDef[] = [
     id: 5,
     title: "Container Quebrado: Debug Real",
     briefing: "Subiu pra produção e o site não responde. Você não tem acesso ao código — só ao Docker. Use 'docker ps -a', 'docker logs' e 'docker inspect' pra descobrir o que deu errado, mate o container quebrado e suba a versão correta.",
-    starter: () => {
+    starter: (lang?: AppLanguage) => {
       const s = baseState();
       // pré-popular nginx (já foi pulled em algum momento)
       const nginxImg = REGISTRY_BASE.find((i) => i.name === "nginx" && i.tag === "latest")!;
@@ -298,7 +300,7 @@ const LEVELS: LevelDef[] = [
         env: { EXPECTED_PORT: "8080", DEPLOYED_BY: "ci-pipeline", APP_VERSION: "v1.2.3" },
         network: "bridge",
         createdAt: Date.now() - 1000 * 60 * 8,
-        logs: [
+        logs: lang === "en" ? [...DOCKER_SIM_EN.starterLogs.level5] : [
           "[INFO] starting nginx 1.25",
           "[INFO] using configuration from /etc/nginx/nginx.conf",
           "[WARN] EXPECTED_PORT=8080 mas mapeamento foi sobrescrito para 81",
@@ -480,9 +482,9 @@ const LEVELS: LevelDef[] = [
     id: 9,
     title: "Multi-stage Build: Imagem Enxuta",
     briefing: "Imagens grandes são lentas pra deployar e custam armazenamento. Multi-stage build resolve isso: você usa uma imagem 'gorda' para compilar e descarta TUDO, copiando só o artefato final pra uma imagem mínima. Edite o Dockerfile, faça o build e veja o tamanho despencar.",
-    starter: () => {
+    starter: (lang?: AppLanguage) => {
       const s = baseState();
-      s.dockerfile = `# STAGE 1: builder — compila o app
+      s.dockerfile = lang === "en" ? DOCKER_SIM_EN.starterLogs.level9Dockerfile : `# STAGE 1: builder — compila o app
 FROM node:20 AS builder
 WORKDIR /app
 COPY package.json .
@@ -590,7 +592,7 @@ CMD ["node", "server.js"]
     id: 11,
     title: "Boas Práticas & System Prune",
     briefing: "Última missão: você herdou um ambiente sujo cheio de containers parados, imagens dangling e volumes órfãos comendo disco. Limpe a casa com system prune e termine entendendo por que escolher 'alpine' ao invés de 'latest' importa em produção.",
-    starter: () => {
+    starter: (lang?: AppLanguage) => {
       const s = baseState();
       // Pré-popular sujeira: imagens grandes + containers parados + volumes órfãos
       s.images.push({ ...REGISTRY_BASE.find((i) => i.name === "node" && i.tag === "20")! });
@@ -598,12 +600,12 @@ CMD ["node", "server.js"]
       s.containers.push({
         id: "deadc0de1234", name: "ctr_morto", imageRef: "legado:old", command: "(default)",
         status: "stopped", ports: [], volumes: [], env: {}, network: "bridge",
-        createdAt: Date.now() - 1000 * 60 * 60 * 24, logs: ["[INFO] saiu com código 1"],
+        createdAt: Date.now() - 1000 * 60 * 60 * 24, logs: lang === "en" ? [...DOCKER_SIM_EN.starterLogs.level11Dead] : ["[INFO] saiu com código 1"],
       });
       s.containers.push({
         id: "ghostc0de999", name: "ctr_zumbi", imageRef: "legado:old", command: "(default)",
         status: "stopped", ports: [], volumes: [], env: {}, network: "bridge",
-        createdAt: Date.now() - 1000 * 60 * 60 * 12, logs: ["[INFO] saiu com código 0"],
+        createdAt: Date.now() - 1000 * 60 * 60 * 12, logs: lang === "en" ? [...DOCKER_SIM_EN.starterLogs.level11Ghost] : ["[INFO] saiu com código 0"],
       });
       s.volumes.push({ name: "vol_orfao", driver: "local", mountpoint: "/var/lib/docker/volumes/vol_orfao/_data", createdAt: Date.now() - 1000 * 60 * 60 * 48 });
       return s;
@@ -644,6 +646,24 @@ CMD ["node", "server.js"]
 ];
 
 export function DockerSimulator({ onBack }: Props) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
+  const localizedLevels = LEVELS.map((lv) => {
+    if (!isEn) return lv;
+    const enLv = DOCKER_SIM_EN.levels[lv.id];
+    if (!enLv) return lv;
+    return {
+      ...lv,
+      title: enLv.title,
+      briefing: enLv.briefing,
+      missions: lv.missions.map((m) => ({
+        ...m,
+        title: enLv.missions[m.id]?.title ?? m.title,
+        hint: enLv.missions[m.id]?.hint ?? m.hint,
+      })),
+    };
+  });
+
   const [phase, setPhase] = useState<"intro" | "playing">(() => {
     return localStorage.getItem("docker_sim_intro_seen") ? "playing" : "intro";
   });
@@ -651,11 +671,11 @@ export function DockerSimulator({ onBack }: Props) {
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
   const [completed, setCompleted] = useState<Set<number>>(new Set());
-  const [state, setState] = useState<State>(() => LEVELS[0].starter());
+  const [state, setState] = useState<State>(() => LEVELS[0].starter(lang));
   const [missionIdx, setMissionIdx] = useState(0);
-  const [lines, setLines] = useState<Line[]>([
-    { type: "info", text: "Docker Simulator iniciado. Digite 'help' para ver os comandos." },
-    { type: "info", text: "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar o Docker Desktop (docker.com)." },
+  const [lines, setLines] = useState<Line[]>(() => [
+    { type: "info", text: isEn ? DOCKER_SIM_EN.terminal.initLine1 : "Docker Simulator iniciado. Digite 'help' para ver os comandos." },
+    { type: "info", text: isEn ? DOCKER_SIM_EN.terminal.initLine2 : "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar o Docker Desktop (docker.com)." },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -668,7 +688,7 @@ export function DockerSimulator({ onBack }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const level = LEVELS[levelIdx];
+  const level = localizedLevels[levelIdx];
   const mission = level.missions[missionIdx];
   const levelDone = missionIdx >= level.missions.length;
 
@@ -698,24 +718,25 @@ export function DockerSimulator({ onBack }: Props) {
   useEffect(() => {
     if (levelDone || !mission) return;
     if (mission.check(state)) {
-      setLines((l) => [...l, { type: "ok", text: `[+] Missão concluída: ${mission.title}` }]);
+      setLines((l) => [...l, { type: "ok", text: isEn ? DOCKER_SIM_EN.terminal.missionCompleted(mission.title) : `[+] Missão concluída: ${mission.title}` }]);
       const next = missionIdx + 1;
       if (next >= level.missions.length) {
-        setLines((l) => [...l, { type: "ok", text: `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===` }]);
+        setLines((l) => [...l, { type: "ok", text: isEn ? DOCKER_SIM_EN.terminal.levelCompleted(level.id, level.title) : `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===` }]);
         setCompleted((s) => new Set(s).add(levelIdx));
-        if (levelIdx + 1 < LEVELS.length) setUnlocked((s) => new Set(s).add(levelIdx + 1));
+        if (levelIdx + 1 < localizedLevels.length) setUnlocked((s) => new Set(s).add(levelIdx + 1));
       }
       setMissionIdx(next);
     }
   }, [state]);
 
   const loadLevel = (idx: number) => {
+    const targetLevel = localizedLevels[idx];
     setLevelIdx(idx);
-    setState(LEVELS[idx].starter());
+    setState(targetLevel.starter(lang));
     setMissionIdx(0);
     setLines([
-      { type: "info", text: `=== NÍVEL ${LEVELS[idx].id}: ${LEVELS[idx].title} ===` },
-      { type: "info", text: LEVELS[idx].briefing },
+      { type: "info", text: isEn ? DOCKER_SIM_EN.terminal.levelHeader(targetLevel.id, targetLevel.title) : `=== NÍVEL ${targetLevel.id}: ${targetLevel.title} ===` },
+      { type: "info", text: targetLevel.briefing },
     ]);
   };
   const resetLevel = () => loadLevel(levelIdx);
@@ -794,6 +815,10 @@ export function DockerSimulator({ onBack }: Props) {
     setHistoryIdx(-1);
 
     if (cmd === "help") {
+      if (isEn) {
+        DOCKER_SIM_EN.helpLines.forEach((line) => out(line));
+        return;
+      }
       out("Comandos suportados:");
       out("  docker pull <image>[:tag]            baixa imagem do registry");
       out("  docker images                        lista imagens locais");
@@ -850,7 +875,7 @@ export function DockerSimulator({ onBack }: Props) {
       return;
     }
 
-    if (!cmd.startsWith("docker ")) { err(`comando não reconhecido: ${cmd}`); return; }
+    if (!cmd.startsWith("docker ")) { err(isEn ? DOCKER_SIM_EN.terminal.cmdNotFound(cmd) : `comando não reconhecido: ${cmd}`); return; }
     const args = cmd.slice(7).trim();
     setState((s) => execDocker(s, args, { out, err, info }) ?? s);
   };
@@ -875,7 +900,7 @@ export function DockerSimulator({ onBack }: Props) {
 
     if (args === "images") {
       io.out("REPOSITORY        TAG       IMAGE ID       SIZE");
-      if (!s.images.length) io.out("(nenhuma imagem local)");
+      if (!s.images.length) io.out(isEn ? DOCKER_SIM_EN.terminal.noLocalImages : "(nenhuma imagem local)");
       s.images.forEach((i) => io.out(`${i.name.padEnd(18)}${i.tag.padEnd(10)}${i.id.slice(0, 12).padEnd(15)}${i.size}`));
       const hasFat = s.images.some((i) => i.name === "node" && i.tag === "20");
       const hasAlpine = s.images.some((i) => i.name === "node" && /alpine/.test(i.tag));
@@ -889,7 +914,7 @@ export function DockerSimulator({ onBack }: Props) {
       const all = !!psMatch[1];
       const list = all ? s.containers : s.containers.filter((c) => c.status === "running");
       io.out("CONTAINER ID   IMAGE                 STATUS      PORTS              NAME");
-      if (!list.length) io.out("(nenhum container)");
+      if (!list.length) io.out(isEn ? DOCKER_SIM_EN.terminal.noContainers : "(nenhum container)");
       list.forEach((c) => {
         const ports = c.ports.map((p) => `${p.host}->${p.container}/tcp`).join(", ") || "—";
         io.out(`${c.id.slice(0, 12).padEnd(15)}${c.imageRef.padEnd(22)}${c.status.padEnd(12)}${ports.padEnd(19)}${c.name}`);
@@ -901,7 +926,7 @@ export function DockerSimulator({ onBack }: Props) {
     // run
     if (args.startsWith("run ") || args === "run") {
       const parsed = parseRunArgs(args.slice(3).trim());
-      if (!parsed) { io.err("docker run: imagem obrigatória"); return null; }
+      if (!parsed) { io.err(isEn ? DOCKER_SIM_EN.terminal.runImageRequired : "docker run: imagem obrigatória"); return null; }
       const [imgName, imgTag = "latest"] = parsed.image.split(":");
       let img = s.images.find((i) => i.name === imgName && i.tag === imgTag);
       if (!img) {
@@ -914,7 +939,7 @@ export function DockerSimulator({ onBack }: Props) {
       }
       const id = randId();
       const name = parsed.name ?? randName();
-      if (s.containers.some((c) => c.name === name)) { io.err(`Conflict: container name '${name}' já em uso`); return null; }
+      if (s.containers.some((c) => c.name === name)) { io.err(isEn ? DOCKER_SIM_EN.terminal.conflictContainerName(name) : `Conflict: container name '${name}' já em uso`); return null; }
       // Validar network: deve existir
       const targetNet = parsed.network ?? "bridge";
       if (!s.networks.some((n) => n.name === targetNet)) {
@@ -943,7 +968,7 @@ export function DockerSimulator({ onBack }: Props) {
         logs: [`[${new Date().toISOString()}] Started container from ${imgName}:${imgTag}${parsed.network ? ` on network ${parsed.network}` : ""}`],
       };
       next.containers.push(container);
-      io.out(parsed.detach ? id : `${id}\n(running in foreground — Ctrl+C para sair)`);
+      io.out(parsed.detach ? id : (isEn ? DOCKER_SIM_EN.terminal.runningForeground(id) : `${id}\n(running in foreground — Ctrl+C para sair)`));
       return next;
     }
 
@@ -955,7 +980,7 @@ export function DockerSimulator({ onBack }: Props) {
       if (c.autoRemove) {
         next.containers = next.containers.filter((x) => x.id !== c.id);
         io.out(c.name);
-        io.info(`(--rm: container '${c.name}' removido automaticamente)`);
+        io.info(isEn ? DOCKER_SIM_EN.terminal.autoRemoved(c.name) : `(--rm: container '${c.name}' removido automaticamente)`);
         return next;
       }
       const idx = next.containers.findIndex((x) => x.id === c.id);
@@ -992,7 +1017,7 @@ export function DockerSimulator({ onBack }: Props) {
       const force = !!rmMatch[1];
       const c = findContainer(s, rmMatch[2]);
       if (!c) { io.err(`No such container: ${rmMatch[2]}`); return null; }
-      if (c.status === "running" && !force) { io.err(`Cannot remove running container ${c.name}. Pare antes ou use -f.`); return null; }
+      if (c.status === "running" && !force) { io.err(isEn ? DOCKER_SIM_EN.terminal.cannotRemoveRunning(c.name) : `Cannot remove running container ${c.name}. Pare antes ou use -f.`); return null; }
       next.containers = next.containers.filter((x) => x.id !== c.id);
       io.out(c.name);
       return next;
@@ -1005,7 +1030,7 @@ export function DockerSimulator({ onBack }: Props) {
       const [n, t = "latest"] = ref.split(":");
       const img = s.images.find((i) => i.name === n && i.tag === t);
       if (!img) { io.err(`No such image: ${ref}`); return null; }
-      if (s.containers.some((c) => c.imageRef === `${n}:${t}`)) { io.err(`Image ${ref} está em uso por containers — remova-os primeiro`); return null; }
+      if (s.containers.some((c) => c.imageRef === `${n}:${t}`)) { io.err(isEn ? DOCKER_SIM_EN.terminal.imageInUse(ref) : `Image ${ref} está em uso por containers — remova-os primeiro`); return null; }
       next.images = next.images.filter((i) => !(i.name === n && i.tag === t));
       io.out(`Untagged: ${n}:${t}\nDeleted: ${img.id.slice(0, 12)}`);
       return next;
@@ -1019,7 +1044,7 @@ export function DockerSimulator({ onBack }: Props) {
       if (!c) { io.err(`No such container: ${logsMatch[2]}`); return null; }
       c.logs.forEach((l) => io.out(l));
       if (flag === "-f" || flag === "--follow") {
-        io.info("[seguindo logs em tempo real — Ctrl+C para sair (simulado)]");
+        io.info(isEn ? DOCKER_SIM_EN.terminal.followingLogs : "[seguindo logs em tempo real — Ctrl+C para sair (simulado)]");
       }
       if (c.name === "site_quebrado") (next as any)._loggedSiteQuebrado = true;
       return next;
@@ -1081,9 +1106,9 @@ export function DockerSimulator({ onBack }: Props) {
       const c = findContainer(s, execShellMatch[1]);
       if (!c) { io.err(`No such container: ${execShellMatch[1]}`); return null; }
       if (c.status !== "running") { io.err(`Error response from daemon: container ${c.name} is not running`); return null; }
-      io.info(`[abrindo shell em '${c.name}' — sessão simulada]`);
+      io.info(isEn ? DOCKER_SIM_EN.terminal.openingShell(c.name) : `[abrindo shell em '${c.name}' — sessão simulada]`);
       io.out(`/ # _`);
-      io.info(`(dica: 'docker exec ${c.name} <cmd>' executa um único comando — ex: 'docker exec ${c.name} env')`);
+      io.info(isEn ? DOCKER_SIM_EN.terminal.execTip(c.name) : `(dica: 'docker exec ${c.name} <cmd>' executa um único comando — ex: 'docker exec ${c.name} env')`);
       return null;
     }
     const execMatch = args.match(/^exec\s+(?:-it\s+|-i\s+|-t\s+)?(\S+)\s+(.+)$/);
@@ -1123,9 +1148,9 @@ export function DockerSimulator({ onBack }: Props) {
         if (!target) {
           io.err(`ping: bad address '${targetName}'`);
         } else if (target.network !== c.network) {
-          io.err(`ping: bad address '${targetName}' — não está na mesma network ('${c.network}' vs '${target.network}')`);
+          io.err(isEn ? DOCKER_SIM_EN.terminal.pingDifferentNet(targetName, c.network, target.network) : `ping: bad address '${targetName}' — não está na mesma network ('${c.network}' vs '${target.network}')`);
         } else if (!isCustomNet) {
-          io.err(`ping: bad address '${targetName}' — DNS interno só funciona em networks customizadas (você está em 'bridge')`);
+          io.err(isEn ? DOCKER_SIM_EN.terminal.pingBridgeOnly(targetName) : `ping: bad address '${targetName}' — DNS interno só funciona em networks customizadas (você está em 'bridge')`);
         } else {
           const ip = `172.18.0.${(parseInt(target.id.slice(0, 4), 16) % 250) + 2}`;
           io.out(`PING ${targetName} (${ip}): 56 data bytes`);
@@ -1136,14 +1161,14 @@ export function DockerSimulator({ onBack }: Props) {
           if (targetName === "db") (next as any)._pingedDb = true;
         }
       }
-      else io.out(`(simulado) ${command}`);
+      else io.out(isEn ? DOCKER_SIM_EN.terminal.simulatedCmd(command) : `(simulado) ${command}`);
       return next;
     }
 
     // build
     const buildMatch = args.match(/^build\s+-t\s+(\S+)\s+\.$/);
     if (buildMatch) {
-      if (!s.dockerfile.trim()) { io.err("Erro: nenhum Dockerfile encontrado. Edite o arquivo primeiro."); return null; }
+      if (!s.dockerfile.trim()) { io.err(isEn ? DOCKER_SIM_EN.terminal.noDockerfile : "Erro: nenhum Dockerfile encontrado. Edite o arquivo primeiro."); return null; }
       const ref = buildMatch[1];
       const [n, t = "latest"] = ref.split(":");
       const lines = s.dockerfile.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
@@ -1202,9 +1227,9 @@ export function DockerSimulator({ onBack }: Props) {
         exposedPort,
       });
       if (isMultiStage) {
-        io.out(`(multi-stage detectado: ${fromLines.length} stages, ${copyFromCount} COPY --from — imagem final enxuta)`);
+        io.out(isEn ? DOCKER_SIM_EN.terminal.multiStageDetected(fromLines.length, copyFromCount) : `(multi-stage detectado: ${fromLines.length} stages, ${copyFromCount} COPY --from — imagem final enxuta)`);
       }
-      if (isAlpineBase) io.out(`(base alpine: imagem ultra-leve — ótimo para produção)`);
+      if (isAlpineBase) io.out(isEn ? DOCKER_SIM_EN.terminal.alpineBase : `(base alpine: imagem ultra-leve — ótimo para produção)`);
       io.out(`Successfully built ${id.slice(0, 12)}`);
       io.out(`Successfully tagged ${n}:${t}`);
       // dispara animação visual de layers
@@ -1220,7 +1245,7 @@ export function DockerSimulator({ onBack }: Props) {
     // ===== docker volume * =====
     if (args === "volume ls" || args === "volume list") {
       io.out("DRIVER    VOLUME NAME");
-      if (!s.volumes.length) io.out("(nenhum volume)");
+      if (!s.volumes.length) io.out(isEn ? DOCKER_SIM_EN.terminal.noVolumes : "(nenhum volume)");
       s.volumes.forEach((v) => io.out(`${v.driver.padEnd(10)}${v.name}`));
       (next as any)._listedVolumes = true;
       return next;
@@ -1348,7 +1373,7 @@ export function DockerSimulator({ onBack }: Props) {
     // ===== docker login =====
     if (args === "login" || args.startsWith("login ")) {
       const userMatch = args.match(/^login(?:\s+(?:-u\s+)?(\S+))?/);
-      const user = userMatch?.[1] ?? "operador";
+      const user = userMatch?.[1] ?? (isEn ? DOCKER_SIM_EN.terminal.defaultUser : "operador");
       io.out(`Login Succeeded`);
       io.info(`Logged in as: ${user}`);
       next.loggedIn = user;
@@ -1366,7 +1391,7 @@ export function DockerSimulator({ onBack }: Props) {
     if (pushMatch) {
       const ref = pushMatch[1];
       const [n, t = "latest"] = ref.split(":");
-      if (!s.loggedIn) { io.err(`denied: requested access to the resource is denied — use 'docker login' primeiro`); return null; }
+      if (!s.loggedIn) { io.err(isEn ? DOCKER_SIM_EN.terminal.pushDenied : `denied: requested access to the resource is denied — use 'docker login' primeiro`); return null; }
       const img = s.images.find((i) => i.name === n && i.tag === t);
       if (!img) { io.err(`An image does not exist locally with the tag: ${ref}`); return null; }
       io.out(`The push refers to repository [docker.io/${s.loggedIn}/${n}]`);
@@ -1408,7 +1433,7 @@ export function DockerSimulator({ onBack }: Props) {
     if (args === "stats" || args === "stats --no-stream") {
       io.out("CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT     MEM %     NET I/O");
       const running = s.containers.filter((c) => c.status === "running");
-      if (!running.length) io.out("(nenhum container rodando)");
+      if (!running.length) io.out(isEn ? DOCKER_SIM_EN.terminal.noRunningContainers : "(nenhum container rodando)");
       running.forEach((c) => {
         const seed = parseInt(c.id.slice(0, 4), 16);
         const cpu = ((seed % 50) + 5).toFixed(1);
@@ -1465,14 +1490,14 @@ export function DockerSimulator({ onBack }: Props) {
       return next;
     }
 
-    io.err(`docker: '${args}' não suportado neste simulador. Use 'help'.`);
+    io.err(isEn ? DOCKER_SIM_EN.terminal.unsupportedDockerCmd(args) : `docker: '${args}' não suportado neste simulador. Use 'help'.`);
     return null;
   };
 
   const execCompose = (s: State, sub: string, io: { out: (x: string) => void; err: (x: string) => void }): State | null => {
     const next: State = JSON.parse(JSON.stringify(s));
     if (sub === "up" || sub === "up -d" || sub === "up --detach") {
-      if (!s.composeFile.trim()) { io.err("Erro: docker-compose.yml não encontrado"); return null; }
+      if (!s.composeFile.trim()) { io.err(isEn ? DOCKER_SIM_EN.terminal.noComposeFile : "Erro: docker-compose.yml não encontrado"); return null; }
       // parse rough: pegar service names após "services:"
       const services: string[] = [];
       let inServices = false;
@@ -1484,7 +1509,7 @@ export function DockerSimulator({ onBack }: Props) {
           if (m) services.push(m[1]);
         }
       });
-      if (!services.length) { io.err("Erro: nenhum serviço encontrado no compose"); return null; }
+      if (!services.length) { io.err(isEn ? DOCKER_SIM_EN.terminal.noComposeServices : "Erro: nenhum serviço encontrado no compose"); return null; }
       if (!next.networks.some((n) => n.name === "proj_default")) {
         next.networks.push({ id: randId(), name: "proj_default", driver: "bridge", scope: "local", createdAt: Date.now() });
       }
@@ -1515,7 +1540,7 @@ export function DockerSimulator({ onBack }: Props) {
       return next;
     }
     if (sub === "down") {
-      if (!s.composeUp) { io.err("Compose não está rodando"); return null; }
+      if (!s.composeUp) { io.err(isEn ? DOCKER_SIM_EN.terminal.composeNotRunning : "Compose não está rodando"); return null; }
       next.containers = next.containers.filter((c) => !c.name.startsWith("proj_"));
       next.networks = next.networks.filter((n) => n.name !== "proj_default");
       next.composeUp = false;
@@ -1527,12 +1552,12 @@ export function DockerSimulator({ onBack }: Props) {
     if (sub === "ps") {
       io.out("NAME            IMAGE              STATUS    PORTS");
       const cs = s.containers.filter((c) => c.name.startsWith("proj_"));
-      if (!cs.length) io.out("(nada rodando do compose)");
+      if (!cs.length) io.out(isEn ? DOCKER_SIM_EN.terminal.nothingRunningCompose : "(nada rodando do compose)");
       cs.forEach((c) => io.out(`${c.name.padEnd(16)}${c.imageRef.padEnd(19)}${c.status.padEnd(10)}${c.ports.map((p) => `${p.host}->${p.container}`).join(",") || "—"}`));
       (next as any)._composePs = true;
       return next;
     }
-    io.err(`docker-compose: '${sub}' não suportado.`);
+    io.err(isEn ? DOCKER_SIM_EN.terminal.unsupportedComposeCmd(sub) : `docker-compose: '${sub}' não suportado.`);
     return null;
   };
 
@@ -1555,7 +1580,7 @@ export function DockerSimulator({ onBack }: Props) {
       else if (matches.length > 1) {
         const common = longestCommonPrefix(matches);
         if (common.length > input.length) setInput(common);
-        info("Sugestões: " + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
+        info((isEn ? DOCKER_SIM_EN.terminal.suggestionsPrefix : "Sugestões: ") + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
       }
     }
   };
@@ -1569,8 +1594,9 @@ export function DockerSimulator({ onBack }: Props) {
   };
   const saveEditor = () => {
     if (!editingFile) return;
+    const filename = editingFile === "dockerfile" ? "Dockerfile" : "docker-compose.yml";
     setState((s) => ({ ...s, [editingFile === "dockerfile" ? "dockerfile" : "composeFile"]: editorContent }));
-    setLines((l) => [...l, { type: "info", text: `[editor] '${editingFile === "dockerfile" ? "Dockerfile" : "docker-compose.yml"}' salvo.` }]);
+    setLines((l) => [...l, { type: "info", text: isEn ? DOCKER_SIM_EN.terminal.editorSaved(filename) : `[editor] '${filename}' salvo.` }]);
     setEditingFile(null);
   };
 
@@ -1589,104 +1615,105 @@ export function DockerSimulator({ onBack }: Props) {
       { border: "border-pink-500/20", bg: "bg-pink-500/10", borderInner: "border-pink-500/30", text: "text-pink-400" },
       { border: "border-lime-500/20", bg: "bg-lime-500/10", borderInner: "border-lime-500/30", text: "text-lime-400" },
     ];
+    const introEn = DOCKER_SIM_EN.intro;
     const steps: { title: string; content: React.ReactNode }[] = [
       {
-        title: "Boas-vindas",
+        title: isEn ? introEn.steps.welcomeTitle : "Boas-vindas",
         content: (
           <div className="text-center pt-6">
             <div className="inline-flex p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 mb-5">
               <ContainerIcon className="w-10 h-10" />
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight">Docker Simulator</h1>
-            <p className="text-sky-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">Containerize sem dor de cabeça</p>
+            <p className="text-sky-400 font-mono text-sm uppercase tracking-[0.3em] mb-6">{isEn ? introEn.steps.welcomeSub : "Containerize sem dor de cabeça"}</p>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-              Aprenda Docker digitando comandos reais. Sem instalar Docker, sem WSL — tudo simulado no navegador. Veja imagens sendo baixadas, containers ligando, portas mapeadas e volumes persistindo.
+              {isEn ? introEn.steps.welcomeDesc : "Aprenda Docker digitando comandos reais. Sem instalar Docker, sem WSL — tudo simulado no navegador. Veja imagens sendo baixadas, containers ligando, portas mapeadas e volumes persistindo."}
             </p>
           </div>
         ),
       },
       {
-        title: "Por que Docker?",
+        title: isEn ? introEn.steps.whyTitle : "Por que Docker?",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" /> Por que Docker?
+              <Lightbulb className="w-4 h-4" /> {isEn ? introEn.steps.whyTitle : "Por que Docker?"}
             </h2>
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <Boxes className="w-6 h-6 text-sky-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">"Funciona na minha máquina"</p>
-                <p className="text-sm text-slate-400 leading-relaxed">Empacota seu app + dependências numa caixa portátil que roda igual em qualquer lugar.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? introEn.steps.whyCard1Title : '"Funciona na minha máquina"'}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">{isEn ? introEn.steps.whyCard1Desc : "Empacota seu app + dependências numa caixa portátil que roda igual em qualquer lugar."}</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <Server className="w-6 h-6 text-emerald-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">Deploy descomplicado</p>
-                <p className="text-sm text-slate-400 leading-relaxed">"Build once, run anywhere". A mesma imagem vai do laptop pro servidor sem surpresas.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? introEn.steps.whyCard2Title : "Deploy descomplicado"}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">{isEn ? introEn.steps.whyCard2Desc : '"Build once, run anywhere". A mesma imagem vai do laptop pro servidor sem surpresas.'}</p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <Layers className="w-6 h-6 text-fuchsia-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">Isolamento</p>
-                <p className="text-sm text-slate-400 leading-relaxed">Rode 5 versões diferentes de Node ou Postgres na mesma máquina sem conflitos.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? introEn.steps.whyCard3Title : "Isolamento"}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">{isEn ? introEn.steps.whyCard3Desc : "Rode 5 versões diferentes de Node ou Postgres na mesma máquina sem conflitos."}</p>
               </div>
             </div>
           </section>
         ),
       },
       {
-        title: "Imagem vs Container",
+        title: isEn ? introEn.steps.imgVsCtrTitle : "Imagem vs Container",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" /> Imagem vs Container
+              <BookOpen className="w-4 h-4" /> {isEn ? introEn.steps.imgVsCtrTitle : "Imagem vs Container"}
             </h2>
             <div className="grid md:grid-cols-2 gap-3 mb-6">
               <div className="bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5">
                 <div className="flex items-center gap-2 text-sky-400 text-sm font-bold uppercase tracking-widest mb-3">
-                  <Package className="w-3.5 h-3.5" /> Imagem (template)
+                  <Package className="w-3.5 h-3.5" /> {isEn ? introEn.steps.imgCardTitle : "Imagem (template)"}
                 </div>
-                <p className="text-base text-slate-300 leading-relaxed mb-3">Receita imutável e somente-leitura. Define qual SO, quais arquivos e qual comando rodar. Você baixa do Docker Hub ou constrói via Dockerfile.</p>
-                <p className="text-xs text-slate-500 font-mono">Estática · Versionada por tag · Compartilhável</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">{isEn ? introEn.steps.imgCardDesc : "Receita imutável e somente-leitura. Define qual SO, quais arquivos e qual comando rodar. Você baixa do Docker Hub ou constrói via Dockerfile."}</p>
+                <p className="text-xs text-slate-500 font-mono">{isEn ? introEn.steps.imgCardMeta : "Estática · Versionada por tag · Compartilhável"}</p>
               </div>
               <div className="bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5">
                 <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold uppercase tracking-widest mb-3">
-                  <ContainerIcon className="w-3.5 h-3.5" /> Container (instância)
+                  <ContainerIcon className="w-3.5 h-3.5" /> {isEn ? introEn.steps.ctrCardTitle : "Container (instância)"}
                 </div>
-                <p className="text-base text-slate-300 leading-relaxed mb-3">Processo isolado rodando a partir de uma imagem. É descartável: você pode parar, reiniciar, deletar e criar dezenas a partir da mesma imagem.</p>
-                <p className="text-xs text-slate-500 font-mono">Dinâmico · Tem estado · Efêmero</p>
+                <p className="text-base text-slate-300 leading-relaxed mb-3">{isEn ? introEn.steps.ctrCardDesc : "Processo isolado rodando a partir de uma imagem. É descartável: você pode parar, reiniciar, deletar e criar dezenas a partir da mesma imagem."}</p>
+                <p className="text-xs text-slate-500 font-mono">{isEn ? introEn.steps.ctrCardMeta : "Dinâmico · Tem estado · Efêmero"}</p>
               </div>
             </div>
             
             <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden mb-4">
               <img 
                 src="/assets/images/docker_edu.png" 
-                alt="Infográfico Educativo: Imagem vs Container" 
+                alt={isEn ? introEn.steps.infographicAlt : "Infográfico Educativo: Imagem vs Container"} 
                 className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
               />
             </div>
             
-            <p className="text-sm text-slate-500 text-center italic">Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado.</p>
+            <p className="text-sm text-slate-500 text-center italic">{isEn ? introEn.steps.analogy : "Analogia: Imagem é a classe, Container é a instância. Ou: Imagem é a receita, Container é o bolo assado."}</p>
           </section>
         ),
       },
       {
-        title: "Como tudo se conecta",
+        title: isEn ? introEn.steps.connectTitle : "Como tudo se conecta",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
-              <Network className="w-4 h-4" /> Como tudo se conecta
+              <Network className="w-4 h-4" /> {isEn ? introEn.steps.connectTitle : "Como tudo se conecta"}
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
               <div className="grid md:grid-cols-4 gap-3 items-center text-center">
                 <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-4">
                   <Cloud className="w-7 h-7 text-fuchsia-400 mx-auto mb-2" />
                   <p className="text-sm font-bold text-white">Docker Hub</p>
-                  <p className="text-xs text-slate-500 mt-1">Registry público</p>
+                  <p className="text-xs text-slate-500 mt-1">{isEn ? introEn.steps.publicRegistry : "Registry público"}</p>
                 </div>
                 <div className="text-slate-600 font-mono text-xs hidden md:block">docker pull →</div>
                 <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4">
                   <Package className="w-7 h-7 text-sky-400 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-white">Imagens Locais</p>
-                  <p className="text-xs text-slate-500 mt-1">No seu disco</p>
+                  <p className="text-sm font-bold text-white">{isEn ? introEn.steps.localImages : "Imagens Locais"}</p>
+                  <p className="text-xs text-slate-500 mt-1">{isEn ? introEn.steps.onDisk : "No seu disco"}</p>
                 </div>
                 <div className="text-slate-600 font-mono text-xs hidden md:block">docker run →</div>
               </div>
@@ -1696,7 +1723,7 @@ export function DockerSimulator({ onBack }: Props) {
                 <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
                   <ContainerIcon className="w-7 h-7 text-emerald-400 mx-auto mb-2" />
                   <p className="text-sm font-bold text-white">Containers</p>
-                  <p className="text-xs text-slate-500 mt-1">Rodando ou parados</p>
+                  <p className="text-xs text-slate-500 mt-1">{isEn ? introEn.steps.runningOrStopped : "Rodando ou parados"}</p>
                 </div>
                 <div></div>
               </div>
@@ -1705,14 +1732,14 @@ export function DockerSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Glossário",
+        title: isEn ? introEn.steps.glossaryTitle : "Glossário",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" /> Glossário rápido
+              <BookOpen className="w-4 h-4" /> {isEn ? introEn.steps.glossaryHeading : "Glossário rápido"}
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5">
-              {[
+              {(isEn ? introEn.steps.glossaryItems : [
                 { t: "Imagem", d: "Template imutável. Identificada por nome:tag (ex: nginx:latest).", c: "text-sky-300" },
                 { t: "Container", d: "Instância em execução de uma imagem. Tem ID único e status (running/stopped).", c: "text-emerald-300" },
                 { t: "Dockerfile", d: "Arquivo de receita usado pelo 'docker build' para construir uma imagem customizada.", c: "text-amber-300" },
@@ -1721,7 +1748,7 @@ export function DockerSimulator({ onBack }: Props) {
                 { t: "Volume", d: "Pasta persistente fora do container — sobrevive a stops/removes. Usado para dados.", c: "text-violet-300" },
                 { t: "Port mapping", d: "Conecta uma porta do host (-p 8080) com uma porta do container (:80) para acesso externo.", c: "text-rose-300" },
                 { t: "docker-compose", d: "Ferramenta para orquestrar múltiplos containers via um arquivo YAML único.", c: "text-pink-300" },
-              ].map((item, i) => (
+              ]).map((item, i) => (
                 <div key={i} className="flex items-start gap-3 p-4">
                   <span className={`text-sm font-bold font-mono ${item.c} min-w-[160px] pt-0.5`}>{item.t}</span>
                   <span className="text-sm text-slate-400 leading-relaxed flex-1">{item.d}</span>
@@ -1732,14 +1759,14 @@ export function DockerSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Os níveis",
+        title: isEn ? introEn.steps.levelsTitle : "Os níveis",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-6 flex items-center gap-2">
-              <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
+              <Trophy className="w-4 h-4" /> {isEn ? introEn.steps.levelsHeading(localizedLevels.length) : `Os ${localizedLevels.length} níveis`}
             </h2>
             <div className="space-y-2">
-              {LEVELS.map((lv, i) => {
+              {localizedLevels.map((lv, i) => {
                 const s = levelStyles[i] ?? levelStyles[0];
                 return (
                   <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
@@ -1756,24 +1783,24 @@ export function DockerSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Pronto para começar",
+        title: isEn ? introEn.steps.readyTitle : "Pronto para começar",
         content: (
           <section>
             <div className="bg-gradient-to-br from-sky-900/10 via-slate-900/40 to-emerald-900/10 border border-sky-500/20 rounded-2xl p-6 mb-6">
               <h2 className="text-xs font-black uppercase tracking-[0.3em] text-sky-400 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" /> Dicas do simulador
+                <Lightbulb className="w-4 h-4" /> {isEn ? introEn.steps.tipsHeading : "Dicas do simulador"}
               </h2>
               <ul className="text-sm text-slate-400 space-y-2">
-                <li>• Digite <code className="text-sky-300 font-mono">help</code> a qualquer momento para ver todos os comandos</li>
-                <li>• Use <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> para histórico e <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> para autocompletar</li>
-                <li>• Clique no <code className="text-amber-300 font-mono">Dockerfile</code> ou <code className="text-amber-300 font-mono">docker-compose.yml</code> para abrir o editor (níveis 2 e 4)</li>
-                <li>• <code className="text-sky-300 font-mono">curl localhost:&lt;porta&gt;</code> testa portas mapeadas</li>
-                <li>• <code className="text-sky-300 font-mono">reset</code> reinicia o nível, <code className="text-sky-300 font-mono">clear</code> limpa o terminal</li>
+                <li>• {isEn ? introEn.steps.tip1Pre : "Digite "}<code className="text-sky-300 font-mono">help</code>{isEn ? introEn.steps.tip1Post : " a qualquer momento para ver todos os comandos"}</li>
+                <li>• {isEn ? introEn.steps.tip2Pre : "Use "}<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd>{isEn ? introEn.steps.tip2Mid : " para histórico e "}<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd>{isEn ? introEn.steps.tip2Post : " para autocompletar"}</li>
+                <li>• {isEn ? introEn.steps.tip3Pre : "Clique no "}<code className="text-amber-300 font-mono">Dockerfile</code>{isEn ? introEn.steps.tip3Mid : " ou "}<code className="text-amber-300 font-mono">docker-compose.yml</code>{isEn ? introEn.steps.tip3Post : " para abrir o editor (níveis 2 e 4)"}</li>
+                <li>• <code className="text-sky-300 font-mono">{isEn ? introEn.steps.tip4Code : "curl localhost:<porta>"}</code>{isEn ? introEn.steps.tip4Post : " testa portas mapeadas"}</li>
+                <li>• <code className="text-sky-300 font-mono">reset</code>{isEn ? introEn.steps.tip5Mid : " reinicia o nível, "}<code className="text-sky-300 font-mono">clear</code>{isEn ? introEn.steps.tip5Post : " limpa o terminal"}</li>
               </ul>
             </div>
             <div className="text-center">
-              <p className="text-base text-slate-300 mb-1">Você está pronto.</p>
-              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Comece pelo Nível 1 — os outros desbloqueiam conforme você avança</p>
+              <p className="text-base text-slate-300 mb-1">{isEn ? introEn.steps.readyLine : "Você está pronto."}</p>
+              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">{isEn ? introEn.steps.readySub : "Comece pelo Nível 1 — os outros desbloqueiam conforme você avança"}</p>
             </div>
           </section>
         ),
@@ -1806,7 +1833,7 @@ export function DockerSimulator({ onBack }: Props) {
               localStorage.setItem("docker_sim_intro_seen", "true");
               setPhase("playing");
             }} className="text-xs text-slate-500 hover:text-sky-400 font-mono uppercase tracking-widest transition-colors">
-              Pular tour →
+              {isEn ? introEn.skipTour : "Pular tour →"}
             </button>
           </div>
 
@@ -1829,22 +1856,22 @@ export function DockerSimulator({ onBack }: Props) {
           <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-md border-t border-white/10">
             <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
               <Button variant="ghost" onClick={goPrev} disabled={introStep === 0} className="text-slate-400 hover:text-white disabled:opacity-30">
-                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> Voltar
+                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> {isEn ? introEn.back : "Voltar"}
               </Button>
               <div className="flex-1 flex flex-col items-center gap-2">
-                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} de {steps.length}</p>
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} {isEn ? introEn.of : "de"} {steps.length}</p>
                 <div className="flex gap-1.5">
                   {steps.map((_, i) => (
                     <button key={i} onClick={() => setIntroStep(i)}
                       className={`h-1.5 rounded-full transition-all ${
                         i === introStep ? "w-8 bg-sky-400" :
                         i < introStep ? "w-1.5 bg-sky-400/60" : "w-1.5 bg-slate-700"
-                      }`} aria-label={`Ir para passo ${i + 1}`} />
+                      }`} aria-label={isEn ? introEn.goToStep(i + 1) : `Ir para passo ${i + 1}`} />
                   ))}
                 </div>
               </div>
               <Button onClick={goNext} className={isLast ? "bg-sky-400 text-slate-950 hover:bg-sky-300 font-bold" : "bg-slate-800 text-white hover:bg-slate-700"}>
-                {isLast ? "Iniciar Treinamento" : "Próximo"} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
+                {isLast ? (isEn ? introEn.startTraining : "Iniciar Treinamento") : (isEn ? introEn.next : "Próximo")} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
               </Button>
             </div>
           </div>
@@ -1854,6 +1881,7 @@ export function DockerSimulator({ onBack }: Props) {
   }
 
   // ---------- Simulator ----------
+  const uiEn = DOCKER_SIM_EN.ui;
   const running = state.containers.filter((c) => c.status === "running");
   const stopped = state.containers.filter((c) => c.status === "stopped");
   const showDockerfile = !!state.dockerfile.trim();
@@ -1876,11 +1904,11 @@ export function DockerSimulator({ onBack }: Props) {
         <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
         <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-        <span className="ml-2 text-[11px] text-slate-500 font-mono">~/projeto $</span>
+        <span className="ml-2 text-[11px] text-slate-500 font-mono">{isEn ? uiEn.projectPrompt : "~/projeto $"}</span>
         <span className="hidden min-w-0 flex-1 truncate text-[10px] text-sky-300 font-mono uppercase tracking-widest sm:block">
-          {levelDone ? "nível concluído" : mission.hint}
+          {levelDone ? (isEn ? uiEn.levelDoneBadge : "nível concluído") : mission.hint}
         </span>
-        <span className="text-[10px] text-sky-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
+        <span className="text-[10px] text-sky-400 font-mono uppercase tracking-widest animate-pulse">{isEn ? uiEn.typeHere : "● digite aqui"}</span>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
         {lines.map((l, i) => (
@@ -1897,7 +1925,7 @@ export function DockerSimulator({ onBack }: Props) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             spellCheck={false} autoComplete="off"
-            placeholder={levelDone ? "Escolha o próximo nível" : mission.hint}
+            placeholder={levelDone ? (isEn ? uiEn.chooseNextLevel : "Escolha o próximo nível") : mission.hint}
             className="flex-1 bg-transparent outline-none text-white caret-sky-400 placeholder:text-slate-600 placeholder:italic" />
           <span className="w-2 h-4 bg-sky-400 animate-pulse" aria-hidden />
         </form>
@@ -1927,14 +1955,14 @@ export function DockerSimulator({ onBack }: Props) {
             </div>
             <div>
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Docker Simulator</h2>
-              <p className="text-[10px] text-sky-400 font-mono uppercase tracking-[0.2em]">Containerize sem dor de cabeça</p>
+              <p className="text-[10px] text-sky-400 font-mono uppercase tracking-[0.2em]">{isEn ? uiEn.subtitle : "Containerize sem dor de cabeça"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsManualOpen(true)} className="text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 text-xs">
-              <BookOpen className="w-4 h-4 mr-2" /> Manual
+              <BookOpen className="w-4 h-4 mr-2" /> {isEn ? uiEn.manualBtn : "Manual"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">{isEn ? uiEn.resetLevelBtn : "Reset Nível"}</Button>
           </div>
         </div>
 
@@ -1944,7 +1972,7 @@ export function DockerSimulator({ onBack }: Props) {
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-900 -translate-y-1/2 z-0" />
           
           <div className="relative z-10 flex items-center justify-between gap-2 overflow-x-auto pb-4 no-scrollbar">
-            {LEVELS.map((lv, i) => {
+            {localizedLevels.map((lv, i) => {
               const isUnlocked = unlocked.has(i);
               const isDone = completed.has(i);
               const isCurrent = i === levelIdx;
@@ -2010,7 +2038,7 @@ export function DockerSimulator({ onBack }: Props) {
             <BookOpen className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-sky-400 font-mono mb-1">Briefing do Nível {level.id}</p>
+            <p className="text-[10px] uppercase tracking-widest text-sky-400 font-mono mb-1">{isEn ? uiEn.levelBriefing(level.id) : `Briefing do Nível ${level.id}`}</p>
             <p className="text-sm text-slate-300 leading-relaxed">{level.briefing}</p>
           </div>
         </div>
@@ -2022,14 +2050,16 @@ export function DockerSimulator({ onBack }: Props) {
               <div className="w-6 h-6 rounded-full bg-sky-500/30 text-sky-300 text-xs font-bold flex items-center justify-center shrink-0">{missionIdx + 1}</div>}
             <div className="flex-1 min-w-0">
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-mono">
-                {levelDone ? `Nível ${level.id} concluído` : `Nível ${level.id} • Missão ${missionIdx + 1} de ${level.missions.length}`}
+                {levelDone
+                  ? (isEn ? uiEn.levelCompletedStatus(level.id) : `Nível ${level.id} concluído`)
+                  : (isEn ? uiEn.levelMissionProgress(level.id, missionIdx + 1, level.missions.length) : `Nível ${level.id} • Missão ${missionIdx + 1} de ${level.missions.length}`)}
               </p>
-              <p className="text-sm font-bold text-white">{levelDone ? "Avance para o próximo nível!" : mission.title}</p>
-              {!levelDone && <p className="text-xs text-slate-400 font-mono mt-0.5">Dica: <span className="text-sky-300">{mission.hint}</span></p>}
+              <p className="text-sm font-bold text-white">{levelDone ? (isEn ? uiEn.advanceNextLevel : "Avance para o próximo nível!") : mission.title}</p>
+              {!levelDone && <p className="text-xs text-slate-400 font-mono mt-0.5">{isEn ? uiEn.hintLabel : "Dica:"} <span className="text-sky-300">{mission.hint}</span></p>}
             </div>
-            {levelDone && levelIdx + 1 < LEVELS.length && (
+            {levelDone && levelIdx + 1 < localizedLevels.length && (
               <Button size="sm" onClick={() => loadLevel(levelIdx + 1)} className="bg-sky-400 text-slate-950 hover:bg-sky-300 font-bold text-xs">
-                Próximo Nível →
+                {isEn ? uiEn.nextLevelBtn : "Próximo Nível →"}
               </Button>
             )}
           </div>
@@ -2050,7 +2080,7 @@ export function DockerSimulator({ onBack }: Props) {
                 return (
                   <div key={i.name + i.tag} className={`flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded border ${local ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-slate-950/50 border-white/5 text-slate-400"}`}>
                     <span>{i.name}:{i.tag}</span>
-                    <span className="text-[10px] text-slate-500">{local ? "✓ baixada" : i.size}</span>
+                    <span className="text-[10px] text-slate-500">{local ? (isEn ? uiEn.pulledBadge : "✓ baixada") : i.size}</span>
                   </div>
                 );
               })}
@@ -2061,10 +2091,10 @@ export function DockerSimulator({ onBack }: Props) {
           <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3 text-sky-400">
               <Package className="w-4 h-4" />
-              <h5 className="text-xs font-bold uppercase tracking-widest">Imagens Locais ({state.images.length})</h5>
+              <h5 className="text-xs font-bold uppercase tracking-widest">{isEn ? uiEn.localImages(state.images.length) : `Imagens Locais (${state.images.length})`}</h5>
             </div>
             <div className="space-y-1 max-h-36 overflow-auto">
-              {state.images.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhuma imagem baixada)</p>}
+              {state.images.length === 0 && <p className="text-[11px] text-slate-600 italic">{isEn ? uiEn.noImagesPulled : "(nenhuma imagem baixada)"}</p>}
               {state.images.map((i) => (
                 <div key={i.id} className="flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded bg-slate-950/50 border border-white/5">
                   <span className="text-sky-300">{i.name}:{i.tag}</span>
@@ -2081,7 +2111,7 @@ export function DockerSimulator({ onBack }: Props) {
               <h5 className="text-xs font-bold uppercase tracking-widest">Containers</h5>
             </div>
             <div className="space-y-1 max-h-36 overflow-auto">
-              {running.length === 0 && stopped.length === 0 && <p className="text-[11px] text-slate-600 italic">(nenhum container)</p>}
+              {running.length === 0 && stopped.length === 0 && <p className="text-[11px] text-slate-600 italic">{isEn ? uiEn.noContainersPanel : "(nenhum container)"}</p>}
               {running.map((c) => (
                 <div key={c.id} className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2 text-xs font-mono">
                   <div className="flex items-center justify-between">
@@ -2141,11 +2171,11 @@ export function DockerSimulator({ onBack }: Props) {
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-sky-400">Roteiro do Nível</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-sky-400">{isEn ? uiEn.levelRoadmap : "Roteiro do Nível"}</p>
                 <h3 className="mt-1 text-sm font-black text-white">{level.title}</h3>
               </div>
               <div className="rounded-lg border border-sky-500/25 bg-sky-500/10 px-2.5 py-1 text-right">
-                <p className="text-[9px] font-mono uppercase tracking-widest text-sky-300">Progresso</p>
+                <p className="text-[9px] font-mono uppercase tracking-widest text-sky-300">{isEn ? uiEn.progressLabel : "Progresso"}</p>
                 <p className="text-base font-black text-white">{completedMissionCount}/{level.missions.length}</p>
               </div>
             </div>
@@ -2185,7 +2215,11 @@ export function DockerSimulator({ onBack }: Props) {
                     <p className={`text-[10px] font-mono uppercase tracking-widest ${
                       done ? "text-emerald-300" : current ? "text-sky-300" : "text-slate-600"
                     }`}>
-                      {done ? "concluído" : current ? "em andamento" : "próximo"}
+                      {done
+                        ? (isEn ? uiEn.statusDone : "concluído")
+                        : current
+                          ? (isEn ? uiEn.statusCurrent : "em andamento")
+                          : (isEn ? uiEn.statusUpcoming : "próximo")}
                     </p>
                   </div>
                 );
@@ -2205,11 +2239,11 @@ export function DockerSimulator({ onBack }: Props) {
               <div className="flex items-center gap-2 mb-3 text-violet-400">
                 <HardDrive className="w-4 h-4" />
                 <h5 className="text-xs font-bold uppercase tracking-widest">Volumes ({state.volumes.length})</h5>
-                <span className="ml-auto text-[10px] text-slate-600 font-mono">storage persistente</span>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">{isEn ? uiEn.volumesPersistent : "storage persistente"}</span>
               </div>
               <div className="space-y-1 max-h-32 overflow-auto">
                 {state.volumes.length === 0 && (
-                  <p className="text-[11px] text-slate-600 italic">(nenhum volume nomeado — use bind mount com -v ou crie em níveis avançados)</p>
+                  <p className="text-[11px] text-slate-600 italic">{isEn ? uiEn.noVolumesPanel : "(nenhum volume nomeado — use bind mount com -v ou crie em níveis avançados)"}</p>
                 )}
                 {state.volumes.map((v) => (
                   <div key={v.name} className="flex items-center justify-between text-xs font-mono px-2 py-1.5 rounded bg-slate-950/50 border border-violet-500/10">
@@ -2234,7 +2268,7 @@ export function DockerSimulator({ onBack }: Props) {
               <div className="flex items-center gap-2 mb-3 text-cyan-400">
                 <Network className="w-4 h-4" />
                 <h5 className="text-xs font-bold uppercase tracking-widest">Networks ({state.networks.length})</h5>
-                <span className="ml-auto text-[10px] text-slate-600 font-mono">isolamento de tráfego</span>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">{isEn ? uiEn.networksIsolation : "isolamento de tráfego"}</span>
               </div>
               <div className="space-y-1 max-h-32 overflow-auto">
                 {state.networks.map((n) => {
@@ -2265,8 +2299,8 @@ export function DockerSimulator({ onBack }: Props) {
             <div className="bg-slate-900/60 border border-cyan-500/20 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3 text-cyan-400">
                 <Network className="w-4 h-4" />
-                <h5 className="text-xs font-bold uppercase tracking-widest">Topologia da Rede</h5>
-                <span className="ml-auto text-[10px] text-slate-600 font-mono">DNS interno ativo em redes custom</span>
+                <h5 className="text-xs font-bold uppercase tracking-widest">{isEn ? uiEn.networkTopology : "Topologia da Rede"}</h5>
+                <span className="ml-auto text-[10px] text-slate-600 font-mono">{isEn ? uiEn.internalDnsActive : "DNS interno ativo em redes custom"}</span>
               </div>
               <div className="space-y-3">
                 {state.networks
@@ -2307,7 +2341,12 @@ export function DockerSimulator({ onBack }: Props) {
                         </svg>
                         {attached.length >= 2 && (
                           <p className="text-[10px] text-slate-500 italic mt-1">
-                            Containers nesta rede falam entre si pelo nome — ex: <code className="text-cyan-300">{attached[0].name}</code> alcança <code className="text-cyan-300">{attached[1].name}</code> via <code className="text-cyan-300">ping {attached[1].name}</code>
+                            {isEn ? uiEn.topologyExplain1 : "Containers nesta rede falam entre si pelo nome — ex: "}
+                            <code className="text-cyan-300">{attached[0].name}</code>
+                            {isEn ? uiEn.topologyExplain2 : " alcança "}
+                            <code className="text-cyan-300">{attached[1].name}</code>
+                            {isEn ? uiEn.topologyExplain3 : " via "}
+                            <code className="text-cyan-300">ping {attached[1].name}</code>
                           </p>
                         )}
                       </div>
@@ -2328,7 +2367,7 @@ export function DockerSimulator({ onBack }: Props) {
                   <FileCode className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-widest">{showDockerfile ? "Dockerfile" : "docker-compose.yml"}</span>
                   <span className="ml-auto text-[10px] text-slate-500 font-mono flex items-center gap-1">
-                    <Edit3 className="w-3 h-3" /> clique para editar
+                    <Edit3 className="w-3 h-3" /> {isEn ? uiEn.clickToEdit : "clique para editar"}
                   </span>
                 </div>
                 <pre className="text-[11px] text-slate-400 font-mono whitespace-pre-wrap line-clamp-6">
@@ -2351,7 +2390,7 @@ export function DockerSimulator({ onBack }: Props) {
           >
             <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/30">
               <Layers className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-300">Construindo Imagem</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-300">{isEn ? uiEn.buildingImage : "Construindo Imagem"}</span>
               {buildViz.isMultiStage && <span className="ml-auto text-[9px] font-mono text-fuchsia-300 bg-fuchsia-500/10 border border-fuchsia-500/30 px-1.5 py-0.5 rounded">multi-stage</span>}
             </div>
             <div className="p-3 space-y-1.5">
@@ -2382,10 +2421,10 @@ export function DockerSimulator({ onBack }: Props) {
                   transition={{ type: "spring", damping: 14 }}
                   className="mt-2 p-3 rounded-xl bg-gradient-to-br from-emerald-500/15 to-amber-500/10 border border-emerald-500/40 text-center"
                 >
-                  <p className="text-[9px] uppercase tracking-widest text-emerald-300 font-mono mb-1">imagem final</p>
+                  <p className="text-[9px] uppercase tracking-widest text-emerald-300 font-mono mb-1">{isEn ? uiEn.finalImage : "imagem final"}</p>
                   <p className="text-2xl font-black text-white tabular-nums">{buildViz.finalSize}</p>
                   {buildViz.isMultiStage && (
-                    <p className="text-[10px] text-emerald-400 font-mono mt-1">↓ stages descartados</p>
+                    <p className="text-[10px] text-emerald-400 font-mono mt-1">{isEn ? uiEn.stagesDiscarded : "↓ stages descartados"}</p>
                   )}
                 </motion.div>
               )}
@@ -2415,9 +2454,9 @@ export function DockerSimulator({ onBack }: Props) {
                 className="w-full h-96 bg-slate-950 text-slate-100 font-mono text-sm p-4 outline-none resize-none"
               />
               <div className="flex justify-end gap-2 px-4 py-3 border-t border-white/10 bg-slate-900">
-                <Button variant="ghost" size="sm" onClick={() => setEditingFile(null)} className="text-slate-400">Cancelar</Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditingFile(null)} className="text-slate-400">{isEn ? uiEn.cancel : "Cancelar"}</Button>
                 <Button size="sm" onClick={saveEditor} className="bg-sky-400 text-slate-950 hover:bg-sky-300 font-bold">
-                  <Save className="w-3.5 h-3.5 mr-1" /> Salvar
+                  <Save className="w-3.5 h-3.5 mr-1" /> {isEn ? uiEn.save : "Salvar"}
                 </Button>
               </div>
             </motion.div>

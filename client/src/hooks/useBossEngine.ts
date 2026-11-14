@@ -8,6 +8,7 @@ import {
 } from "@/lib/pythonEngine";
 import { soundManager } from "@/lib/sounds";
 import { BossChallenge } from "@/lib/types";
+import { getSavedLanguage } from "@/contexts/LanguageContext";
 
 export type BossEngineState = {
   pythonReady: boolean;
@@ -80,7 +81,7 @@ export function useBossEngine(
           setState((s) => ({ ...s, pythonReady: true }));
         }
       } catch {
-        toast.error("Erro ao inicializar o motor Python");
+        toast.error(getSavedLanguage() === "en" ? "Error initializing Python engine" : "Erro ao inicializar o motor Python");
       }
     }
     init();
@@ -152,13 +153,18 @@ export function useBossEngine(
         currentActIndex: nextActIndex,
         currentHintIdx: allPassed ? 0 : s.currentHintIdx,
         defeated,
-        feedback: result.success
-          ? allPassed
-            ? advancing
-              ? "Ato concluído. Avançando..."
-              : "OPERAÇÃO BLACKBOX — SUCESSO TOTAL."
-            : "Verifique os objetivos pendentes."
-          : `Erro: ${result.error ?? "execução falhou"}`,
+        feedback: (() => {
+          const isEn = getSavedLanguage() === "en";
+          if (!result.success) {
+            return `${isEn ? "Error:" : "Erro:"} ${result.error ?? (isEn ? "execution failed" : "execução falhou")}`;
+          }
+          if (allPassed) {
+            return advancing
+              ? (isEn ? "Act complete. Advancing..." : "Ato concluído. Avançando...")
+              : (isEn ? "OPERATION BLACKBOX — TOTAL SUCCESS." : "OPERAÇÃO BLACKBOX — SUCESSO TOTAL.");
+          }
+          return isEn ? "Check pending objectives." : "Verifique os objetivos pendentes.";
+        })(),
       };
     });
 

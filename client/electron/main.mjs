@@ -89,13 +89,23 @@ function getSaveFilePath() {
   return path.join(userDataDir, "steam_save.json");
 }
 
+function getAppIconPath() {
+  const candidates = [
+    path.join(__dirname, "..", "public", "assets", "images", "python-protocol-mark.png"),
+    path.join(__dirname, "..", "dist", "assets", "images", "python-protocol-mark.png"),
+  ];
+  return candidates.find((p) => fs.existsSync(p));
+}
+
   async function createWindow() {
+    const iconPath = getAppIconPath();
     mainWindow = new BrowserWindow({
       width: 1440,
       height: 900,
       minWidth: 1024,
       minHeight: 700,
       title: "Python Quest — A Ascensão do Scriptweaver",
+      icon: iconPath,
       backgroundColor: "#020617",
       autoHideMenuBar: true,
       webPreferences: {
@@ -118,11 +128,31 @@ function getSaveFilePath() {
       await mainWindow.loadURL(`http://127.0.0.1:${port}/?steam=1`);
     }
 
-    // Atalho nativo F11 para alternar Tela Cheia
+    // Atalho nativo F11 para alternar Tela Cheia e bloqueio de atalhos de navegador
     mainWindow.webContents.on("before-input-event", (event, input) => {
-      if (input.type === "keyDown" && input.key === "F11") {
+      if (input.type !== "keyDown") return;
+
+      if (input.key === "F11") {
         event.preventDefault();
         mainWindow.setFullScreen(!mainWindow.isFullScreen());
+        return;
+      }
+
+      if (!devServerUrl) {
+        const key = input.key.toLowerCase();
+        if (
+          input.key === "F5" ||
+          ((input.control || input.meta) && (key === "r" || key === "=" || key === "-" || key === "0"))
+        ) {
+          event.preventDefault();
+        }
+      }
+    });
+
+    // Desativa clique direito padrão do navegador fora de campos editáveis
+    mainWindow.webContents.on("context-menu", (event, params) => {
+      if (!params.isEditable) {
+        event.preventDefault();
       }
     });
   }

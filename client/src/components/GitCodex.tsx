@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { GIT_CODEX_EN } from "@/lib/i18n/git_en";
 
 type Props = {
   isOpen: boolean;
@@ -66,6 +68,13 @@ const RITUALS = {
 export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("concepts");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
+
+  const tabs = TABS.map((t) => ({
+    ...t,
+    title: isEn ? GIT_CODEX_EN.tabs[t.id] : t.title,
+  }));
 
   useEffect(() => {
     if (isOpen) {
@@ -91,7 +100,7 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success("Comando copiado para a área de transferência.");
+    toast.success(isEn ? GIT_CODEX_EN.copyToast : "Comando copiado para a área de transferência.");
   };
 
   const renderContent = () => {
@@ -104,29 +113,57 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                 <GitBranch size={120} />
               </div>
               <h3 className="text-2xl font-black text-white flex items-center gap-3 mb-4 relative font-serif">
-                <Terminal className="text-emerald-400" /> A Máquina do Tempo
+                <Terminal className="text-emerald-400" /> {isEn ? GIT_CODEX_EN.conceptsTitle : "A Máquina do Tempo"}
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium text-lg relative">
-                O Git não é apenas um sistema de backup. Ele é uma <strong className="text-emerald-400">infraestrutura de snapshots</strong> que permite ramificar a realidade do código e fundir universos paralelos sem perder um único bit.
+                {isEn ? (
+                  <>
+                    {GIT_CODEX_EN.conceptsIntroPrefix}
+                    <strong className="text-emerald-400">{GIT_CODEX_EN.conceptsIntroHighlight}</strong>
+                    {GIT_CODEX_EN.conceptsIntroSuffix}
+                  </>
+                ) : (
+                  <>
+                    O Git não é apenas um sistema de backup. Ele é uma <strong className="text-emerald-400">infraestrutura de snapshots</strong> que permite ramificar a realidade do código e fundir universos paralelos sem perder um único bit.
+                  </>
+                )}
               </p>
             </div>
             
             <div className="p-6 md:p-8 border border-white/5 rounded-[1.5rem] bg-slate-900/50">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-6 flex items-center gap-2">
-                <Zap size={16} /> As 3 Áreas Fundamentais
+                <Zap size={16} /> {isEn ? GIT_CODEX_EN.threeAreasHeading : "As 3 Áreas Fundamentais"}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-sky-300 mb-3">Working Directory</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">Onde você edita seus arquivos. É a sua área "suja" e não rastreada pelo Git.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-sky-300 mb-3">
+                    {isEn ? GIT_CODEX_EN.areas.workingDirTitle : "Working Directory"}
+                  </h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {isEn
+                      ? GIT_CODEX_EN.areas.workingDirDesc
+                      : 'Onde você edita seus arquivos. É a sua área "suja" e não rastreada pelo Git.'}
+                  </p>
                 </div>
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-3">Staging Area</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">A sala de espera. Você escolhe quais mudanças entrarão no próximo snapshot.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-3">
+                    {isEn ? GIT_CODEX_EN.areas.stagingTitle : "Staging Area"}
+                  </h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {isEn
+                      ? GIT_CODEX_EN.areas.stagingDesc
+                      : "A sala de espera. Você escolhe quais mudanças entrarão no próximo snapshot."}
+                  </p>
                 </div>
                 <div className="p-6 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-fuchsia-300 mb-3">Repository (.git)</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">Onde o Git guarda permanentemente os snapshots (commits) e o histórico.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-fuchsia-300 mb-3">
+                    {isEn ? GIT_CODEX_EN.areas.repoTitle : "Repository (.git)"}
+                  </h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {isEn
+                      ? GIT_CODEX_EN.areas.repoDesc
+                      : "Onde o Git guarda permanentemente os snapshots (commits) e o histórico."}
+                  </p>
                 </div>
               </div>
             </div>
@@ -138,39 +175,85 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 md:p-8 border border-red-500/20 rounded-[1.5rem] bg-red-500/5 relative overflow-hidden">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-red-400 mb-4 flex items-center gap-2">
-                <X size={16} /> Alerta de Conflito
+                <X size={16} /> {isEn ? GIT_CODEX_EN.conflictAlertTitle : "Alerta de Conflito"}
               </h3>
               <p className="text-slate-300 leading-relaxed font-medium italic text-lg">
-                "Um histórico sujo é pior que um bug. Ele esconde a verdade do sistema."
+                {isEn
+                  ? GIT_CODEX_EN.conflictAlertQuote
+                  : '"Um histórico sujo é pior que um bug. Ele esconde a verdade do sistema."'}
                 <br/><br/>
-                Nunca use <code className="text-red-300">git push --force</code> em branches compartilhadas. Isso reescreve a realidade dos outros operadores e causa caos na rede.
+                {isEn ? (
+                  <>
+                    {GIT_CODEX_EN.conflictAlertPre}
+                    <code className="text-red-300">git push --force</code>
+                    {GIT_CODEX_EN.conflictAlertPost}
+                  </>
+                ) : (
+                  <>
+                    Nunca use <code className="text-red-300">git push --force</code> em branches compartilhadas. Isso reescreve a realidade dos outros operadores e causa caos na rede.
+                  </>
+                )}
               </p>
             </div>
             
             <div className="p-6 md:p-8 border border-emerald-500/20 rounded-[1.5rem] bg-emerald-500/5">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-6 flex items-center gap-2">
-                <Flame size={16} /> Protocolos de Commit
+                <Flame size={16} /> {isEn ? GIT_CODEX_EN.commitProtocolsTitle : "Protocolos de Commit"}
               </h3>
               <ul className="space-y-6">
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                   <div>
-                    <h4 className="text-emerald-300 font-bold mb-1">Commits Atômicos</h4>
-                    <p className="text-slate-300 leading-relaxed">Faça commits pequenos e focados. Um commit deve resolver apenas <strong className="text-white">uma coisa</strong>. Isso facilita reverter se algo quebrar.</p>
+                    <h4 className="text-emerald-300 font-bold mb-1">
+                      {isEn ? GIT_CODEX_EN.protocols.atomicTitle : "Commits Atômicos"}
+                    </h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {isEn ? (
+                        <>
+                          {GIT_CODEX_EN.protocols.atomicPre}
+                          <strong className="text-white">{GIT_CODEX_EN.protocols.atomicHighlight}</strong>
+                          {GIT_CODEX_EN.protocols.atomicPost}
+                        </>
+                      ) : (
+                        <>
+                          Faça commits pequenos e focados. Um commit deve resolver apenas <strong className="text-white">uma coisa</strong>. Isso facilita reverter se algo quebrar.
+                        </>
+                      )}
+                    </p>
                   </div>
                 </li>
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                   <div>
-                    <h4 className="text-emerald-300 font-bold mb-1">Mensagens Imperativas</h4>
-                    <p className="text-slate-300 leading-relaxed">Escreva como um comando: "Add login feature" em vez de "Added login". O Git lê suas mensagens como instruções para o histórico.</p>
+                    <h4 className="text-emerald-300 font-bold mb-1">
+                      {isEn ? GIT_CODEX_EN.protocols.imperativeTitle : "Mensagens Imperativas"}
+                    </h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {isEn
+                        ? GIT_CODEX_EN.protocols.imperativeDesc
+                        : 'Escreva como um comando: "Add login feature" em vez de "Added login". O Git lê suas mensagens como instruções para o histórico.'}
+                    </p>
                   </div>
                 </li>
                 <li className="flex gap-4 items-start">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                   <div>
-                    <h4 className="text-emerald-300 font-bold mb-1">O .gitignore</h4>
-                    <p className="text-slate-300 leading-relaxed">Nunca suba senhas, arquivos binários pesados ou pastas de dependências (node_modules). Use o arquivo <code className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded text-sm">.gitignore</code> para filtrar o ruído.</p>
+                    <h4 className="text-emerald-300 font-bold mb-1">
+                      {isEn ? GIT_CODEX_EN.protocols.gitignoreTitle : "O .gitignore"}
+                    </h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {isEn ? (
+                        <>
+                          {GIT_CODEX_EN.protocols.gitignorePre}
+                          <code className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded text-sm">.gitignore</code>
+                          {GIT_CODEX_EN.protocols.gitignorePost}
+                        </>
+                      ) : (
+                        <>
+                          Nunca suba senhas, arquivos binários pesados ou pastas de dependências (node_modules). Use o arquivo <code className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded text-sm">.gitignore</code> para filtrar o ruído.
+                        </>
+                      )}
+                    </p>
                   </div>
                 </li>
               </ul>
@@ -183,15 +266,15 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
       case "remote":
       case "undoing":
       case "config":
-        const rituals = RITUALS[activeTab as keyof typeof RITUALS];
+        const rituals = (isEn ? GIT_CODEX_EN.rituals : RITUALS)[activeTab as keyof typeof RITUALS];
         
-        const tabDesc = {
+        const tabDesc = (isEn ? GIT_CODEX_EN.tabDescriptions : {
           basics: "Comandos fundamentais para iniciar seu rastro no sistema e salvar seu progresso local.",
           branching: "Crie realidades alternativas. Trabalhe em features isoladas sem corromper o núcleo principal (main).",
           remote: "Conecte sua máquina à rede global. Colabore com outros operadores e mantenha backups na nuvem.",
           undoing: "O poder de corrigir o passado. Resgate arquivos deletados ou desfaça decisões erradas com precisão.",
           config: "Personalize sua assinatura criptográfica e ajuste o comportamento da ferramenta Git."
-        }[activeTab as keyof typeof RITUALS];
+        })[activeTab as keyof typeof RITUALS];
 
         return (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -212,7 +295,7 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                           onSendToTerminal(r.code.split('\n')[0]);
                           onClose();
                         }} className="h-8 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-3 rounded-lg shadow-lg shadow-emerald-900/20">
-                          <Play size={12} className="mr-1.5" /> Injetar
+                          <Play size={12} className="mr-1.5" /> {isEn ? GIT_CODEX_EN.injectBtn : "Injetar"}
                         </Button>
                       )}
                     </div>
@@ -258,7 +341,7 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
               </div>
               
               <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2">
-                {TABS.map((tab) => {
+                {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
                   const Icon = tab.icon;
                   return (
@@ -281,7 +364,9 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
               <div className="p-6 mt-auto border-t border-white/5 hidden md:block">
                 <div className="flex items-center gap-3 text-emerald-500/50 hover:text-emerald-400 transition-colors cursor-default">
                   <Github className="w-4 h-4 shrink-0" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Protocolo Open Source</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    {isEn ? GIT_CODEX_EN.openSourceLabel : "Protocolo Open Source"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -292,16 +377,16 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
                     {(() => {
-                      const ActiveIcon = TABS.find(t => t.id === activeTab)?.icon || BookOpen;
+                      const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || BookOpen;
                       return <ActiveIcon size={20} />;
                     })()}
                   </div>
                   <div>
                     <h2 className="text-3xl font-black text-white font-mono tracking-tight">
-                      {TABS.find(t => t.id === activeTab)?.title}
+                      {tabs.find(t => t.id === activeTab)?.title}
                     </h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/50 mt-1">
-                      Snapshot de Memória
+                      {isEn ? GIT_CODEX_EN.memorySnapshotLabel : "Snapshot de Memória"}
                     </p>
                   </div>
                 </div>
@@ -321,7 +406,7 @@ export function GitCodex({ isOpen, onClose, onSendToTerminal }: Props) {
                   onClick={onClose}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95 text-sm"
                 >
-                  Fechar Manual
+                  {isEn ? GIT_CODEX_EN.closeManualBtn : "Fechar Manual"}
                 </Button>
               </div>
             </div>

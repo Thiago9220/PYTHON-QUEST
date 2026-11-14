@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  HelpCircle, 
-  Lightbulb, 
-  Play, 
-  RotateCcw, 
+import {
+  ArrowLeft,
+  BookOpen,
+  HelpCircle,
+  Lightbulb,
+  Play,
+  RotateCcw,
   Trophy,
   Zap,
   Terminal
@@ -17,6 +17,8 @@ import PythonEditor from "@/components/PythonEditor";
 import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
 import { useGame } from "@/contexts/GameContext";
+import { useLanguage, isScreenShakeEnabled } from "@/contexts/LanguageContext";
+import { getLocalizedChallenge, getLocalizedWorld } from "@/lib/i18n/localize";
 import { getChallengeById, getWorldById } from "@/lib/challenges";
 import { DialogueCutscene } from "@/components/DialogueCutscene";
 import { AnswerRevealModal } from "@/components/AnswerRevealModal";
@@ -30,11 +32,11 @@ import { MissionPanel } from "./GameArenaComponents/MissionPanel";
 import { ResultPanel } from "./GameArenaComponents/ResultPanel";
 
 const DIFFICULTY_LABELS = {
-  iniciante: { label: "Iniciante", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-  intermediario: { label: "Intermediário", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-  avancado: { label: "Avançado", color: "text-red-400 bg-red-500/10 border-red-500/20" },
-  epico: { label: "Épico", color: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
-  lendario: { label: "Lendário", color: "text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20" },
+  iniciante: { pt: "Iniciante", en: "Beginner", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+  intermediario: { pt: "Intermediário", en: "Intermediate", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+  avancado: { pt: "Avançado", en: "Advanced", color: "text-red-400 bg-red-500/10 border-red-500/20" },
+  epico: { pt: "Épico", en: "Epic", color: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
+  lendario: { pt: "Lendário", en: "Legendary", color: "text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20" },
 };
 
 type Props = {
@@ -47,10 +49,25 @@ type Props = {
 export default function GameArena({ challengeId, onBack, onBackToHome, onNext }: Props) {
   const { user } = useAuth();
   const { state: gameState, dispatch, isChallengeCompleted } = useGame();
-  const challenge = getChallengeById(challengeId);
-  const world = challenge ? getWorldById(challenge.worldId) : null;
+  const { t, lang } = useLanguage();
+  const rawChallenge = getChallengeById(challengeId);
+  const rawWorld = rawChallenge ? getWorldById(rawChallenge.worldId) : null;
+  const challenge = rawChallenge ? getLocalizedChallenge(rawChallenge, lang) : rawChallenge;
+  const world = rawWorld ? getLocalizedWorld(rawWorld, lang) : rawWorld;
   const engine = useChallengeEngine(challenge ?? null, dispatch, isChallengeCompleted);
   const isMaster = import.meta.env.DEV && user?.email === "thiago.ramoss2009@gmail.com";
+  const [isShaking, setIsShaking] = useState(false);
+  const prevAttemptsRef = useRef(0);
+
+  useEffect(() => {
+    if (engine.attempts > prevAttemptsRef.current && engine.isCorrect === false && isScreenShakeEnabled()) {
+      setIsShaking(true);
+      const timer = setTimeout(() => setIsShaking(false), 380);
+      prevAttemptsRef.current = engine.attempts;
+      return () => clearTimeout(timer);
+    }
+    prevAttemptsRef.current = engine.attempts;
+  }, [engine.attempts, engine.isCorrect]);
 
   const [activeTab, setActiveTab] = useState<"mission" | "concept">("mission");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -108,14 +125,20 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
 
     if (engine.attempts >= 5 && !engine.isCorrect && !hasNotifiedStruggle) {
       if (remainingUses > 0) {
-        toast("Quer comparar com uma resposta?", {
-          description: `Você tem ${remainingUses} usos de estudo restantes hoje.`,
-          action: { label: "Ver", onClick: () => setShowAnswerModal(true) },
+        toast(lang === "en" ? "Compare with a solution?" : "Quer comparar com uma resposta?", {
+          description:
+            lang === "en"
+              ? `You have ${remainingUses} study reveal${remainingUses > 1 ? "s" : ""} remaining today.`
+              : `Você tem ${remainingUses} usos de estudo restantes hoje.`,
+          action: { label: lang === "en" ? "View" : "Ver", onClick: () => setShowAnswerModal(true) },
           duration: 8000,
         });
       } else {
-        toast("Limite de estudos atingido", {
-          description: "Você já usou suas 3 consultas diárias. Tente novamente amanhã ou use as dicas!",
+        toast(lang === "en" ? "Daily study limit reached" : "Limite de estudos atingido", {
+          description:
+            lang === "en"
+              ? "You've already used your 3 daily reveals. Try again tomorrow or use the hints!"
+              : "Você já usou suas 3 consultas diárias. Tente novamente amanhã ou use as dicas!",
           duration: 8000,
         });
       }
@@ -146,297 +169,337 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
   }, [engine.isCorrect, challengeNumber, totalChallenges]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden selection:bg-sky-500/30">
-      {/* Cinematic Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div 
-          className="absolute inset-0 opacity-10" 
-          style={{ 
-            backgroundImage: `radial-gradient(circle at 20% 30%, ${themeColor}33, transparent 50%), radial-gradient(circle at 80% 70%, ${themeColor}22, transparent 50%)` 
-          }} 
-        />
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:64px_64px]" />
-      </div>
-
-      <header id="arena-header" className="flex-shrink-0 border-b border-white/10 bg-slate-950/60 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="group flex items-center gap-3" onClick={onBackToHome}>
-              <img
-                src="/assets/images/python-protocol-mark.png"
-                alt="Python Protocol"
-                className="h-8 w-8 shrink-0 rounded-xl object-cover shadow-[0_0_15px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-transform group-hover:scale-110"
-              />
-              <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
-            </button>
-            
-            <div className="h-6 w-px bg-white/10 hidden md:block" />
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={onBack} className="h-9 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl px-4 font-bold transition-all">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {world.title}
-              </Button>
-              <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md">
-                <span className="text-white text-sm font-black tracking-tight">{challenge.title}</span>
-                <span className="text-[9px] font-black text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20 uppercase tracking-widest">
-                  {challengeNumber} / {totalChallenges}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-4">
-              <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border font-black ${diffStyle.color}`}>
-                {diffStyle.label}
-              </span>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
-                <Zap className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{xpEarned} XP</span>
-              </div>
-            </div>
-
-            <div className="h-8 w-px bg-white/10 hidden md:block" />
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAchievements(true)}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-xl transition-all border border-white/10 group backdrop-blur-md"
-              >
-                <Trophy className="w-4 h-4 text-amber-400 group-hover:rotate-12 transition-transform" />
-                <span className="text-xs font-black text-white">
-                  {gameState.achievements.filter((a) => a.unlocked).length}/{gameState.achievements.length}
-                </span>
-              </button>
-              
-              <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1 backdrop-blur-md">
-                <VolumeControl isMuted={gameState.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
-                <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg">
-                  <BookOpen className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowArenaTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-lg">
-                  <HelpCircle className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+      <motion.div
+        animate={isShaking ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+        transition={{ duration: 0.35 }}
+        className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden selection:bg-sky-500/30"
+      >
+        {/* Cinematic Background */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20% 30%, ${themeColor}33, transparent 50%), radial-gradient(circle at 80% 70%, ${themeColor}22, transparent 50%)`
+            }}
+          />
+          <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:64px_64px]" />
         </div>
-      </header>
 
-      <div className="flex-1 relative z-10 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-4 gap-4">
-        {!isExpanded && (
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <MissionPanel 
-              challenge={challenge} 
-              activeTab={activeTab} 
-              setActiveTab={setActiveTab} 
-              themeColor={world?.color} 
-              hintsUsed={engine.hintsUsed}
-            />
+        <header id="arena-header" className="flex-shrink-0 border-b border-white/10 bg-slate-950/60 backdrop-blur-md sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <button className="group flex items-center gap-3" onClick={onBackToHome}>
+                <img
+                  src="/assets/images/python-protocol-mark.png"
+                  alt="Python Protocol"
+                  className="h-8 w-8 shrink-0 rounded-xl object-cover shadow-[0_0_15px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-transform group-hover:scale-110"
+                />
+                <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
+              </button>
 
-            <motion.div 
-              id="arena-editor"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex-1 bg-slate-900/60 border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(14,165,233,0.15)] flex flex-col backdrop-blur-xl"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-white/5 bg-slate-900/80">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
-                    <Terminal className="w-4 h-4 text-sky-400" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Câmara de Código</div>
-                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Reforje sua lógica no terminal</div>
-                  </div>
+              <div className="h-6 w-px bg-white/10 hidden md:block" />
+
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={onBack} className="h-9 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl px-4 font-bold transition-all">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  {world.title}
+                </Button>
+                <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md">
+                  <span className="text-white text-sm font-black tracking-tight">{challenge.title}</span>
+                  <span className="text-[9px] font-black text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20 uppercase tracking-widest">
+                    {challengeNumber} / {totalChallenges}
+                  </span>
                 </div>
-                <div id="arena-actions" className="flex flex-wrap items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={engine.handleReset} className="text-slate-400 hover:text-white hover:bg-white/5 h-10 px-4 rounded-xl font-bold transition-all border border-transparent hover:border-white/10">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Resetar
-                  </Button>
-                  {challenge.hints.length > 0 && engine.currentHintIdx < challenge.hints.length && (
-                    <Button variant="ghost" size="sm" onClick={engine.handleHint} className="text-amber-400 bg-amber-400/5 hover:bg-amber-400/10 border border-amber-400/20 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                      <Lightbulb className="w-4 h-4 mr-2" />
-                      Pedir Dica ({engine.currentHintIdx + 1}/{challenge.hints.length})
-                    </Button>
-                  )}
-                  {engine.attempts >= 5 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => {
-                        const today = new Date().toISOString().split("T")[0];
-                        const isNewDay = gameState.lastStudyAnswerDate !== today;
-                        const currentUses = isNewDay ? 0 : gameState.studyAnswerUses;
-                        if (currentUses >= 3) {
-                          toast.error("Limite diário atingido", {
-                            description: "Você já revelou 3 respostas hoje. Tente resolver sozinho ou use as dicas!"
-                          });
-                          return;
-                        }
-                        setShowAnswerModal(true);
-                      }} 
-                      className="text-sky-400 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-400/10 transition-all"
-                    >
-                      <HelpCircle className="w-4 h-4 mr-2" /> Resposta
-                    </Button>
-                  )}
-                  {isMaster && answerCode && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        engine.setCode(answerCode);
-                        engine.forceSuccess();
-                      }}
-                      className="text-fuchsia-400 bg-fuchsia-400/10 hover:bg-fuchsia-400/20 border border-fuchsia-400/30 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                    >
-                      <Zap className="w-4 h-4 mr-2" /> Resolver (DEV)
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={engine.handleRun}
-                    disabled={engine.isRunning || !engine.pythonReady || !engine.code.trim() || engine.isCorrect === true}
-                    className="bg-sky-600 hover:bg-sky-500 h-10 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    {engine.isRunning ? "PROJETANDO..." : engine.isCorrect ? "SISTEMA COMPROMETIDO" : "EXECUTAR"}
-                  </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-4">
+                <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border font-black ${diffStyle.color}`}>
+                  {lang === "en" ? diffStyle.en : diffStyle.pt}
+                </span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
+                  <Zap className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{xpEarned} XP</span>
                 </div>
               </div>
 
-              <PythonEditor
-                code={engine.code}
-                onChange={engine.setCode}
-                onRun={engine.handleRun}
-                isRunning={engine.isRunning}
-                pythonReady={engine.pythonReady}
-              />
-            </motion.div>
+              <div className="h-8 w-px bg-white/10 hidden md:block" />
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAchievements(true)}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-xl transition-all border border-white/10 group backdrop-blur-md"
+                >
+                  <Trophy className="w-4 h-4 text-amber-400 group-hover:rotate-12 transition-transform" />
+                  <span className="text-xs font-black text-white">
+                    {gameState.achievements.filter((a) => a.unlocked).length}/{gameState.achievements.length}
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1 backdrop-blur-md">
+                  <VolumeControl isMuted={gameState.isMuted} onToggleMute={() => dispatch({ type: "TOGGLE_MUTE" })} />
+                  <Button variant="ghost" size="icon" onClick={() => setShowCodex(true)} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg">
+                    <BookOpen className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setShowArenaTour(true)} className="h-8 w-8 text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 rounded-lg">
+                    <HelpCircle className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </header>
 
-        <ResultPanel
-          isExpanded={isExpanded}
-          setIsExpanded={setIsExpanded}
-          output={engine.output}
-          isCorrect={engine.isCorrect}
-          feedback={engine.feedback}
-          attempts={engine.attempts}
-          hintsUsed={engine.hintsUsed}
-          xpEarned={xpEarned}
-          onNext={() => onNext(world.challenges[challengeIndex + 1]?.id ?? null)}
-          onBack={onBack}
-          hasNextChallenge={challengeIndex >= 0 && challengeIndex < world.challenges.length - 1}
-          wasAlreadyCompleted={engine.wasAlreadyCompleted}
+        <div className="flex-1 relative z-10 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 py-4 gap-4">
+          {!isExpanded && (
+            <div className="flex-1 flex flex-col gap-4 min-w-0">
+              <MissionPanel
+                challenge={challenge}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                themeColor={world?.color}
+                hintsUsed={engine.hintsUsed}
+              />
+
+              <motion.div
+                id="arena-editor"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex-1 bg-slate-900/60 border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(14,165,233,0.15)] flex flex-col backdrop-blur-xl"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-white/5 bg-slate-900/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                      <Terminal className="w-4 h-4 text-sky-400" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{t("codeChamber")}</div>
+                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{t("codeChamberSub")}</div>
+                    </div>
+                  </div>
+                  <div id="arena-actions" className="flex flex-wrap items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={engine.handleReset} className="text-slate-400 hover:text-white hover:bg-white/5 h-10 px-4 rounded-xl font-bold transition-all border border-transparent hover:border-white/10">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      {t("resetCode")}
+                    </Button>
+                    {challenge.hints.length > 0 && engine.currentHintIdx < challenge.hints.length && (
+                      <Button variant="ghost" size="sm" onClick={engine.handleHint} className="text-amber-400 bg-amber-400/5 hover:bg-amber-400/10 border border-amber-400/20 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        <Lightbulb className="w-4 h-4 mr-2" />
+                        {t("askHint")} ({engine.currentHintIdx + 1}/{challenge.hints.length})
+                      </Button>
+                    )}
+                    {engine.attempts >= 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const today = new Date().toISOString().split("T")[0];
+                          const isNewDay = gameState.lastStudyAnswerDate !== today;
+                          const currentUses = isNewDay ? 0 : gameState.studyAnswerUses;
+                          if (currentUses >= 3) {
+                            toast.error(lang === "en" ? "Daily limit reached" : "Limite diário atingido", {
+                              description:
+                                lang === "en"
+                                  ? "You've already revealed 3 answers today. Try solving it yourself or use hints!"
+                                  : "Você já revelou 3 respostas hoje. Tente resolver sozinho ou use as dicas!"
+                            });
+                            return;
+                          }
+                          setShowAnswerModal(true);
+                        }}
+                        className="text-sky-400 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-400/10 transition-all"
+                      >
+                        <HelpCircle className="w-4 h-4 mr-2" /> {lang === "en" ? "Answer" : "Resposta"}
+                      </Button>
+                    )}
+                    {isMaster && answerCode && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          engine.setCode(answerCode);
+                          engine.forceSuccess();
+                        }}
+                        className="text-fuchsia-400 bg-fuchsia-400/10 hover:bg-fuchsia-400/20 border border-fuchsia-400/30 h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <Zap className="w-4 h-4 mr-2" /> Resolver (DEV)
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={engine.handleRun}
+                      disabled={engine.isRunning || !engine.pythonReady || !engine.code.trim() || engine.isCorrect === true}
+                      className="bg-sky-600 hover:bg-sky-500 h-10 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95 disabled:bg-white/5 disabled:text-slate-600"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      {engine.isRunning ? t("runningCode") : engine.isCorrect ? t("systemCompromised") : t("runCode")}
+                    </Button>
+                  </div>
+                </div>
+
+                <PythonEditor
+                  code={engine.code}
+                  onChange={engine.setCode}
+                  onRun={engine.handleRun}
+                  isRunning={engine.isRunning}
+                  pythonReady={engine.pythonReady}
+                />
+              </motion.div>
+            </div>
+          )}
+
+          <ResultPanel
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            output={engine.output}
+            isCorrect={engine.isCorrect}
+            feedback={engine.feedback}
+            attempts={engine.attempts}
+            hintsUsed={engine.hintsUsed}
+            xpEarned={xpEarned}
+            onNext={() => onNext(world.challenges[challengeIndex + 1]?.id ?? null)}
+            onBack={onBack}
+            hasNextChallenge={challengeIndex >= 0 && challengeIndex < world.challenges.length - 1}
+            wasAlreadyCompleted={engine.wasAlreadyCompleted}
+          />
+        </div>
+
+        <AnimatePresence>
+          {engine.showCutscene && challenge.successStory && (
+            <DialogueCutscene
+              npc={challenge.successNpc ?? "Mentor Aurora"}
+              avatar={challenge.successAvatar ?? "PY"}
+              text={challenge.successStory}
+              themeColor={themeColor}
+              onComplete={() => engine.closeCutscene()}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {engine.showIntroCutscene && challenge.introStory && (
+            <DialogueCutscene
+              npc={challenge.introNpc ?? "Mentor Aurora"}
+              avatar={challenge.introAvatar ?? "PY"}
+              text={challenge.introStory}
+              themeColor={themeColor}
+              onComplete={() => engine.closeIntroCutscene()}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showAchievements && <AchievementsModal isOpen={showAchievements} onClose={() => setShowAchievements(false)} />}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showCodex && (
+            <Codex
+              isOpen={showCodex}
+              onClose={() => setShowCodex(false)}
+              onSendToEditor={(code) => {
+                engine.setCode(code);
+                setShowCodex(false);
+                soundManager.playClick();
+              }}
+            />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showAnswerModal && (
+            <AnswerRevealModal
+              isOpen={showAnswerModal}
+              onClose={() => setShowAnswerModal(false)}
+              onConfirm={() => {
+                engine.setUsedStudyAnswer(true);
+                dispatch({ type: "USE_STUDY_ANSWER" });
+              }}
+              expectedCode={answerCode}
+              remainingUses={Math.max(0, 3 - (gameState.lastStudyAnswerDate === new Date().toISOString().split("T")[0] ? gameState.studyAnswerUses : 0))}
+            />
+          )}
+        </AnimatePresence>
+        <WorldCompletionModal
+          isOpen={showCompletionModal}
+          onClose={() => {
+            setShowCompletionModal(false);
+            onBack();
+          }}
+          world={world}
         />
-      </div>
-
-      <AnimatePresence>
-        {engine.showCutscene && challenge.successStory && (
-          <DialogueCutscene
-            npc={challenge.successNpc ?? "Mentor Aurora"}
-            avatar={challenge.successAvatar ?? "PY"}
-            text={challenge.successStory}
-            themeColor={themeColor}
-            onComplete={() => engine.closeCutscene()}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {engine.showIntroCutscene && challenge.introStory && (
-          <DialogueCutscene
-            npc={challenge.introNpc ?? "Mentor Aurora"}
-            avatar={challenge.introAvatar ?? "PY"}
-            text={challenge.introStory}
-            themeColor={themeColor}
-            onComplete={() => engine.closeIntroCutscene()}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAchievements && <AchievementsModal isOpen={showAchievements} onClose={() => setShowAchievements(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showCodex && (
-          <Codex
-            isOpen={showCodex}
-            onClose={() => setShowCodex(false)}
-            onSendToEditor={(code) => {
-              engine.setCode(code);
-              setShowCodex(false);
-              soundManager.playClick();
-            }}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showAnswerModal && (
-          <AnswerRevealModal 
-            isOpen={showAnswerModal} 
-            onClose={() => setShowAnswerModal(false)} 
-            onConfirm={() => {
-              engine.setUsedStudyAnswer(true);
-              dispatch({ type: "USE_STUDY_ANSWER" });
-            }}
-            expectedCode={answerCode} 
-            remainingUses={Math.max(0, 3 - (gameState.lastStudyAnswerDate === new Date().toISOString().split("T")[0] ? gameState.studyAnswerUses : 0))}
-          />
-        )}
-      </AnimatePresence>
-      <WorldCompletionModal 
-        isOpen={showCompletionModal} 
-        onClose={() => {
-          setShowCompletionModal(false);
-          onBack();
-        }}
-        world={world}
-      />
-      <TutorialTour 
-        isOpen={showArenaTour} 
-        onClose={() => {
-          localStorage.setItem(arenaTourStorageKey, "true");
-          setShowArenaTour(false);
-          if (!gameState.hasSeenArenaTour) dispatch({ type: "COMPLETE_ARENA_TOUR" });
-        }} 
-        steps={[
-          {
-            targetId: "arena-mission",
-            title: "Diretrizes e Conceitos",
-            content: "Aqui você encontra o objetivo da missão atual. Alterne para a aba 'Conceito' para ler a documentação teórica antes de codar.",
-            position: "right"
-          },
-          {
-            targetId: "arena-editor",
-            title: "Câmara de Código",
-            content: "Seu ambiente de desenvolvimento. Escreva seu código Python real aqui para solucionar o desafio.",
-            position: "left"
-          },
-          {
-            targetId: "arena-terminal",
-            title: "Console Terminal",
-            content: "Acompanhe os resultados da execução do seu código, erros do interpretador e as tentativas gastas.",
-            position: "left"
-          },
-          {
-            targetId: "arena-actions",
-            title: "Ações de Execução",
-            content: "Solicite dicas se ficar preso, limpe seu código com o botão Resetar, ou clique em EXECUTAR para testar seu script contra as defesas do sistema.",
-            position: "bottom"
-          },
-          {
-            targetId: "arena-header",
-            title: "Painel de Controle",
-            content: "Verifique sua progressão atual, acesse suas conquistas ou consulte o Codex para documentação a qualquer momento.",
-            position: "bottom"
-          }
-        ]}
-      />
-    </div>
+        <TutorialTour
+          isOpen={showArenaTour}
+          onClose={() => {
+            localStorage.setItem(arenaTourStorageKey, "true");
+            setShowArenaTour(false);
+            if (!gameState.hasSeenArenaTour) dispatch({ type: "COMPLETE_ARENA_TOUR" });
+          }}
+          steps={lang === "en"
+            ? [
+                {
+                  targetId: "arena-mission",
+                  title: "Directives & Concepts",
+                  content: "Here you'll find the current mission objective. Switch to the 'Concept' tab to read the technical reference before coding.",
+                  position: "right"
+                },
+                {
+                  targetId: "arena-editor",
+                  title: "Code Chamber",
+                  content: "Your development environment. Write real Python code here to solve the challenge.",
+                  position: "left"
+                },
+                {
+                  targetId: "arena-terminal",
+                  title: "Terminal Console",
+                  content: "Track your execution output, interpreter errors, and attempts spent.",
+                  position: "left"
+                },
+                {
+                  targetId: "arena-actions",
+                  title: "Execution Actions",
+                  content: "Request hints if you get stuck, clear your code with Reset, or click RUN CODE to test your script against system defenses.",
+                  position: "bottom"
+                },
+                {
+                  targetId: "arena-header",
+                  title: "Control Panel",
+                  content: "Check your current progress, view your achievements, or open the Codex for documentation anytime.",
+                  position: "bottom"
+                }
+              ]
+            : [
+                {
+                  targetId: "arena-mission",
+                  title: "Diretrizes e Conceitos",
+                  content: "Aqui você encontra o objetivo da missão atual. Alterne para a aba 'Conceito' para ler a documentação teórica antes de codar.",
+                  position: "right"
+                },
+                {
+                  targetId: "arena-editor",
+                  title: "Câmara de Código",
+                  content: "Seu ambiente de desenvolvimento. Escreva seu código Python real aqui para solucionar o desafio.",
+                  position: "left"
+                },
+                {
+                  targetId: "arena-terminal",
+                  title: "Console Terminal",
+                  content: "Acompanhe os resultados da execução do seu código, erros do interpretador e as tentativas gastas.",
+                  position: "left"
+                },
+                {
+                  targetId: "arena-actions",
+                  title: "Ações de Execução",
+                  content: "Solicite dicas se ficar preso, limpe seu código com o botão Resetar, ou clique em EXECUTAR para testar seu script contra as defesas do sistema.",
+                  position: "bottom"
+                },
+                {
+                  targetId: "arena-header",
+                  title: "Painel de Controle",
+                  content: "Verifique sua progressão atual, acesse suas conquistas ou consulte o Codex para documentação a qualquer momento.",
+                  position: "bottom"
+                }
+              ]}
+        />
+    </motion.div >
   );
 }

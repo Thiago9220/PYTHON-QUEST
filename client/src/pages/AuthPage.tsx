@@ -1,17 +1,19 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { toast } from "sonner";
-import { Loader2, LogIn, UserPlus, Mail } from "lucide-react";
+import { Loader2, LogIn, UserPlus, Mail, Globe } from "lucide-react";
 
 type Mode = "landing" | "login" | "register" | "reset";
 
 export default function AuthPage() {
   const { login, register, resetPassword } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
   const [mode, setMode] = useState<Mode>("landing");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,7 +27,7 @@ export default function AuthPage() {
 
   const requireCaptcha = () => {
     if (!captchaEnabled || captchaToken) return true;
-    toast.error("Confirme o desafio de seguranca antes de continuar.");
+    toast.error(t("authSecurityToast"));
     return false;
   };
 
@@ -46,23 +48,23 @@ export default function AuthPage() {
     setInfo(null);
 
     if (mode === "reset") {
-      if (!email.trim()) return toast.error("Informe seu e-mail.");
+      if (!email.trim()) return toast.error(t("authEmailRequired"));
       if (!requireCaptcha()) return;
       setSubmitting(true);
       const result = await resetPassword(email.trim(), captchaToken ?? undefined);
       setSubmitting(false);
       if (!result.success) resetCaptcha();
-      if (!result.success) return toast.error(result.error ?? "Falha ao enviar e-mail.");
-      setInfo("Enviamos um link de recuperação para seu e-mail.");
+      if (!result.success) return toast.error(result.error ?? t("authEmailSendFail"));
+      setInfo(t("authResetSent"));
       return;
     }
 
     if (!email.trim() || password.length < 6) {
-      return toast.error("E-mail válido e senha de 6+ caracteres.");
+      return toast.error(t("authInvalidInput"));
     }
 
     if (mode === "register" && displayName.trim().length < 2) {
-      return toast.error("Codinome precisa ter pelo menos 2 caracteres.");
+      return toast.error(t("authNameTooShort"));
     }
 
     setSubmitting(true);
@@ -75,8 +77,8 @@ export default function AuthPage() {
       const result = await login(email.trim(), password, captchaToken ?? undefined);
       setSubmitting(false);
       if (!result.success) resetCaptcha();
-      if (!result.success) return toast.error(result.error ?? "Credenciais inválidas.");
-      toast.success("Bem-vindo de volta!");
+      if (!result.success) return toast.error(result.error ?? t("authInvalidCreds"));
+      toast.success(t("authWelcomeBack"));
       return;
     }
 
@@ -88,13 +90,13 @@ export default function AuthPage() {
     const result = await register(displayName.trim(), email.trim(), password, captchaToken ?? "");
     setSubmitting(false);
     if (!result.success) resetCaptcha();
-    if (!result.success) return toast.error(result.error ?? "Falha ao registrar.");
+    if (!result.success) return toast.error(result.error ?? t("authRegisterFail"));
     if (result.needsEmailConfirmation) {
-      setInfo("Conta criada! Confirme seu e-mail para entrar.");
+      setInfo(t("authConfirmEmailInfo"));
       resetCaptcha();
       setMode("login");
     } else {
-      toast.success("Conta criada com sucesso!");
+      toast.success(t("authAccountCreated"));
     }
   };
 
@@ -108,6 +110,15 @@ export default function AuthPage() {
       
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.2),transparent_60%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.2),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.05)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+      <button
+        type="button"
+        onClick={toggleLang}
+        className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-slate-900/80 px-3 py-2 text-xs font-black uppercase tracking-widest text-cyan-300 backdrop-blur-md hover:border-cyan-400 hover:bg-slate-800 transition-all"
+      >
+        <Globe className="w-3.5 h-3.5" />
+        {lang === "pt" ? "PT-BR" : "EN-US"}
+      </button>
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -125,9 +136,9 @@ export default function AuthPage() {
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Python Quest</h1>
             <p className="text-sm text-slate-400 mt-1">
-              {mode === "login" && "Entre para continuar sua jornada."}
-              {mode === "register" && "Crie sua conta e comece a aventura."}
-              {mode === "reset" && "Vamos recuperar seu acesso."}
+              {mode === "login" && t("authSubLogin")}
+              {mode === "register" && t("authSubRegister")}
+              {mode === "reset" && t("authSubReset")}
             </p>
           </div>
         )}
@@ -147,7 +158,7 @@ export default function AuthPage() {
                 PYTHON QUEST
               </h1>
               <p className="text-slate-300 text-lg mb-8 max-w-sm mx-auto leading-relaxed font-medium">
-                Aprenda programação hackeando sistemas, invadindo servidores e dominando a linguagem Python.
+                {t("authLandingDesc")}
               </p>
               <div className="space-y-4">
                 <Button 
@@ -155,7 +166,7 @@ export default function AuthPage() {
                   className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] transition-all bg-cyan-600 hover:bg-cyan-500"
                   onClick={() => changeMode("register")}
                 >
-                  <UserPlus className="size-5 mr-2" /> Iniciar Jornada
+                  <UserPlus className="size-5 mr-2" /> {t("authStartJourney")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -163,7 +174,7 @@ export default function AuthPage() {
                   className="w-full h-14 text-sm font-bold uppercase tracking-widest rounded-xl border-slate-700 hover:bg-slate-800 text-slate-300"
                   onClick={() => changeMode("login")}
                 >
-                  <LogIn className="size-4 mr-2" /> Acessar Terminal
+                  <LogIn className="size-4 mr-2" /> {t("authAccessTerminal")}
                 </Button>
               </div>
             </div>
@@ -182,7 +193,7 @@ export default function AuthPage() {
                   }`}
                 >
                   <LogIn className="size-4" />
-                  Entrar
+                  {t("authLoginTab")}
                 </button>
                 <button
                   type="button"
@@ -194,13 +205,13 @@ export default function AuthPage() {
                   }`}
                 >
                   <UserPlus className="size-4" />
-                  Criar Conta
+                  {t("authRegisterTab")}
                 </button>
               </div>
             ) : (
               <div className="flex bg-slate-950/40 border-b border-slate-800">
                 <div className="flex-1 py-4 flex items-center justify-center gap-2 font-semibold text-sm text-cyan-400 border-b-2 border-cyan-500 bg-slate-900/20">
-                  Recuperar Acesso
+                  {t("authResetTab")}
                 </div>
               </div>
             )}
@@ -218,27 +229,27 @@ export default function AuthPage() {
                 >
                   {mode === "register" && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="displayName">Codinome</Label>
+                      <Label htmlFor="displayName">{t("authCodenameLabel")}</Label>
                       <Input
                         id="displayName"
                         autoComplete="nickname"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Ex: Hacker_77"
+                        placeholder={t("authCodenamePlaceholder")}
                         disabled={submitting}
                       />
                     </div>
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">E-mail</Label>
+                    <Label htmlFor="email">{t("authEmailLabel")}</Label>
                     <Input
                       id="email"
                       type="email"
                       autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="voce@exemplo.com"
+                      placeholder={t("authEmailPlaceholder")}
                       disabled={submitting}
                     />
                   </div>
@@ -246,14 +257,14 @@ export default function AuthPage() {
                   {mode !== "reset" && (
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Senha</Label>
+                        <Label htmlFor="password">{t("authPasswordLabel")}</Label>
                         {mode === "login" && (
                           <button
                             type="button"
                             onClick={() => changeMode("reset")}
                             className="text-xs text-cyan-400 hover:text-cyan-300"
                           >
-                            Esqueci minha senha
+                            {t("authForgotPassword")}
                           </button>
                         )}
                       </div>
@@ -263,7 +274,7 @@ export default function AuthPage() {
                         autoComplete={mode === "login" ? "current-password" : "new-password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder={t("authPasswordPlaceholder")}
                         disabled={submitting}
                       />
                     </div>
@@ -287,11 +298,11 @@ export default function AuthPage() {
                     {submitting ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : mode === "login" ? (
-                      <><LogIn className="size-4" /> Entrar</>
+                      <><LogIn className="size-4" /> {t("authLoginTab")}</>
                     ) : mode === "register" ? (
-                      <><UserPlus className="size-4" /> Criar conta</>
+                      <><UserPlus className="size-4" /> {t("authRegisterTab")}</>
                     ) : (
-                      <><Mail className="size-4" /> Enviar link</>
+                      <><Mail className="size-4" /> {t("authSendLinkBtn")}</>
                     )}
                   </Button>
                 </motion.form>
@@ -300,25 +311,25 @@ export default function AuthPage() {
               <div className="mt-6 text-center text-sm text-slate-400">
                 {mode === "login" && (
                   <>
-                    Não tem conta?{" "}
+                    {t("authNoAccount")}{" "}
                     <button
                       type="button"
                       onClick={() => changeMode("register")}
                       className="text-cyan-400 hover:text-cyan-300 font-medium"
                     >
-                      Crie uma agora
+                      {t("authCreateNow")}
                     </button>
                   </>
                 )}
                 {mode === "register" && (
                   <>
-                    Já tem conta?{" "}
+                    {t("authHasAccount")}{" "}
                     <button
                       type="button"
                       onClick={() => changeMode("login")}
                       className="text-cyan-400 hover:text-cyan-300 font-medium"
                     >
-                      Entre agora
+                      {t("authSignInNow")}
                     </button>
                   </>
                 )}
@@ -328,7 +339,7 @@ export default function AuthPage() {
                     onClick={() => changeMode("login")}
                     className="text-cyan-400 hover:text-cyan-300 font-medium"
                   >
-                    Voltar ao login
+                    {t("authBackToLogin")}
                   </button>
                 )}
               </div>
@@ -337,7 +348,7 @@ export default function AuthPage() {
         )}
 
         <p className="text-center text-xs text-slate-500 mt-4">
-          Seu progresso é salvo na nuvem e acompanha você em qualquer dispositivo.
+          {t("authCloudFooter")}
         </p>
       </motion.div>
     </div>

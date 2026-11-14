@@ -27,15 +27,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { NetworkCodex } from "./NetworkCodex";
 import { useGame } from "@/contexts/GameContext";
+import { useLanguage, type AppLanguage } from "@/contexts/LanguageContext";
 import {
-  ATTACK_STEPS,
-  ATTACK_TERMINAL_OUTPUT,
-  ATTACKS,
-  DEFENSES,
-  INTRO_SLIDES,
-  MISSION_CONCEPTS,
-  PRINCIPLES,
+  getAttackSteps,
+  getAttackTerminalOutput,
+  getAttacks,
+  getDefenses,
+  getIntroSlides,
+  getMissionConcepts,
+  getPrinciples,
 } from "./cyber-lab/content";
+import {
+  ALERTS_EN,
+  ASSETS_EN,
+  LEVELS_EN,
+  LOG_LINES_EN,
+} from "@/lib/i18n/cybersec_en";
 
 interface Props {
   onBack: () => void;
@@ -642,11 +649,80 @@ const typeClass: Record<Line["type"], string> = {
   warn: "text-amber-300",
 };
 
-const statusLabel: Record<ControlStatus, string> = {
-  weak: "Fraco",
-  partial: "Parcial",
-  strong: "Forte",
+const statusLabelByLang: Record<AppLanguage, Record<ControlStatus, string>> = {
+  pt: {
+    weak: "Fraco",
+    partial: "Parcial",
+    strong: "Forte",
+  },
+  en: {
+    weak: "Weak",
+    partial: "Partial",
+    strong: "Strong",
+  },
 };
+
+function getCriticalityLabel(criticality: Asset["criticality"], lang: AppLanguage): string {
+  if (lang !== "en") return criticality;
+  return {
+    baixa: "low",
+    media: "medium",
+    alta: "high",
+    critica: "critical",
+  }[criticality];
+}
+
+function getAlertStatusLabel(status: AlertItem["status"], lang: AppLanguage): string {
+  if (lang !== "en") return status;
+  return {
+    novo: "new",
+    investigando: "investigating",
+    contido: "contained",
+    fechado: "closed",
+  }[status];
+}
+
+function getLocalizedAsset(asset: Asset, lang: AppLanguage): Asset {
+  if (lang !== "en") return asset;
+  const tr = ASSETS_EN[asset.id];
+  if (!tr) return asset;
+  return {
+    ...asset,
+    name: tr.name,
+    zone: tr.zone,
+    owner: tr.owner,
+    services: asset.services.map((service, idx) => ({
+      ...service,
+      note: tr.serviceNotes[idx] ?? service.note,
+    })),
+    weaknesses: asset.weaknesses.map((weakness) => {
+      const wTr = tr.weaknesses[weakness.id];
+      return wTr ? { ...weakness, ...wTr } : weakness;
+    }),
+    evidence: tr.evidence,
+  };
+}
+
+function getLocalizedAlertTitle(alert: AlertItem, lang: AppLanguage): string {
+  if (lang !== "en") return alert.title;
+  return ALERTS_EN[alert.id] ?? alert.title;
+}
+
+function getLocalizedLevel(level: LevelDef, lang: AppLanguage): LevelDef {
+  if (lang !== "en") return level;
+  const tr = LEVELS_EN[level.id];
+  if (!tr) return level;
+  return {
+    ...level,
+    title: tr.title,
+    focus: tr.focus,
+    briefing: tr.briefing,
+    missions: level.missions.map((mission) => {
+      const mTr = tr.missions[mission.id];
+      return mTr ? { ...mission, ...mTr } : mission;
+    }),
+  };
+}
 
 const statusClass: Record<ControlStatus, string> = {
   weak: "bg-red-500/15 text-red-200 border-red-500/30",
@@ -663,6 +739,8 @@ const severityClass: Record<Weakness["severity"], string> = {
 
 export function CyberSecSimulator({ onBack }: Props) {
   const { state: gameState, dispatch, hasHydrated } = useGame();
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   const [phase, setPhase] = useState<"intro" | "playing">(() =>
     localStorage.getItem("cyber_sim_intro") ? "playing" : "intro"
   );
@@ -670,10 +748,20 @@ export function CyberSecSimulator({ onBack }: Props) {
   const [levelIdx, setLevelIdx] = useState(0);
   const [missionIdx, setMissionIdx] = useState(0);
   const [state, setState] = useState<LabState>(() => LEVELS[0].starter());
-  const [lines, setLines] = useState<Line[]>([
+  const [lines, setLines] = useState<Line[]>(() => [
     { type: "info", text: "Cyber Security Lab v3.0" },
-    { type: "warn", text: "Ambiente 100% simulado. Pratique apenas em sistemas próprios ou com autorização." },
-    { type: "info", text: "Digite 'help' para ver comandos de defesa e ataque simulado." },
+    {
+      type: "warn",
+      text: isEn
+        ? "100% simulated environment. Practice only on systems you own or have authorization to test."
+        : "Ambiente 100% simulado. Pratique apenas em sistemas próprios ou com autorização.",
+    },
+    {
+      type: "info",
+      text: isEn
+        ? "Type 'help' to see defense and simulated attack commands."
+        : "Digite 'help' para ver comandos de defesa e ataque simulado.",
+    },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -688,21 +776,32 @@ export function CyberSecSimulator({ onBack }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const level = LEVELS[levelIdx];
+  const localizedLevels = useMemo(() => LEVELS.map((lv) => getLocalizedLevel(lv, lang)), [lang]);
+  const level = localizedLevels[levelIdx];
   const mission = level.missions[missionIdx];
   const levelDone = missionIdx >= level.missions.length;
-  const assets = Object.values(state.assets);
+  const assets = useMemo(
+    () => Object.values(state.assets).map((asset) => getLocalizedAsset(asset, lang)),
+    [state.assets, lang]
+  );
+  const localizedAssetMap = useMemo(
+    () => Object.fromEntries(assets.map((asset) => [asset.id, asset])) as Record<string, Asset>,
+    [assets]
+  );
   const riskScore = useMemo(() => calculateRisk(state), [state]);
   const containedAlerts = state.alerts.filter((alert) => alert.status === "contido" || alert.status === "fechado").length;
-  const completedAttackSteps = ATTACK_STEPS.filter((step) => state.completedActions.has(step.id)).length;
+  const attackSteps = useMemo(() => getAttackSteps(lang), [lang]);
+  const attackTerminalOutput = useMemo(() => getAttackTerminalOutput(lang), [lang]);
+  const completedAttackSteps = attackSteps.filter((step) => state.completedActions.has(step.id)).length;
   const strongControls = assets.reduce(
     (sum, asset) => sum + Object.values(asset.controls).filter((status) => status === "strong").length,
     0
   );
   const totalControls = assets.reduce((sum, asset) => sum + Object.values(asset.controls).length, 0);
-  const introSlide = INTRO_SLIDES[introStep];
+  const introSlides = useMemo(() => getIntroSlides(lang), [lang]);
+  const introSlide = introSlides[introStep];
   const IntroIcon = introSlide.icon;
-  const introDone = introStep === INTRO_SLIDES.length - 1;
+  const introDone = introStep === introSlides.length - 1;
 
   const startLab = () => {
     localStorage.setItem("cyber_sim_intro", "true");
@@ -742,19 +841,22 @@ export function CyberSecSimulator({ onBack }: Props) {
 
     setLines((current) => [
       ...current,
-      { type: "ok", text: `[+] Missão concluída: ${mission.title}` },
-      { type: "info", text: `Defesa aplicada: ${mission.defense}` },
+      { type: "ok", text: isEn ? `[+] Mission completed: ${mission.title}` : `[+] Missão concluída: ${mission.title}` },
+      { type: "info", text: isEn ? `Defense applied: ${mission.defense}` : `Defesa aplicada: ${mission.defense}` },
     ]);
 
     const next = missionIdx + 1;
     if (next >= level.missions.length) {
       setLines((current) => [
         ...current,
-        { type: "ok", text: `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===` },
+        {
+          type: "ok",
+          text: isEn ? `=== LEVEL ${level.id} COMPLETED: ${level.title} ===` : `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===`,
+        },
       ]);
     }
     setMissionIdx(next);
-  }, [levelDone, level.id, level.missions.length, level.title, mission, missionIdx, state]);
+  }, [isEn, levelDone, level.id, level.missions.length, level.title, mission, missionIdx, state]);
 
   const pushLine = (type: Line["type"], text: string) => {
     setLines((current) => [...current, { type, text }]);
@@ -765,14 +867,17 @@ export function CyberSecSimulator({ onBack }: Props) {
   };
 
   const resetLevel = (index = levelIdx) => {
-    const nextLevel = LEVELS[index];
+    const nextLevel = localizedLevels[index];
     setLevelIdx(index);
     setMissionIdx(0);
     setState(nextLevel.starter());
     setLines([
-      { type: "info", text: `Nível ${nextLevel.id}: ${nextLevel.title}` },
+      { type: "info", text: isEn ? `Level ${nextLevel.id}: ${nextLevel.title}` : `Nível ${nextLevel.id}: ${nextLevel.title}` },
       { type: "info", text: nextLevel.briefing },
-      { type: "info", text: "Digite 'help' para comandos ou siga a missão atual." },
+      {
+        type: "info",
+        text: isEn ? "Type 'help' for commands or follow the current mission." : "Digite 'help' para comandos ou siga a missão atual.",
+      },
     ]);
     setInput("");
     setHistoryIdx(-1);
@@ -787,7 +892,13 @@ export function CyberSecSimulator({ onBack }: Props) {
   };
 
   const findAsset = (token: string) =>
-    assets.find((asset) => asset.id === token || asset.ip === token || asset.name.toLowerCase() === token.toLowerCase());
+    assets.find(
+      (asset) =>
+        asset.id === token ||
+        asset.ip === token ||
+        asset.name.toLowerCase() === token.toLowerCase() ||
+        state.assets[asset.id]?.name.toLowerCase() === token.toLowerCase()
+    );
 
   const run = (raw: string) => {
     const cmd = raw.trim();
@@ -810,115 +921,210 @@ export function CyberSecSimulator({ onBack }: Props) {
 
     if (cmd === "next") {
       if (levelIdx < LEVELS.length - 1) resetLevel(levelIdx + 1);
-      else pushLine("ok", "Todos os níveis já foram liberados neste laboratório.");
+      else
+        pushLine(
+          "ok",
+          isEn ? "All levels have already been unlocked in this lab." : "Todos os níveis já foram liberados neste laboratório."
+        );
       return;
     }
 
-    if (/^nivel\s+[1-4]$/.test(cmd)) {
+    if (/^(nivel|level)\s+[1-4]$/.test(cmd)) {
       resetLevel(Number(cmd.split(/\s+/)[1]) - 1);
       return;
     }
 
     if (cmd === "help") {
-      printLines("out", [
-        "Comandos principais:",
-        "  principios                         Estuda CIA, menor privilégio, defesa em profundidade e zero trust",
-        "  ataques                            Lista ataques comuns e sinais defensivos",
-        "  defesas                            Lista controles e boas práticas de proteção",
-        "  inventario                         Mostra ativos, donos, zonas e criticidade",
-        "  nmap <ip|ativo>                    Mapeia portas do ativo simulado",
-        "  risco <ip|ativo>                   Resume riscos e controles fracos",
-        "  logs <ativo>                       Revisa evidências do ativo",
-        "  sqli-test portal-web               Detecta SQLi sem executar payload real",
-        "  patch sqli                         Corrige causa raiz da injeção no Portal Web",
-        "  mfa admin                          Ativa MFA e controles de login privilegiado",
-        "  phishing analisar email-42         Analisa indicadores de phishing",
-        "  edr scan ws-17                     Investiga endpoint suspeito",
-        "  isolar ws-17                       Contém workstation afetada",
-        "  bloquear dominio evil-login.example Bloqueia indicador malicioso",
-        "  firewall ssh private               Restringe SSH administrativo",
-        "  hardening db                       Aplica menor privilégio no banco",
-        "  backup validar                     Testa restore e reforça backup",
-        "  incident report                    Fecha relatório de resposta",
-        "  score                              Mostra postura atual de risco",
-        "",
-        "Comandos do ambiente de ataque simulado:",
-        "  ataque                             Mostra a cadeia ofensiva segura",
-        "  ambiente ataque                    Define escopo, regras e alvos fictícios",
-        "  recon portal-web                   Reconhecimento controlado do alvo web",
-        "  fingerprint portal-web             Enumeração didática da aplicação",
-        "  simular-sqli portal-web            Exploração conceitual sem payload real",
-        "  cred-test idp                      Simula risco de credenciais sem brute force",
-        "  pivot-sim db-core                  Movimento lateral narrativo e seguro",
-        "  impacto-sim db-core                Classifica impacto sem exfiltrar dados",
-        "  relatorio ataque                   Fecha achados ofensivos e defesas",
-      ]);
+      printLines(
+        "out",
+        isEn
+          ? [
+              "Main commands:",
+              "  principios                         Study CIA, least privilege, defense in depth, and zero trust",
+              "  ataques                            List common attacks and defensive signals",
+              "  defesas                            List protection controls and best practices",
+              "  inventario                         Show assets, owners, zones, and criticality",
+              "  nmap <ip|asset>                    Map ports on the simulated asset",
+              "  risco <ip|asset>                   Summarize risks and weak controls",
+              "  logs <asset>                       Review evidence for the asset",
+              "  sqli-test portal-web               Detect SQLi without running a real payload",
+              "  patch sqli                         Fix injection root cause on Portal Web",
+              "  mfa admin                          Enable MFA and privileged login controls",
+              "  phishing analisar email-42         Analyze phishing indicators",
+              "  edr scan ws-17                     Investigate suspicious endpoint",
+              "  isolar ws-17                       Contain affected workstation",
+              "  bloquear dominio evil-login.example Block malicious indicator",
+              "  firewall ssh private               Restrict administrative SSH",
+              "  hardening db                       Apply least privilege on the database",
+              "  backup validar                     Test restore and harden backup",
+              "  incident report                    Close incident response report",
+              "  score                              Show current risk posture",
+              "",
+              "Simulated attack environment commands:",
+              "  ataque                             Show the safe offensive chain",
+              "  ambiente ataque                    Define scope, rules, and fictional targets",
+              "  recon portal-web                   Controlled recon of the web target",
+              "  fingerprint portal-web             Educational application enumeration",
+              "  simular-sqli portal-web            Conceptual exploitation without a real payload",
+              "  cred-test idp                      Simulate credential risk without brute force",
+              "  pivot-sim db-core                  Safe narrative lateral movement",
+              "  impacto-sim db-core                Classify impact without exfiltrating data",
+              "  relatorio ataque                   Close offensive findings and defenses",
+            ]
+          : [
+              "Comandos principais:",
+              "  principios                         Estuda CIA, menor privilégio, defesa em profundidade e zero trust",
+              "  ataques                            Lista ataques comuns e sinais defensivos",
+              "  defesas                            Lista controles e boas práticas de proteção",
+              "  inventario                         Mostra ativos, donos, zonas e criticidade",
+              "  nmap <ip|ativo>                    Mapeia portas do ativo simulado",
+              "  risco <ip|ativo>                   Resume riscos e controles fracos",
+              "  logs <ativo>                       Revisa evidências do ativo",
+              "  sqli-test portal-web               Detecta SQLi sem executar payload real",
+              "  patch sqli                         Corrige causa raiz da injeção no Portal Web",
+              "  mfa admin                          Ativa MFA e controles de login privilegiado",
+              "  phishing analisar email-42         Analisa indicadores de phishing",
+              "  edr scan ws-17                     Investiga endpoint suspeito",
+              "  isolar ws-17                       Contém workstation afetada",
+              "  bloquear dominio evil-login.example Bloqueia indicador malicioso",
+              "  firewall ssh private               Restringe SSH administrativo",
+              "  hardening db                       Aplica menor privilégio no banco",
+              "  backup validar                     Testa restore e reforça backup",
+              "  incident report                    Fecha relatório de resposta",
+              "  score                              Mostra postura atual de risco",
+              "",
+              "Comandos do ambiente de ataque simulado:",
+              "  ataque                             Mostra a cadeia ofensiva segura",
+              "  ambiente ataque                    Define escopo, regras e alvos fictícios",
+              "  recon portal-web                   Reconhecimento controlado do alvo web",
+              "  fingerprint portal-web             Enumeração didática da aplicação",
+              "  simular-sqli portal-web            Exploração conceitual sem payload real",
+              "  cred-test idp                      Simula risco de credenciais sem brute force",
+              "  pivot-sim db-core                  Movimento lateral narrativo e seguro",
+              "  impacto-sim db-core                Classifica impacto sem exfiltrar dados",
+              "  relatorio ataque                   Fecha achados ofensivos e defesas",
+            ]
+      );
       return;
     }
 
     if (cmd === "principios" || cmd === "cia") {
-      printLines("info", [
-        "Princípios defensivos essenciais:",
-        "  1. Confidencialidade: dados sensíveis só para quem precisa.",
-        "  2. Integridade: alterações devem ser autorizadas, rastreáveis e verificáveis.",
-        "  3. Disponibilidade: serviços críticos precisam resistir a falhas e ataques.",
-        "  4. Menor privilégio: reduza permissões para limitar impacto.",
-        "  5. Defesa em profundidade: nenhuma camada sozinha é suficiente.",
-        "  6. Zero trust: verifique identidade, dispositivo e contexto continuamente.",
-      ]);
+      printLines(
+        "info",
+        isEn
+          ? [
+              "Essential defensive principles:",
+              "  1. Confidentiality: sensitive data only for those who need it.",
+              "  2. Integrity: changes must be authorized, traceable, and verifiable.",
+              "  3. Availability: critical services must withstand failures and attacks.",
+              "  4. Least privilege: minimize permissions to limit impact.",
+              "  5. Defense in depth: no single layer is sufficient on its own.",
+              "  6. Zero trust: continuously verify identity, device, and context.",
+            ]
+          : [
+              "Princípios defensivos essenciais:",
+              "  1. Confidencialidade: dados sensíveis só para quem precisa.",
+              "  2. Integridade: alterações devem ser autorizadas, rastreáveis e verificáveis.",
+              "  3. Disponibilidade: serviços críticos precisam resistir a falhas e ataques.",
+              "  4. Menor privilégio: reduza permissões para limitar impacto.",
+              "  5. Defesa em profundidade: nenhuma camada sozinha é suficiente.",
+              "  6. Zero trust: verifique identidade, dispositivo e contexto continuamente.",
+            ]
+      );
       updateState((draft) => draft.completedActions.add("principles_read"));
       setKnowledgeTab("principios");
       return;
     }
 
     if (cmd === "ataques") {
-      printLines("warn", [
-        "Principais ataques que este laboratório cobre:",
-        "  Phishing: manipula pessoas para obter acesso ou executar malware.",
-        "  Credential stuffing: usa senhas vazadas contra contas corporativas.",
-        "  SQL Injection: explora entrada não tratada em consultas ao banco.",
-        "  Ransomware: criptografa dados e pressiona por resgate.",
-        "  Exposição de serviços: administra sistemas por portas abertas indevidamente.",
-      ]);
+      printLines(
+        "warn",
+        isEn
+          ? [
+              "Main attacks covered by this lab:",
+              "  Phishing: manipulates people to gain access or execute malware.",
+              "  Credential stuffing: tests leaked passwords against corporate accounts.",
+              "  SQL Injection: exploits unhandled input in database queries.",
+              "  Ransomware: encrypts data and demands a ransom.",
+              "  Service exposure: administers systems over improperly open ports.",
+            ]
+          : [
+              "Principais ataques que este laboratório cobre:",
+              "  Phishing: manipula pessoas para obter acesso ou executar malware.",
+              "  Credential stuffing: usa senhas vazadas contra contas corporativas.",
+              "  SQL Injection: explora entrada não tratada em consultas ao banco.",
+              "  Ransomware: criptografa dados e pressiona por resgate.",
+              "  Exposição de serviços: administra sistemas por portas abertas indevidamente.",
+            ]
+      );
       updateState((draft) => draft.completedActions.add("attacks_read"));
       setKnowledgeTab("ataques");
       return;
     }
 
     if (cmd === "defesas") {
-      printLines("ok", [
-        "Defesas prioritárias:",
-        "  Inventário contínuo e classificação de criticidade.",
-        "  MFA para contas sensíveis e políticas de senha fortes.",
-        "  Segmentação, firewall e acesso administrativo via VPN ou allowlist.",
-        "  Queries parametrizadas, validação de entrada e testes de segurança.",
-        "  Logs centralizados, alertas acionáveis e EDR em endpoints.",
-        "  Backups imutáveis com restauração testada.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Priority defenses:",
+              "  Continuous inventory and criticality classification.",
+              "  MFA for sensitive accounts and strong password policies.",
+              "  Segmentation, firewall, and admin access via VPN or allowlist.",
+              "  Parameterized queries, input validation, and security testing.",
+              "  Centralized logs, actionable alerts, and EDR on endpoints.",
+              "  Immutable backups with tested restoration.",
+            ]
+          : [
+              "Defesas prioritárias:",
+              "  Inventário contínuo e classificação de criticidade.",
+              "  MFA para contas sensíveis e políticas de senha fortes.",
+              "  Segmentação, firewall e acesso administrativo via VPN ou allowlist.",
+              "  Queries parametrizadas, validação de entrada e testes de segurança.",
+              "  Logs centralizados, alertas acionáveis e EDR em endpoints.",
+              "  Backups imutáveis com restauração testada.",
+            ]
+      );
       updateState((draft) => draft.completedActions.add("defenses_read"));
       setKnowledgeTab("defesas");
       return;
     }
 
     if (cmd === "ataque" || cmd === "attack help" || cmd === "killchain") {
-      printLines("warn", [
-        "Ambiente de ataque simulado:",
-        "  1. Preparação: ambiente ataque",
-        "  2. Reconhecimento: recon portal-web",
-        "  3. Enumeração: fingerprint portal-web",
-        "  4. Exploração conceitual: simular-sqli portal-web",
-        "  5. Identidade: cred-test idp",
-        "  6. Movimento lateral: pivot-sim db-core",
-        "  7. Impacto: impacto-sim db-core",
-        "  8. Fechamento: relatorio ataque",
-        "Regra do laboratório: aprender o raciocínio ofensivo sem payload, malware, brute force ou alvo real.",
-      ]);
+      printLines(
+        "warn",
+        isEn
+          ? [
+              "Simulated attack environment:",
+              "  1. Preparation: ambiente ataque",
+              "  2. Reconnaissance: recon portal-web",
+              "  3. Enumeration: fingerprint portal-web",
+              "  4. Conceptual exploitation: simular-sqli portal-web",
+              "  5. Identity: cred-test idp",
+              "  6. Lateral movement: pivot-sim db-core",
+              "  7. Impact: impacto-sim db-core",
+              "  8. Closure: relatorio ataque",
+              "Lab rule: learn offensive reasoning without real payloads, malware, brute force, or real targets.",
+            ]
+          : [
+              "Ambiente de ataque simulado:",
+              "  1. Preparação: ambiente ataque",
+              "  2. Reconhecimento: recon portal-web",
+              "  3. Enumeração: fingerprint portal-web",
+              "  4. Exploração conceitual: simular-sqli portal-web",
+              "  5. Identidade: cred-test idp",
+              "  6. Movimento lateral: pivot-sim db-core",
+              "  7. Impacto: impacto-sim db-core",
+              "  8. Fechamento: relatorio ataque",
+              "Regra do laboratório: aprender o raciocínio ofensivo sem payload, malware, brute force ou alvo real.",
+            ]
+      );
       setKnowledgeTab("ataques");
       return;
     }
 
     if (cmd === "ambiente ataque") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_scope);
+      printLines("out", attackTerminalOutput.attack_scope);
       updateState((draft) => draft.completedActions.add("attack_scope"));
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -926,7 +1132,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "recon portal-web" || cmd === "recon 10.10.10.20") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_recon_portal-web"]);
+      printLines("out", attackTerminalOutput["attack_recon_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_recon_portal-web");
         draft.discovered.add("portal-web");
@@ -938,7 +1144,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "fingerprint portal-web") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_fingerprint_portal-web"]);
+      printLines("out", attackTerminalOutput["attack_fingerprint_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_fingerprint_portal-web");
         draft.reviewedLogs.add("portal-web");
@@ -949,7 +1155,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "simular-sqli portal-web" || cmd === "simular-sqli 10.10.10.20") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT["attack_sqli_portal-web"]);
+      printLines("out", attackTerminalOutput["attack_sqli_portal-web"]);
       updateState((draft) => {
         draft.completedActions.add("attack_sqli_portal-web");
         draft.completedActions.add("sqli_detected");
@@ -963,7 +1169,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "cred-test idp") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_creds_idp);
+      printLines("out", attackTerminalOutput.attack_creds_idp);
       updateState((draft) => {
         draft.completedActions.add("attack_creds_idp");
         draft.reviewedLogs.add("idp");
@@ -977,7 +1183,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "pivot-sim db-core") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_pivot_db);
+      printLines("out", attackTerminalOutput.attack_pivot_db);
       updateState((draft) => {
         draft.completedActions.add("attack_pivot_db");
         draft.discovered.add("db-core");
@@ -989,7 +1195,7 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "impacto-sim db-core") {
-      printLines("out", ATTACK_TERMINAL_OUTPUT.attack_impact_db);
+      printLines("out", attackTerminalOutput.attack_impact_db);
       updateState((draft) => draft.completedActions.add("attack_impact_db"));
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -997,15 +1203,21 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "relatorio ataque") {
-      const completed = ATTACK_STEPS.filter((step) => state.completedActions.has(step.id)).length;
+      const completed = attackSteps.filter((step) => state.completedActions.has(step.id)).length;
       printLines("ok", [
-        ...ATTACK_TERMINAL_OUTPUT.attack_report,
+        ...attackTerminalOutput.attack_report,
         "",
-        `Etapas concluídas pelo aluno: ${completed}/${ATTACK_STEPS.length}`,
+        isEn
+          ? `Steps completed by student: ${completed}/${attackSteps.length}`
+          : `Etapas concluídas pelo aluno: ${completed}/${attackSteps.length}`,
       ]);
       updateState((draft) => {
         draft.completedActions.add("attack_report");
-        draft.incidentNotes.push("Relatório ofensivo didático criado com cadeia Lockheed Martin, MITRE ATT&CK e NIST CSF.");
+        draft.incidentNotes.push(
+          isEn
+            ? "Educational offensive report created with Lockheed Martin kill chain, MITRE ATT&CK, and NIST CSF."
+            : "Relatório ofensivo didático criado com cadeia Lockheed Martin, MITRE ATT&CK e NIST CSF."
+        );
       });
       setViewMode("attack");
       setKnowledgeTab("ataques");
@@ -1015,9 +1227,10 @@ export function CyberSecSimulator({ onBack }: Props) {
     if (cmd === "inventario") {
       printLines(
         "out",
-        assets.map(
-          (asset) =>
-            `${asset.id.padEnd(13)} ${asset.ip.padEnd(12)} zona=${asset.zone.padEnd(11)} criticidade=${asset.criticality.padEnd(8)} dono=${asset.owner}`
+        assets.map((asset) =>
+          isEn
+            ? `${asset.id.padEnd(13)} ${asset.ip.padEnd(12)} zone=${asset.zone.padEnd(11)} criticality=${getCriticalityLabel(asset.criticality, lang).padEnd(8)} owner=${asset.owner}`
+            : `${asset.id.padEnd(13)} ${asset.ip.padEnd(12)} zona=${asset.zone.padEnd(11)} criticidade=${asset.criticality.padEnd(8)} dono=${asset.owner}`
         )
       );
       updateState((draft) => {
@@ -1031,14 +1244,17 @@ export function CyberSecSimulator({ onBack }: Props) {
       const target = cmd.split(/\s+/)[1];
       const asset = findAsset(target);
       if (!asset) {
-        pushLine("err", "Ativo não encontrado no escopo autorizado do laboratório.");
+        pushLine(
+          "err",
+          isEn ? "Asset not found in the authorized lab scope." : "Ativo não encontrado no escopo autorizado do laboratório."
+        );
         return;
       }
 
       printLines("out", [
-        "Starting SafeMap 2.0 (simulação defensiva)",
+        isEn ? "Starting SafeMap 2.0 (defensive simulation)" : "Starting SafeMap 2.0 (simulação defensiva)",
         `Scan report for ${asset.name} (${asset.ip})`,
-        "PORT     STATE     SERVICE        EXPOSIÇÃO      NOTA",
+        isEn ? "PORT     STATE     SERVICE        EXPOSURE       NOTE" : "PORT     STATE     SERVICE        EXPOSIÇÃO      NOTA",
         ...asset.services.map((service) => {
           const port = service.port === 0 ? "n/a" : `${service.port}/tcp`;
           return `${port.padEnd(8)} ${service.state.padEnd(9)} ${service.name.padEnd(14)} ${service.exposure.padEnd(12)} ${service.note}`;
@@ -1055,21 +1271,35 @@ export function CyberSecSimulator({ onBack }: Props) {
       const target = cmd.split(/\s+/)[1];
       const asset = findAsset(target);
       if (!asset) {
-        pushLine("err", "Ativo não encontrado. Use 'inventario' para listar escopo.");
+        pushLine(
+          "err",
+          isEn ? "Asset not found. Use 'inventario' to list scope." : "Ativo não encontrado. Use 'inventario' para listar escopo."
+        );
         return;
       }
 
       const weakControls = Object.entries(asset.controls)
         .filter(([, status]) => status !== "strong")
-        .map(([name, status]) => `${name}=${statusLabel[status]}`);
+        .map(([name, status]) => `${name}=${statusLabelByLang[lang][status]}`);
       const openInternet = asset.services.filter((service) => service.exposure === "internet" && service.state === "open");
-      printLines("warn", [
-        `Risco: ${asset.name} (${asset.id})`,
-        `Criticidade: ${asset.criticality} | Zona: ${asset.zone} | Dono: ${asset.owner}`,
-        `Serviços expostos: ${openInternet.length ? openInternet.map((service) => `${service.name}:${service.port}`).join(", ") : "nenhum"}`,
-        `Fraquezas abertas: ${asset.weaknesses.filter((weakness) => !weakness.resolved).map((weakness) => weakness.title).join(" | ") || "nenhuma crítica"}`,
-        `Controles a melhorar: ${weakControls.join(", ") || "controles fortes"}`,
-      ]);
+      printLines(
+        "warn",
+        isEn
+          ? [
+              `Risk: ${asset.name} (${asset.id})`,
+              `Criticality: ${getCriticalityLabel(asset.criticality, lang)} | Zone: ${asset.zone} | Owner: ${asset.owner}`,
+              `Exposed services: ${openInternet.length ? openInternet.map((service) => `${service.name}:${service.port}`).join(", ") : "none"}`,
+              `Open weaknesses: ${asset.weaknesses.filter((weakness) => !weakness.resolved).map((weakness) => weakness.title).join(" | ") || "no critical weaknesses"}`,
+              `Controls to improve: ${weakControls.join(", ") || "strong controls"}`,
+            ]
+          : [
+              `Risco: ${asset.name} (${asset.id})`,
+              `Criticidade: ${asset.criticality} | Zona: ${asset.zone} | Dono: ${asset.owner}`,
+              `Serviços expostos: ${openInternet.length ? openInternet.map((service) => `${service.name}:${service.port}`).join(", ") : "nenhum"}`,
+              `Fraquezas abertas: ${asset.weaknesses.filter((weakness) => !weakness.resolved).map((weakness) => weakness.title).join(" | ") || "nenhuma crítica"}`,
+              `Controles a melhorar: ${weakControls.join(", ") || "controles fortes"}`,
+            ]
+      );
       updateState((draft) => draft.completedActions.add(`risk_${asset.id}`));
       return;
     }
@@ -1078,41 +1308,46 @@ export function CyberSecSimulator({ onBack }: Props) {
       const target = cmd.split(/\s+/)[1];
       const asset = findAsset(target);
       if (!asset) {
-        pushLine("err", "Ativo não encontrado para consulta de logs.");
+        pushLine("err", isEn ? "Asset not found for log inspection." : "Ativo não encontrado para consulta de logs.");
         return;
       }
 
-      const logLines: Record<string, string[]> = {
-        "portal-web": [
-          "2026-05-11T13:14Z auth/login status=500 reason=db_error source=203.0.113.77",
-          "2026-05-11T13:15Z waf/anomaly category=input-tampering endpoint=/login action=alert",
-          "2026-05-11T13:16Z app/security recommendation=parameterized-query",
-        ],
-        idp: [
-          "2026-05-11T03:22Z login failed user=admin source=198.51.100.14 count=47",
-          "2026-05-11T03:23Z login failed user=admin source=198.51.100.31 count=39",
-          "2026-05-11T03:25Z policy warning=mfa_not_required group=admins",
-        ],
-        "ws-17": [
-          "2026-05-11T09:41Z mail delivered subject='Fatura urgente' sender=payroll@evil-login.example",
-          "2026-05-11T09:44Z endpoint process=invoice_viewer.tmp parent=mail_client action=blocked",
-          "2026-05-11T09:45Z network dns_query=evil-login.example verdict=malicious",
-        ],
-        "db-core": [
-          "2026-05-11T12:01Z postgres connection_denied source=10.10.20.17 user=app_readonly",
-          "2026-05-11T12:02Z audit recommendation=restrict_network_acl",
-        ],
-        "backup-vault": [
-          "2026-05-10T22:00Z backup completed dataset=finance status=ok",
-          "2026-05-11T08:00Z restore_test status=missing evidence=no_recent_restore",
-        ],
-        "edge-fw": [
-          "2026-05-11T00:00Z rule review status=stale any-to-core permitted=true",
-          "2026-05-11T00:05Z vpn auth warning=mfa_partial",
-        ],
-      };
+      const logLines: Record<string, string[]> = isEn
+        ? LOG_LINES_EN
+        : {
+            "portal-web": [
+              "2026-05-11T13:14Z auth/login status=500 reason=db_error source=203.0.113.77",
+              "2026-05-11T13:15Z waf/anomaly category=input-tampering endpoint=/login action=alert",
+              "2026-05-11T13:16Z app/security recommendation=parameterized-query",
+            ],
+            idp: [
+              "2026-05-11T03:22Z login failed user=admin source=198.51.100.14 count=47",
+              "2026-05-11T03:23Z login failed user=admin source=198.51.100.31 count=39",
+              "2026-05-11T03:25Z policy warning=mfa_not_required group=admins",
+            ],
+            "ws-17": [
+              "2026-05-11T09:41Z mail delivered subject='Fatura urgente' sender=payroll@evil-login.example",
+              "2026-05-11T09:44Z endpoint process=invoice_viewer.tmp parent=mail_client action=blocked",
+              "2026-05-11T09:45Z network dns_query=evil-login.example verdict=malicious",
+            ],
+            "db-core": [
+              "2026-05-11T12:01Z postgres connection_denied source=10.10.20.17 user=app_readonly",
+              "2026-05-11T12:02Z audit recommendation=restrict_network_acl",
+            ],
+            "backup-vault": [
+              "2026-05-10T22:00Z backup completed dataset=finance status=ok",
+              "2026-05-11T08:00Z restore_test status=missing evidence=no_recent_restore",
+            ],
+            "edge-fw": [
+              "2026-05-11T00:00Z rule review status=stale any-to-core permitted=true",
+              "2026-05-11T00:05Z vpn auth warning=mfa_partial",
+            ],
+          };
 
-      printLines("out", [`Logs de ${asset.name}:`, ...(logLines[asset.id] || asset.evidence)]);
+      printLines("out", [
+        isEn ? `Logs for ${asset.name}:` : `Logs de ${asset.name}:`,
+        ...(logLines[asset.id] || asset.evidence),
+      ]);
       updateState((draft) => {
         draft.reviewedLogs.add(asset.id);
         draft.alerts = draft.alerts.map((alert) =>
@@ -1123,12 +1358,22 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "sqli-test portal-web" || cmd === "sqli-test 10.10.10.20") {
-      printLines("warn", [
-        "Teste seguro de SQL Injection iniciado contra ambiente simulado.",
-        "Resultado: parâmetro de login altera comportamento da consulta quando recebe entrada anômala.",
-        "Evidência: erro de banco registrado, sem extração de dados e sem payload real exibido.",
-        "Recomendação: prepared statements, validação server-side, testes automatizados e alerta no WAF.",
-      ]);
+      printLines(
+        "warn",
+        isEn
+          ? [
+              "Safe SQL Injection test started against the simulated environment.",
+              "Result: login parameter alters query behavior when given anomalous input.",
+              "Evidence: database error logged, without data extraction or real payload shown.",
+              "Recommendation: prepared statements, server-side validation, automated tests, and WAF alerting.",
+            ]
+          : [
+              "Teste seguro de SQL Injection iniciado contra ambiente simulado.",
+              "Resultado: parâmetro de login altera comportamento da consulta quando recebe entrada anômala.",
+              "Evidência: erro de banco registrado, sem extração de dados e sem payload real exibido.",
+              "Recomendação: prepared statements, validação server-side, testes automatizados e alerta no WAF.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("sqli_detected");
         draft.alerts = draft.alerts.map((alert) =>
@@ -1139,13 +1384,24 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "patch sqli") {
-      printLines("ok", [
-        "Patch aplicado no Portal Web:",
-        "  - Login migrado para consultas parametrizadas.",
-        "  - Validação server-side adicionada aos campos sensíveis.",
-        "  - Teste de regressão criado para entrada anomala.",
-        "  - WAF passou de fraco para parcial e logs foram reforcados.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Patch applied on Portal Web:",
+              "  - Login migrated to parameterized queries.",
+              "  - Server-side validation added to sensitive fields.",
+              "  - Regression test added for anomalous input.",
+              "  - WAF upgraded from weak to partial and logging strengthened.",
+            ]
+          : [
+              "Patch aplicado no Portal Web:",
+              "  - Login migrado para consultas parametrizadas.",
+              "  - Validação server-side adicionada aos campos sensíveis.",
+              "  - Teste de regressão criado para entrada anomala.",
+              "  - WAF passou de fraco para parcial e logs foram reforcados.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("patch_sqli");
         draft.assets["portal-web"] = markResolved(
@@ -1168,13 +1424,24 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "mfa admin") {
-      printLines("ok", [
-        "Controles de identidade aplicados:",
-        "  - MFA resistente a phishing para administradores.",
-        "  - Rate limit adaptativo para falhas de login.",
-        "  - Revisão de sessões ativas e contas privilegiadas.",
-        "  - Alerta para login impossível e origem anômala.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Identity controls applied:",
+              "  - Phishing-resistant MFA enabled for administrators.",
+              "  - Adaptive rate limiting for failed logins.",
+              "  - Active sessions and privileged accounts reviewed.",
+              "  - Alerts enabled for impossible travel and anomalous sources.",
+            ]
+          : [
+              "Controles de identidade aplicados:",
+              "  - MFA resistente a phishing para administradores.",
+              "  - Rate limit adaptativo para falhas de login.",
+              "  - Revisão de sessões ativas e contas privilegiadas.",
+              "  - Alerta para login impossível e origem anômala.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("mfa_admin");
         draft.assets.idp = markResolved(
@@ -1198,14 +1465,26 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "phishing analisar email-42") {
-      printLines("warn", [
-        "Análise do email-42:",
-        "  Remetente: payroll@evil-login.example",
-        "  Sinal: urgência artificial e domínio parecido com fornecedor real.",
-        "  Sinal: anexo executável disfarçado como fatura.",
-        "  Sinal: link redireciona para página de login falsa.",
-        "Conclusão: phishing confirmado. Acione contenção e bloqueio de indicador.",
-      ]);
+      printLines(
+        "warn",
+        isEn
+          ? [
+              "Analysis of email-42:",
+              "  Sender: payroll@evil-login.example",
+              "  Signal: artificial urgency and lookalike vendor domain.",
+              "  Signal: executable attachment disguised as an invoice.",
+              "  Signal: link redirects to a fake login page.",
+              "Conclusion: phishing confirmed. Trigger containment and indicator blocking.",
+            ]
+          : [
+              "Análise do email-42:",
+              "  Remetente: payroll@evil-login.example",
+              "  Sinal: urgência artificial e domínio parecido com fornecedor real.",
+              "  Sinal: anexo executável disfarçado como fatura.",
+              "  Sinal: link redireciona para página de login falsa.",
+              "Conclusão: phishing confirmado. Acione contenção e bloqueio de indicador.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("phishing_analyzed");
         draft.reviewedLogs.add("ws-17");
@@ -1217,14 +1496,26 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "edr scan ws-17") {
-      printLines("out", [
-        "EDR scan ws-17:",
-        "  Processo suspeito: invoice_viewer.tmp",
-        "  Origem: cliente de email",
-        "  Ação: tentativa de persistência bloqueada",
-        "  Conexão: evil-login.example",
-        "  Recomendação: isolar host, coletar artefatos e redefinir sessões do usuário.",
-      ]);
+      printLines(
+        "out",
+        isEn
+          ? [
+              "EDR scan ws-17:",
+              "  Suspicious process: invoice_viewer.tmp",
+              "  Origin: email client",
+              "  Action: persistence attempt blocked",
+              "  Connection: evil-login.example",
+              "  Recommendation: isolate host, collect artifacts, and reset user sessions.",
+            ]
+          : [
+              "EDR scan ws-17:",
+              "  Processo suspeito: invoice_viewer.tmp",
+              "  Origem: cliente de email",
+              "  Ação: tentativa de persistência bloqueada",
+              "  Conexão: evil-login.example",
+              "  Recomendação: isolar host, coletar artefatos e redefinir sessões do usuário.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("edr_scanned");
         draft.assets["ws-17"].controls.edr = "strong";
@@ -1233,11 +1524,20 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "isolar ws-17") {
-      printLines("ok", [
-        "Workstation ws-17 isolada da rede comum.",
-        "Canal permitido: console EDR para coleta de evidências.",
-        "Próximo passo: bloquear domínio malicioso e revisar credenciais do usuário.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Workstation ws-17 isolated from the corporate network.",
+              "Allowed channel: EDR console for forensic evidence collection.",
+              "Next step: block the malicious domain and review user credentials.",
+            ]
+          : [
+              "Workstation ws-17 isolada da rede comum.",
+              "Canal permitido: console EDR para coleta de evidências.",
+              "Próximo passo: bloquear domínio malicioso e revisar credenciais do usuário.",
+            ]
+      );
       updateState((draft) => {
         draft.assets["ws-17"].status = "isolated";
         draft.assets["ws-17"].controls.isolation = "strong";
@@ -1249,10 +1549,18 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "bloquear dominio evil-login.example") {
-      printLines("ok", [
-        "Indicador bloqueado em DNS filtering, gateway de email e EDR.",
-        "Campanha adicionada ao treinamento direcionado do Financeiro.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Indicator blocked across DNS filtering, email gateway, and EDR.",
+              "Campaign added to targeted Finance security training.",
+            ]
+          : [
+              "Indicador bloqueado em DNS filtering, gateway de email e EDR.",
+              "Campanha adicionada ao treinamento direcionado do Financeiro.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("domain_blocked");
         draft.assets["ws-17"] = markResolved(
@@ -1271,12 +1579,22 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "firewall ssh private") {
-      printLines("ok", [
-        "Regra aplicada:",
-        "  - SSH do Portal Web restrito a VPN administrativa.",
-        "  - Tentativas diretas da internet agora são bloqueadas.",
-        "  - Revisão de regras any-to-core agendada.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Rule applied:",
+              "  - Portal Web SSH restricted to administrative VPN.",
+              "  - Direct internet attempts are now blocked.",
+              "  - Review of any-to-core rules scheduled.",
+            ]
+          : [
+              "Regra aplicada:",
+              "  - SSH do Portal Web restrito a VPN administrativa.",
+              "  - Tentativas diretas da internet agora são bloqueadas.",
+              "  - Revisão de regras any-to-core agendada.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("firewall_ssh_private");
         draft.assets["edge-fw"].controls.firewall = "strong";
@@ -1295,12 +1613,22 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "hardening db") {
-      printLines("ok", [
-        "Hardening aplicado no banco:",
-        "  - ACL aceita conexões apenas do Portal Web e rede de administração.",
-        "  - Conta da aplicação revisada para menor privilégio.",
-        "  - Auditoria de acesso sensível habilitada.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Hardening applied to the database:",
+              "  - ACL accepts connections only from Portal Web and the admin network.",
+              "  - Application account tightened to least privilege.",
+              "  - Sensitive access auditing enabled.",
+            ]
+          : [
+              "Hardening aplicado no banco:",
+              "  - ACL aceita conexões apenas do Portal Web e rede de administração.",
+              "  - Conta da aplicação revisada para menor privilégio.",
+              "  - Auditoria de acesso sensível habilitada.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("hardening_db");
         draft.assets["db-core"] = markResolved(
@@ -1320,11 +1648,20 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "backup validar") {
-      printLines("ok", [
-        "Restore testado com sucesso em ambiente isolado.",
-        "Backup marcado como imutável, criptografado e com acesso separado de administradores comuns.",
-        "RPO/RTO documentados para sistemas críticos.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Restore tested successfully in an isolated environment.",
+              "Backup marked as immutable, encrypted, and isolated from standard admin accounts.",
+              "RPO/RTO documented for critical systems.",
+            ]
+          : [
+              "Restore testado com sucesso em ambiente isolado.",
+              "Backup marcado como imutável, criptografado e com acesso separado de administradores comuns.",
+              "RPO/RTO documentados para sistemas críticos.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("backup_validated");
         draft.assets["backup-vault"] = markResolved(
@@ -1345,35 +1682,74 @@ export function CyberSecSimulator({ onBack }: Props) {
     }
 
     if (cmd === "incident report") {
-      printLines("ok", [
-        "Relatório fechado:",
-        "  Causa: phishing e controles parciais de email/endpoint.",
-        "  Impacto: endpoint contido antes de propagação.",
-        "  Contenção: isolamento, bloqueio de domínio e revisão de sessões.",
-        "  Erradicação: artefatos removidos e regras atualizadas.",
-        "  Melhorias: MFA, hardening, backups testados e playbooks revisados.",
-      ]);
+      printLines(
+        "ok",
+        isEn
+          ? [
+              "Report closed:",
+              "  Cause: phishing and partial email/endpoint controls.",
+              "  Impact: endpoint contained before propagation.",
+              "  Containment: isolation, domain blocking, and session review.",
+              "  Eradication: artifacts removed and rules updated.",
+              "  Improvements: MFA, hardening, tested backups, and revised playbooks.",
+            ]
+          : [
+              "Relatório fechado:",
+              "  Causa: phishing e controles parciais de email/endpoint.",
+              "  Impacto: endpoint contido antes de propagação.",
+              "  Contenção: isolamento, bloqueio de domínio e revisão de sessões.",
+              "  Erradicação: artefatos removidos e regras atualizadas.",
+              "  Melhorias: MFA, hardening, backups testados e playbooks revisados.",
+            ]
+      );
       updateState((draft) => {
         draft.completedActions.add("incident_reported");
-        draft.incidentNotes.push("Relatório de incidente fechado com causa, impacto, contencao e melhorias.");
+        draft.incidentNotes.push(
+          isEn
+            ? "Incident report closed with cause, impact, containment, and improvements."
+            : "Relatório de incidente fechado com causa, impacto, contencao e melhorias."
+        );
         draft.alerts = draft.alerts.map((alert) => ({ ...alert, status: alert.status === "novo" ? "investigando" : alert.status }));
       });
       return;
     }
 
     if (cmd === "score") {
-      const posture = riskScore < 35 ? "aceitavel" : riskScore < 60 ? "em melhoria" : "alto risco";
-      printLines(riskScore < 35 ? "ok" : "warn", [
-        `Score de risco: ${riskScore}/100 (${posture})`,
-        `Controles fortes: ${strongControls}/${totalControls}`,
-        `Alertas contidos: ${containedAlerts}/${state.alerts.length}`,
-        `Acoes concluidas: ${state.completedActions.size}`,
-      ]);
+      const posture = isEn
+        ? riskScore < 35
+          ? "acceptable"
+          : riskScore < 60
+            ? "improving"
+            : "high risk"
+        : riskScore < 35
+          ? "aceitavel"
+          : riskScore < 60
+            ? "em melhoria"
+            : "alto risco";
+      printLines(
+        riskScore < 35 ? "ok" : "warn",
+        isEn
+          ? [
+              `Risk score: ${riskScore}/100 (${posture})`,
+              `Strong controls: ${strongControls}/${totalControls}`,
+              `Alerts contained: ${containedAlerts}/${state.alerts.length}`,
+              `Completed actions: ${state.completedActions.size}`,
+            ]
+          : [
+              `Score de risco: ${riskScore}/100 (${posture})`,
+              `Controles fortes: ${strongControls}/${totalControls}`,
+              `Alertas contidos: ${containedAlerts}/${state.alerts.length}`,
+              `Acoes concluidas: ${state.completedActions.size}`,
+            ]
+      );
       updateState((draft) => draft.completedActions.add("score_checked"));
       return;
     }
 
-    pushLine("err", `Comando não reconhecido: ${cmd}. Digite 'help'.`);
+    pushLine(
+      "err",
+      isEn ? `Unrecognized command: ${cmd}. Type 'help'.` : `Comando não reconhecido: ${cmd}. Digite 'help'.`
+    );
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -1440,7 +1816,7 @@ export function CyberSecSimulator({ onBack }: Props) {
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
           className="min-w-0 flex-1 bg-transparent text-slate-100 outline-none placeholder:text-slate-600"
-          placeholder="Digite um comando"
+          placeholder={isEn ? "Type a command" : "Digite um comando"}
           spellCheck={false}
           autoFocus
         />
@@ -1462,22 +1838,22 @@ export function CyberSecSimulator({ onBack }: Props) {
             <div className="mb-6 flex items-center justify-between gap-4">
               <Button variant="ghost" onClick={onBack} className="text-slate-300 hover:text-white">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar
+                {isEn ? "Back" : "Voltar"}
               </Button>
               <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
-                Ataque e Defesa Simulados
+                {isEn ? "Simulated Attack & Defense" : "Ataque e Defesa Simulados"}
               </div>
             </div>
 
             <div className="mb-6 grid gap-2 sm:grid-cols-6">
-              {INTRO_SLIDES.map((slide, index) => (
+              {introSlides.map((slide, index) => (
                 <button
                   key={slide.title}
                   onClick={() => setIntroStep(index)}
                   className={`h-2 rounded-full transition ${
                     index <= introStep ? "bg-sky-300" : "bg-white/10 hover:bg-white/20"
                   }`}
-                  aria-label={`Abrir introdução ${index + 1}: ${slide.title}`}
+                  aria-label={isEn ? `Open introduction ${index + 1}: ${slide.title}` : `Abrir introdução ${index + 1}: ${slide.title}`}
                 />
               ))}
             </div>
@@ -1499,7 +1875,7 @@ export function CyberSecSimulator({ onBack }: Props) {
 
                 {introSlide.command && (
                   <div className="mt-5 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 font-mono text-sm text-emerald-100">
-                    <span className="text-emerald-300">Comando exemplo:</span> {introSlide.command}
+                    <span className="text-emerald-300">{isEn ? "Example command:" : "Comando exemplo:"}</span> {introSlide.command}
                   </div>
                 )}
 
@@ -1510,20 +1886,20 @@ export function CyberSecSimulator({ onBack }: Props) {
                     onClick={() => setIntroStep((current) => Math.max(0, current - 1))}
                     disabled={introStep === 0}
                   >
-                    Voltar etapa
+                    {isEn ? "Previous step" : "Voltar etapa"}
                   </Button>
                   <Button
                     className="bg-rose-600 text-white hover:bg-rose-700"
                     onClick={() => {
                       if (introDone) startLab();
-                      else setIntroStep((current) => Math.min(INTRO_SLIDES.length - 1, current + 1));
+                      else setIntroStep((current) => Math.min(introSlides.length - 1, current + 1));
                     }}
                   >
                     {introDone ? <TerminalSquare className="mr-2 h-4 w-4" /> : <ChevronDown className="-rotate-90 mr-2 h-4 w-4" />}
-                    {introDone ? "Entrar no Laboratório" : "Próxima explicação"}
+                    {introDone ? (isEn ? "Enter the Lab" : "Entrar no Laboratório") : (isEn ? "Next explanation" : "Próxima explicação")}
                   </Button>
                   <Button variant="ghost" className="text-slate-300 hover:text-white" onClick={startLab}>
-                    Pular introdução
+                    {isEn ? "Skip introduction" : "Pular introdução"}
                   </Button>
                 </div>
               </div>
@@ -1532,10 +1908,10 @@ export function CyberSecSimulator({ onBack }: Props) {
                 <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-                      O que observar
+                      {isEn ? "What to observe" : "O que observar"}
                     </div>
                     <div className="text-xs font-bold text-slate-500">
-                      {introStep + 1}/{INTRO_SLIDES.length}
+                      {introStep + 1}/{introSlides.length}
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -1552,11 +1928,18 @@ export function CyberSecSimulator({ onBack }: Props) {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {[
-                    { label: "Defesa", icon: ShieldCheck, text: "Investigar, conter e corrigir." },
-                    { label: "Ataque", icon: Bug, text: "Entender a cadeia sem risco real." },
-                    { label: "Evidência", icon: FileSearch, text: "Decidir com logs e alertas." },
-                  ].map((item) => {
+                  {(isEn
+                    ? [
+                        { label: "Defense", icon: ShieldCheck, text: "Investigate, contain, and remediate." },
+                        { label: "Attack", icon: Bug, text: "Understand the chain without real risk." },
+                        { label: "Evidence", icon: FileSearch, text: "Decide using logs and alerts." },
+                      ]
+                    : [
+                        { label: "Defesa", icon: ShieldCheck, text: "Investigar, conter e corrigir." },
+                        { label: "Ataque", icon: Bug, text: "Entender a cadeia sem risco real." },
+                        { label: "Evidência", icon: FileSearch, text: "Decidir com logs e alertas." },
+                      ]
+                  ).map((item) => {
                     const Icon = item.icon;
                     return (
                       <div key={item.label} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
@@ -1600,12 +1983,12 @@ export function CyberSecSimulator({ onBack }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Metric label="Risco" value={`${riskScore}/100`} tone={riskScore < 35 ? "good" : riskScore < 60 ? "warn" : "bad"} />
-            <Metric label="Alertas" value={`${containedAlerts}/${state.alerts.length}`} tone="warn" />
-            <Metric label="Controles fortes" value={`${strongControls}/${totalControls}`} tone="good" />
+            <Metric label={isEn ? "Risk" : "Risco"} value={`${riskScore}/100`} tone={riskScore < 35 ? "good" : riskScore < 60 ? "warn" : "bad"} />
+            <Metric label={isEn ? "Alerts" : "Alertas"} value={`${containedAlerts}/${state.alerts.length}`} tone="warn" />
+            <Metric label={isEn ? "Strong controls" : "Controles fortes"} value={`${strongControls}/${totalControls}`} tone="good" />
             <Metric
-              label={viewMode === "attack" ? "Ataque" : "Nível"}
-              value={viewMode === "attack" ? `${completedAttackSteps}/${ATTACK_STEPS.length}` : `${level.id}/4`}
+              label={viewMode === "attack" ? (isEn ? "Attack" : "Ataque") : (isEn ? "Level" : "Nível")}
+              value={viewMode === "attack" ? `${completedAttackSteps}/${attackSteps.length}` : `${level.id}/4`}
               tone="info"
             />
             <Button 
@@ -1621,7 +2004,7 @@ export function CyberSecSimulator({ onBack }: Props) {
 
         <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {LEVELS.map((item, index) => (
+            {localizedLevels.map((item, index) => (
               <button
                 key={item.id}
                 onClick={() => resetLevel(index)}
@@ -1631,7 +2014,7 @@ export function CyberSecSimulator({ onBack }: Props) {
                     : "border-white/10 bg-white/[0.04] text-slate-400 hover:bg-white/[0.07] hover:text-white"
                 }`}
               >
-                <div className="text-[10px] font-black uppercase tracking-[0.18em]">Nível {item.id}</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.18em]">{isEn ? `Level ${item.id}` : `Nível ${item.id}`}</div>
                 <div className="mt-1 text-sm font-bold">{item.title}</div>
               </button>
             ))}
@@ -1639,9 +2022,9 @@ export function CyberSecSimulator({ onBack }: Props) {
 
           <div className="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-white/[0.04] p-1 xl:w-auto">
             {[
-              { id: "guided" as ViewMode, label: "Modo guiado", icon: BookOpen },
-              { id: "soc" as ViewMode, label: "Modo SOC", icon: ShieldCheck },
-              { id: "attack" as ViewMode, label: "Modo Ataque", icon: Bug },
+              { id: "guided" as ViewMode, label: isEn ? "Guided mode" : "Modo guiado", icon: BookOpen },
+              { id: "soc" as ViewMode, label: isEn ? "SOC mode" : "Modo SOC", icon: ShieldCheck },
+              { id: "attack" as ViewMode, label: isEn ? "Attack mode" : "Modo Ataque", icon: Bug },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -1673,7 +2056,7 @@ export function CyberSecSimulator({ onBack }: Props) {
                 assets={assets}
                 scanned={state.scanned}
                 alerts={state.alerts}
-                assetMap={state.assets}
+                assetMap={localizedAssetMap}
                 discovered={state.discovered}
               />
             </section>
@@ -1696,7 +2079,7 @@ export function CyberSecSimulator({ onBack }: Props) {
               <aside className="space-y-5">
                 <MissionPanel level={level} mission={mission} levelDone={levelDone} missionIdx={missionIdx} />
                 <OperationMap assets={assets} scanned={state.scanned} />
-                <AlertPanel alerts={state.alerts} assets={state.assets} />
+                <AlertPanel alerts={state.alerts} assets={localizedAssetMap} />
               </aside>
             </section>
 
@@ -1737,13 +2120,16 @@ function Metric({ label, value, tone }: { label: string; value: string; tone: "g
 }
 
 function MissionConceptPanel({ mission, levelDone }: { mission?: Mission; levelDone: boolean }) {
-  const concept = !levelDone && mission ? MISSION_CONCEPTS[mission.id] : undefined;
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
+  const concepts = getMissionConcepts(lang);
+  const concept = !levelDone && mission ? concepts[mission.id] : undefined;
 
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
       <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         <BookOpen className="h-4 w-4 text-emerald-300" />
-        Conceito da Etapa
+        {isEn ? "Stage Concept" : "Conceito da Etapa"}
       </div>
 
       {concept ? (
@@ -1777,7 +2163,9 @@ function MissionConceptPanel({ mission, levelDone }: { mission?: Mission; levelD
       ) : (
         <div className="flex items-start gap-3 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm leading-6 text-emerald-100">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
-          Nível finalizado. Use `next` para abrir o próximo conjunto de conceitos.
+          {isEn
+            ? "Level completed. Use `next` to open the next set of concepts."
+            : "Nível finalizado. Use `next` para abrir o próximo conjunto de conceitos."}
         </div>
       )}
     </div>
@@ -1801,16 +2189,30 @@ function GuidedDetails({
   assetMap: Record<string, Asset>;
   discovered: Set<string>;
 }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   const panels: { id: DetailPanel; title: string; subtitle: string; icon: LucideIcon; count: string }[] = [
-    { id: "ambiente", title: "Ambiente", subtitle: "Mapa de ativos", icon: Radar, count: `${assets.length}` },
+    {
+      id: "ambiente",
+      title: isEn ? "Environment" : "Ambiente",
+      subtitle: isEn ? "Asset map" : "Mapa de ativos",
+      icon: Radar,
+      count: `${assets.length}`,
+    },
     {
       id: "alertas",
-      title: "Alertas",
-      subtitle: "Triagem SOC",
+      title: isEn ? "Alerts" : "Alertas",
+      subtitle: isEn ? "SOC triage" : "Triagem SOC",
       icon: Activity,
       count: `${alerts.filter((alert) => alert.status === "novo" || alert.status === "investigando").length}`,
     },
-    { id: "ativos", title: "Controles", subtitle: "Estado defensivo", icon: Eye, count: `${discovered.size}/${assets.length}` },
+    {
+      id: "ativos",
+      title: isEn ? "Controls" : "Controles",
+      subtitle: isEn ? "Defensive state" : "Estado defensivo",
+      icon: Eye,
+      count: `${discovered.size}/${assets.length}`,
+    },
   ];
 
   return (
@@ -1820,10 +2222,12 @@ function GuidedDetails({
           <div>
             <div className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
               <ChevronDown className="h-4 w-4 text-sky-300" />
-              Painéis Técnicos
+              {isEn ? "Technical Panels" : "Painéis Técnicos"}
             </div>
             <p className="text-xs leading-5 text-slate-500">
-              Abra só quando precisar investigar. O modo SOC mostra todos ao mesmo tempo.
+              {isEn
+                ? "Open only when you need to investigate. SOC mode shows all of them at once."
+                : "Abra só quando precisar investigar. O modo SOC mostra todos ao mesmo tempo."}
             </p>
           </div>
         </div>
@@ -1871,19 +2275,25 @@ function MissionPanel({
   missionIdx: number;
   levelDone: boolean;
 }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
       <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         <Crosshair className="h-4 w-4 text-rose-300" />
-        Missão Atual
+        {isEn ? "Current Mission" : "Missão Atual"}
       </div>
       {levelDone ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-emerald-300">
             <Unlock className="h-5 w-5" />
-            <span className="font-black">Nível concluido</span>
+            <span className="font-black">{isEn ? "Level completed" : "Nível concluido"}</span>
           </div>
-          <p className="text-sm leading-6 text-slate-400">Digite `next` ou selecione outro nível para continuar o treinamento.</p>
+          <p className="text-sm leading-6 text-slate-400">
+            {isEn
+              ? "Type `next` or select another level to continue training."
+              : "Digite `next` ou selecione outro nível para continuar o treinamento."}
+          </p>
         </div>
       ) : (
         <div>
@@ -1892,7 +2302,7 @@ function MissionPanel({
           </div>
           <h2 className="mb-3 text-base font-black text-white">{mission?.title}</h2>
           <p className="mb-3 rounded-md border border-sky-500/20 bg-sky-500/10 p-3 text-xs leading-5 text-sky-100">
-            Comando: <span className="font-mono font-bold">{mission?.hint}</span>
+            {isEn ? "Command:" : "Comando:"} <span className="font-mono font-bold">{mission?.hint}</span>
           </p>
           <p className="mb-2 text-sm leading-6 text-slate-300">{mission?.principle}</p>
           <p className="text-xs leading-5 text-slate-500">{mission?.defense}</p>
@@ -1903,6 +2313,8 @@ function MissionPanel({
 }
 
 function OperationMap({ assets, scanned }: { assets: Asset[]; scanned: Set<string> }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   const iconFor = (asset: Asset) => {
     if (asset.id === "ws-17") return Laptop;
     if (asset.id === "edge-fw") return Shield;
@@ -1915,7 +2327,7 @@ function OperationMap({ assets, scanned }: { assets: Asset[]; scanned: Set<strin
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
       <div className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         <Radar className="h-4 w-4 text-sky-300" />
-        Ambiente
+        {isEn ? "Environment" : "Ambiente"}
       </div>
       <div className="grid grid-cols-2 gap-2">
         {assets.map((asset) => {
@@ -1939,11 +2351,13 @@ function OperationMap({ assets, scanned }: { assets: Asset[]; scanned: Set<strin
 }
 
 function AlertPanel({ alerts, assets }: { alerts: AlertItem[]; assets: Record<string, Asset> }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
       <div className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         <Activity className="h-4 w-4 text-amber-300" />
-        Alertas
+        {isEn ? "Alerts" : "Alertas"}
       </div>
       <div className="space-y-2">
         {alerts.map((alert) => (
@@ -1952,9 +2366,9 @@ function AlertPanel({ alerts, assets }: { alerts: AlertItem[]; assets: Record<st
               <span className={`rounded border px-2 py-0.5 text-[10px] font-black uppercase ${severityClass[alert.severity]}`}>
                 {alert.severity}
               </span>
-              <span className="text-[10px] font-bold uppercase text-slate-500">{alert.status}</span>
+              <span className="text-[10px] font-bold uppercase text-slate-500">{getAlertStatusLabel(alert.status, lang)}</span>
             </div>
-            <p className="text-xs leading-5 text-slate-300">{alert.title}</p>
+            <p className="text-xs leading-5 text-slate-300">{getLocalizedAlertTitle(alert, lang)}</p>
             <p className="mt-1 text-[11px] text-slate-500">{assets[alert.assetId]?.name}</p>
           </div>
         ))}
@@ -1964,11 +2378,14 @@ function AlertPanel({ alerts, assets }: { alerts: AlertItem[]; assets: Record<st
 }
 
 function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: string) => void }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
+  const attackSteps = useMemo(() => getAttackSteps(lang), [lang]);
   const [quizAnswered, setQuizAnswered] = useState<Set<string>>(new Set());
   const [quizPick, setQuizPick] = useState<Record<string, number>>({});
   const [openStep, setOpenStep] = useState<string | null>(null);
 
-  const masteredCount = ATTACK_STEPS.filter(
+  const masteredCount = attackSteps.filter(
     (step) => state.completedActions.has(step.id) && quizAnswered.has(step.id)
   ).length;
 
@@ -1978,28 +2395,37 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-300">
             <Flame className="h-4 w-4" />
-            Ambiente de Ataque · Cyber Kill Chain
+            {isEn ? "Attack Environment · Cyber Kill Chain" : "Ambiente de Ataque · Cyber Kill Chain"}
           </div>
-          <h2 className="text-lg font-black text-white">AttackBox didática</h2>
+          <h2 className="text-lg font-black text-white">{isEn ? "Educational AttackBox" : "AttackBox didática"}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-400">
-            Trilha ofensiva alinhada a MITRE ATT&CK, OWASP Top 10 e NIST CSF. Cada etapa termina com um quiz de compreensão.
+            {isEn
+              ? "Offensive track aligned with MITRE ATT&CK, OWASP Top 10, and NIST CSF. Each step ends with a comprehension quiz."
+              : "Trilha ofensiva alinhada a MITRE ATT&CK, OWASP Top 10 e NIST CSF. Cada etapa termina com um quiz de compreensão."}
           </p>
         </div>
         <div className="rounded-md border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-right">
-          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Domínio</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">{isEn ? "Mastery" : "Domínio"}</div>
           <div className="text-xl font-black text-white">
-            {masteredCount}/{ATTACK_STEPS.length}
+            {masteredCount}/{attackSteps.length}
           </div>
-          <div className="text-[10px] text-rose-200/80">comando + quiz</div>
+          <div className="text-[10px] text-rose-200/80">{isEn ? "command + quiz" : "comando + quiz"}</div>
         </div>
       </div>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-3">
-        {[
-          ["Rede", "172.16.50.0/24 isolada"],
-          ["Frameworks", "MITRE ATT&CK · OWASP · NIST CSF"],
-          ["Regra", "Sem payload real ou alvo externo"],
-        ].map(([label, value]) => (
+        {(isEn
+          ? [
+              ["Network", "172.16.50.0/24 isolated"],
+              ["Frameworks", "MITRE ATT&CK · OWASP · NIST CSF"],
+              ["Rule", "No real payload or external target"],
+            ]
+          : [
+              ["Rede", "172.16.50.0/24 isolada"],
+              ["Frameworks", "MITRE ATT&CK · OWASP · NIST CSF"],
+              ["Regra", "Sem payload real ou alvo externo"],
+            ]
+        ).map(([label, value]) => (
           <div key={label} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</div>
             <div className="mt-1 text-xs font-bold text-slate-200">{value}</div>
@@ -2008,14 +2434,24 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
       </div>
 
       <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
-        {ATTACK_STEPS.map((step, index) => {
+        {attackSteps.map((step, index) => {
           const ran = state.completedActions.has(step.id);
           const mastered = ran && quizAnswered.has(step.id);
           const isOpen = openStep === step.id;
           const pick = quizPick[step.id];
           const showQuiz = ran && !mastered;
 
-          const status = mastered ? "feito" : ran ? "quiz pendente" : "pendente";
+          const status = isEn
+            ? mastered
+              ? "done"
+              : ran
+                ? "quiz pending"
+                : "pending"
+            : mastered
+              ? "feito"
+              : ran
+                ? "quiz pendente"
+                : "pendente";
           const statusClasses = mastered
             ? "bg-emerald-500/20 text-emerald-200"
             : ran
@@ -2075,7 +2511,9 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
                     <div className="font-mono text-[11px] text-rose-100">{step.mitre.technique}</div>
                   </div>
                   <div className="rounded border border-white/10 bg-black/20 p-2">
-                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Ferramentas reais (referência)</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      {isEn ? "Real tools (reference)" : "Ferramentas reais (referência)"}
+                    </div>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {step.realTools.map((tool) => (
                         <span key={tool} className="rounded bg-slate-800/60 px-2 py-0.5 font-mono text-[10px] text-slate-200">
@@ -2102,19 +2540,19 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
                     setOpenStep(step.id);
                   }}
                 >
-                  Executar no terminal
+                  {isEn ? "Run in terminal" : "Executar no terminal"}
                 </Button>
               </div>
 
               <div className="mt-2 rounded border border-sky-500/15 bg-sky-500/5 p-2 text-[11px] leading-5 text-sky-100">
-                <span className="font-bold text-sky-200">Defesa:</span> {step.defense}
+                <span className="font-bold text-sky-200">{isEn ? "Defense:" : "Defesa:"}</span> {step.defense}
               </div>
 
               {showQuiz && (
                 <div className="mt-3 rounded border border-amber-500/25 bg-amber-500/5 p-3">
                   <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-200">
                     <BookOpen className="h-3.5 w-3.5" />
-                    Check de compreensão
+                    {isEn ? "Comprehension check" : "Check de compreensão"}
                   </div>
                   <p className="mb-3 text-xs leading-5 text-slate-200">{step.quiz.question}</p>
                   <div className="space-y-1.5">
@@ -2158,7 +2596,7 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
                   </div>
                   {pick !== undefined && (
                     <div className="mt-3 rounded border border-sky-500/20 bg-sky-500/10 p-2 text-[11px] leading-5 text-sky-100">
-                      <span className="font-bold text-sky-200">Explicação: </span>
+                      <span className="font-bold text-sky-200">{isEn ? "Explanation: " : "Explicação: "}</span>
                       {step.quiz.explanation}
                     </div>
                   )}
@@ -2172,7 +2610,7 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
                       })}
                       className="mt-2 text-[11px] font-bold text-amber-200 hover:text-amber-100"
                     >
-                      Tentar novamente
+                      {isEn ? "Try again" : "Tentar novamente"}
                     </button>
                   )}
                 </div>
@@ -2186,16 +2624,24 @@ function AttackLabPanel({ state, onRun }: { state: LabState; onRun: (command: st
 }
 
 function KnowledgePanel({ tab, onChange }: { tab: KnowledgeTab; onChange: (tab: KnowledgeTab) => void }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   const data = {
-    principios: PRINCIPLES,
-    ataques: ATTACKS,
-    defesas: DEFENSES,
+    principios: getPrinciples(lang),
+    ataques: getAttacks(lang),
+    defesas: getDefenses(lang),
   }[tab];
-  const tabLabels: Record<KnowledgeTab, string> = {
-    principios: "Princípios",
-    ataques: "Ataques",
-    defesas: "Defesas",
-  };
+  const tabLabels: Record<KnowledgeTab, string> = isEn
+    ? {
+        principios: "Principles",
+        ataques: "Attacks",
+        defesas: "Defenses",
+      }
+    : {
+        principios: "Princípios",
+        ataques: "Ataques",
+        defesas: "Defesas",
+      };
 
   const Icon = tab === "principios" ? BookOpen : tab === "ataques" ? Flame : ShieldCheck;
 
@@ -2204,7 +2650,7 @@ function KnowledgePanel({ tab, onChange }: { tab: KnowledgeTab; onChange: (tab: 
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
           <Icon className="h-4 w-4 text-emerald-300" />
-          Base de Conhecimento
+          {isEn ? "Knowledge Base" : "Base de Conhecimento"}
         </div>
         <div className="grid w-full grid-cols-3 rounded-md border border-white/10 bg-white/[0.04] p-1">
           {(["principios", "ataques", "defesas"] as KnowledgeTab[]).map((item) => (
@@ -2255,11 +2701,13 @@ function KnowledgePanel({ tab, onChange }: { tab: KnowledgeTab; onChange: (tab: 
 }
 
 function AssetPanel({ assets, discovered }: { assets: Asset[]; discovered: Set<string> }) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
       <div className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         <Eye className="h-4 w-4 text-sky-300" />
-        Ativos e Controles
+        {isEn ? "Assets & Controls" : "Ativos e Controles"}
       </div>
 
       <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
@@ -2270,12 +2718,20 @@ function AssetPanel({ assets, discovered }: { assets: Asset[]; discovered: Set<s
             <div key={asset.id} className="rounded-md border border-white/10 bg-white/[0.04] p-3">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-black text-white">{visible ? asset.name : "Ativo não inventariado"}</h3>
-                  <p className="text-xs text-slate-500">{visible ? `${asset.id} | ${asset.ip} | ${asset.zone}` : "Use inventário para revelar"}</p>
+                  <h3 className="truncate text-sm font-black text-white">
+                    {visible ? asset.name : isEn ? "Uninventoried asset" : "Ativo não inventariado"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {visible
+                      ? `${asset.id} | ${asset.ip} | ${asset.zone}`
+                      : isEn
+                        ? "Run 'inventario' to reveal"
+                        : "Use inventário para revelar"}
+                  </p>
                 </div>
                 {asset.status === "isolated" ? (
                   <span className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-black uppercase text-amber-200">
-                    Isolado
+                    {isEn ? "Isolated" : "Isolado"}
                   </span>
                 ) : (
                   <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-black uppercase text-emerald-200">
@@ -2289,7 +2745,7 @@ function AssetPanel({ assets, discovered }: { assets: Asset[]; discovered: Set<s
                   <div className="mb-3 flex flex-wrap gap-1.5">
                     {Object.entries(asset.controls).map(([name, status]) => (
                       <span key={name} className={`rounded border px-2 py-1 text-[10px] font-bold ${statusClass[status]}`}>
-                        {name}: {statusLabel[status]}
+                        {name}: {statusLabelByLang[lang][status]}
                       </span>
                     ))}
                   </div>
@@ -2308,7 +2764,7 @@ function AssetPanel({ assets, discovered }: { assets: Asset[]; discovered: Set<s
                     ) : (
                       <div className="flex items-center gap-2 rounded border border-emerald-500/20 bg-emerald-500/5 p-2 text-xs text-emerald-200">
                         <CheckCircle2 className="h-4 w-4" />
-                        Principais fraquezas tratadas
+                        {isEn ? "Main weaknesses addressed" : "Principais fraquezas tratadas"}
                       </div>
                     )}
                   </div>
@@ -2316,7 +2772,7 @@ function AssetPanel({ assets, discovered }: { assets: Asset[]; discovered: Set<s
               ) : (
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <Lock className="h-4 w-4" />
-                  Ativo ainda não classificado.
+                  {isEn ? "Asset not yet classified." : "Ativo ainda não classificado."}
                 </div>
               )}
             </div>

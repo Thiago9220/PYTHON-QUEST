@@ -6,6 +6,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { NetworkCodex } from "./NetworkCodex";
+import { getSavedLanguage, useLanguage, type AppLanguage } from "@/contexts/LanguageContext";
+import { NETWORK_HELP_LINES_EN, NETWORK_HELP_LINES_PT, NETWORK_LEVELS_EN } from "@/lib/i18n/network_en";
 
 interface Props { onBack: () => void }
 
@@ -128,11 +130,13 @@ interface LevelDef {
   id: number;
   title: string;
   briefing: string;
-  starter: () => NetState;
+  starter: (lang?: AppLanguage) => NetState;
   missions: { id: string; title: string; hint: string; check: (s: NetState) => boolean }[];
 }
 
-const initialNet = (): NetState => ({
+const initialNet = (lang: AppLanguage = getSavedLanguage()): NetState => {
+  const isEn = lang === "en";
+  return {
   myIp: "192.168.1.42",
   gateway: "192.168.1.1",
   subnet: "192.168.1.0/24",
@@ -167,7 +171,9 @@ const initialNet = (): NetState => ({
         },
         "/admin": {
           status: 200, headers: { "Server": "nginx/1.18.0", "Content-Type": "text/html", "X-Powered-By": "Internal-CMS/2.1" },
-          body: "<!DOCTYPE html>\n<html><body>\n<h1>Admin Panel — CorpHQ</h1>\n<form><input name=user><input name=pass type=password><button>Login</button></form>\n<!-- DEBUG token vazado em produção: CTF{admin_panel_index_was_public} -->\n</body></html>",
+          body: isEn
+            ? "<!DOCTYPE html>\n<html><body>\n<h1>Admin Panel — CorpHQ</h1>\n<form><input name=user><input name=pass type=password><button>Login</button></form>\n<!-- DEBUG leaked token in production: CTF{admin_panel_index_was_public} -->\n</body></html>"
+            : "<!DOCTYPE html>\n<html><body>\n<h1>Admin Panel — CorpHQ</h1>\n<form><input name=user><input name=pass type=password><button>Login</button></form>\n<!-- DEBUG token vazado em produção: CTF{admin_panel_index_was_public} -->\n</body></html>",
           flag: "CTF{admin_panel_index_was_public}"
         },
         "/.git/config": {
@@ -208,16 +214,26 @@ const initialNet = (): NetState => ({
           "@reboot postgres /home/postgres/start.sh",
         ],
         files: {
-          "/home/postgres/notes.txt": { content: "TODO:\n - rotacionar credenciais\n - revisar permissões do /opt/scripts/backup.sh\n - lembrar de remover sudoers wildcard\n", owner: "postgres", size: 142 },
+          "/home/postgres/notes.txt": {
+            content: isEn
+              ? "TODO:\n - rotate credentials\n - review permissions on /opt/scripts/backup.sh\n - remember to remove sudoers wildcard\n"
+              : "TODO:\n - rotacionar credenciais\n - revisar permissões do /opt/scripts/backup.sh\n - lembrar de remover sudoers wildcard\n",
+            owner: "postgres", size: 142
+          },
           "/home/postgres/.bash_history": { content: "ls -la /opt/scripts\nsudo find / -name '*.conf' 2>/dev/null\ncat /etc/postgresql/16/main/pg_hba.conf\nexit\n", owner: "postgres", size: 124 },
           "/etc/passwd": { content: "root:x:0:0:root:/root:/bin/bash\npostgres:x:999:999:PostgreSQL:/home/postgres:/bin/bash\nbackup:x:1001:1001:Backup User:/var/lib/backup:/bin/false\n", owner: "root", size: 188 },
-          "/etc/shadow": { content: "(permissão negada — root only)", perm: "----------", owner: "root" },
+          "/etc/shadow": { content: isEn ? "(permission denied — root only)" : "(permissão negada — root only)", perm: "----------", owner: "root" },
           "/etc/postgresql/16/main/pg_hba.conf": { content: "# TYPE  DATABASE  USER      ADDRESS         METHOD\nlocal   all       postgres                  trust\nhost    all       all       0.0.0.0/0       md5\n", owner: "postgres" },
           "/opt/scripts/backup.sh": { content: "#!/bin/bash\n# Backup script — owned by root, runs every minute via cron\npg_dump corp_db > /backups/corp_$(date +%F).sql\nchmod 644 /backups/*.sql\n", perm: "rwxrwxrwx", owner: "root" },
           "/usr/bin/find": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 320128 },
           "/usr/bin/passwd": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 67912 },
           "/usr/bin/chsh": { suid: true, owner: "root", perm: "rwsr-xr-x", bin: true, size: 49664 },
-          "/root/flag.txt": { content: "CTF{root_via_sudo_nopasswd_find}\nParabéns — você escalou privilégios usando sudo NOPASSWD em /usr/bin/find\nDica GTFOBins: sudo find . -exec /bin/sh \\; -quit\n", owner: "root", perm: "rw-------" },
+          "/root/flag.txt": {
+            content: isEn
+              ? "CTF{root_via_sudo_nopasswd_find}\nCongratulations — you escalated privileges using sudo NOPASSWD on /usr/bin/find\nGTFOBins tip: sudo find . -exec /bin/sh \\; -quit\n"
+              : "CTF{root_via_sudo_nopasswd_find}\nParabéns — você escalou privilégios usando sudo NOPASSWD em /usr/bin/find\nDica GTFOBins: sudo find . -exec /bin/sh \\; -quit\n",
+            owner: "root", perm: "rw-------"
+          },
         },
       },
     },
@@ -225,12 +241,14 @@ const initialNet = (): NetState => ({
       ip: "192.168.1.100", hostname: "ftp-legacy.corp.local", os: "Windows Server 2008", status: "up",
       ports: [
         {
-          port: 21, state: "open", service: "ftp", version: "vsftpd 2.3.4", banner: "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)",
+          port: 21, state: "open", service: "ftp", version: "vsftpd 2.3.4",
+          banner: isEn ? "220 vsftpd 2.3.4 (vulnerable - CVE-2011-2523)" : "220 vsftpd 2.3.4 (vulneravel - CVE-2011-2523)",
           cves: ["CVE-2011-2523 (vsftpd backdoor)"]
         },
         { port: 139, state: "open", service: "netbios" },
         {
-          port: 445, state: "open", service: "smb", version: "Samba 3.6 (vulnerável a EternalBlue)",
+          port: 445, state: "open", service: "smb",
+          version: isEn ? "Samba 3.6 (vulnerable to EternalBlue)" : "Samba 3.6 (vulnerável a EternalBlue)",
           cves: ["CVE-2017-0144 (EternalBlue/MS17-010)", "CVE-2017-7494 (SambaCry)"]
         },
         { port: 3389, state: "filtered", service: "rdp" },
@@ -243,19 +261,36 @@ const initialNet = (): NetState => ({
         { name: "ADMIN$", type: "Disk", comment: "Remote Admin", readable: false },
         { name: "C$", type: "Disk", comment: "Default share", readable: false },
         {
-          name: "Backups", type: "Disk", comment: "Backups antigos do banco — sem permissão restrita", readable: true,
+          name: "Backups", type: "Disk",
+          comment: isEn ? "Legacy database backups — unrestricted permissions" : "Backups antigos do banco — sem permissão restrita",
+          readable: true,
           flag: "CTF{smb_backup_share_was_world_readable}",
           files: [
-            { name: "db_dump_2023.sql", size: 124550, content: "-- backup parcial — credenciais expostas em plain text\nINSERT INTO users (login,pwd) VALUES ('admin','S3nh@F0rt3!');\n[truncado: 2.4MB]" },
-            { name: "README.txt", size: 412, content: "Backup mensal automatizado.\nNão deletar.\nRotação manual.\n" },
+            {
+              name: "db_dump_2023.sql", size: 124550,
+              content: isEn
+                ? "-- partial backup — credentials exposed in plain text\nINSERT INTO users (login,pwd) VALUES ('admin','S3nh@F0rt3!');\n[truncated: 2.4MB]"
+                : "-- backup parcial — credenciais expostas em plain text\nINSERT INTO users (login,pwd) VALUES ('admin','S3nh@F0rt3!');\n[truncado: 2.4MB]"
+            },
+            {
+              name: "README.txt", size: 412,
+              content: isEn
+                ? "Automated monthly backup.\nDo not delete.\nManual rotation.\n"
+                : "Backup mensal automatizado.\nNão deletar.\nRotação manual.\n"
+            },
             { name: ".env.bak", size: 287, content: "DB_HOST=db.corp.local\nDB_USER=postgres\nDB_PASS=postgres\nJWT_SECRET=8f3a91-internal\nFLAG=CTF{smb_backup_share_was_world_readable}\n" },
           ]
         },
         {
-          name: "Public", type: "Disk", comment: "Read-only para todos", readable: true,
+          name: "Public", type: "Disk",
+          comment: isEn ? "Read-only for everyone" : "Read-only para todos",
+          readable: true,
           files: [
-            { name: "Manual_Procedimentos.pdf", size: 89221 },
-            { name: "Aviso_TI.txt", size: 156, content: "Reset de senhas: contatar admin@corp.local\n" },
+            { name: isEn ? "Procedures_Manual.pdf" : "Manual_Procedimentos.pdf", size: 89221 },
+            {
+              name: isEn ? "IT_Notice.txt" : "Aviso_TI.txt", size: 156,
+              content: isEn ? "Password reset: contact admin@corp.local\n" : "Reset de senhas: contatar admin@corp.local\n"
+            },
           ]
         },
       ],
@@ -277,12 +312,12 @@ const initialNet = (): NetState => ({
       webPaths: {
         "/": {
           status: 401, headers: { "Server": "Boa/0.94.14rc21", "WWW-Authenticate": "Basic realm=\"IPCam\"" },
-          body: "401 Unauthorized — autenticação necessária",
+          body: isEn ? "401 Unauthorized — authentication required" : "401 Unauthorized — autenticação necessária",
           authRequired: { user: "admin", pass: "admin" }
         },
         "/cgi-bin/snapshot": {
           status: 200, headers: { "Server": "Boa/0.94.14rc21", "Content-Type": "image/jpeg", "X-Flag": "CTF{iot_default_admin_admin}" },
-          body: "[binary jpeg snapshot — 38 KB] (header X-Flag vazou a flag)",
+          body: isEn ? "[binary jpeg snapshot — 38 KB] (X-Flag header leaked the flag)" : "[binary jpeg snapshot — 38 KB] (header X-Flag vazou a flag)",
           flag: "CTF{iot_default_admin_admin}",
           authRequired: { user: "admin", pass: "admin" }
         },
@@ -316,7 +351,8 @@ const initialNet = (): NetState => ({
   packetLog: [],
   connections: [],
   firewallRules: [],
-});
+  };
+};
 
 const longestCommonPrefix = (arr: string[]): string => {
   if (!arr.length) return "";
@@ -454,12 +490,12 @@ const computeNetCompletions = (input: string, s: NetState): string[] => {
   return baseCompletions.filter((c) => c.startsWith(trimmed));
 };
 
-const LEVELS: LevelDef[] = [
+const BASE_LEVELS: LevelDef[] = [
   {
     id: 1,
     title: "Reconhecimento Local",
     briefing: "Antes de mapear a rede, descubra o terreno em que VOCÊ está: seu próprio IP, o gateway que conecta sua máquina ao resto e os vizinhos diretos no segmento de rede.",
-    starter: initialNet,
+    starter: (lang) => initialNet(lang),
     missions: [
       { id: "ifconfig", title: "Descubra seu IP local", hint: "ifconfig (ou: ip a)", check: (s) => !!s._ifconfigViewed },
       { id: "ping-gw", title: "Verifique se o gateway responde", hint: "ping 192.168.1.1", check: (s) => s.discovered.has("192.168.1.1") },
@@ -471,7 +507,7 @@ const LEVELS: LevelDef[] = [
     id: 2,
     title: "DNS — Traduzindo Nomes",
     briefing: "Humanos lembram nomes (corp.local), máquinas falam IPs (192.168.1.50). O DNS é a 'agenda telefônica' que faz a tradução. Use nslookup, dig e whois pra extrair informação.",
-    starter: initialNet,
+    starter: (lang) => initialNet(lang),
     missions: [
       { id: "nslookup", title: "Resolva 'web.corp.local' para um IP", hint: "nslookup web.corp.local", check: (s) => s.discovered.has("192.168.1.50") },
       { id: "dig", title: "Busque informações detalhadas com dig", hint: "dig web.corp.local", check: (s) => !!s._digViewed },
@@ -482,7 +518,7 @@ const LEVELS: LevelDef[] = [
     id: 3,
     title: "Mapeamento de Portas",
     briefing: "Cada IP tem 65535 'portas' por onde serviços conversam. Web na 80, SSH na 22, banco na 5432. Use nmap pra varrer essas portas e descobrir o que está exposto.",
-    starter: initialNet,
+    starter: (lang) => initialNet(lang),
     missions: [
       { id: "discover", title: "Descubra todos os hosts ativos da subrede", hint: "nmap -sn 192.168.1.0/24", check: (s) => s.discovered.has("192.168.1.50") && s.discovered.has("192.168.1.77") && s.discovered.has("192.168.1.100") && s.discovered.has("192.168.1.150") },
       { id: "scan", title: "Varra as portas do servidor web", hint: "nmap 192.168.1.50", check: (s) => s.scanned.has("192.168.1.50") },
@@ -493,7 +529,7 @@ const LEVELS: LevelDef[] = [
     id: 4,
     title: "Interagindo com Serviços",
     briefing: "Achou portas abertas? Hora de conversar com elas. curl fala HTTP, nc (netcat) faz banner grabbing, ssh tenta conectar. Cada protocolo tem sua linguagem.",
-    starter: initialNet,
+    starter: (lang) => initialNet(lang),
     missions: [
       { id: "curl", title: "Faça GET no servidor web (portal interno)", hint: "curl http://192.168.1.50", check: (s) => s.flags.has("portal-fetched") },
       { id: "banner", title: "Capture o banner SSH para ver a versão exata", hint: "nc 192.168.1.50 22 (banner grabbing)", check: (s) => s.flags.has("ssh-banner") },
@@ -504,7 +540,7 @@ const LEVELS: LevelDef[] = [
     id: 5,
     title: "Forense & Tráfego",
     briefing: "A última fase: monitorar o tráfego. netstat mostra suas conexões, tcpdump captura pacotes em tempo real. Saber observar a rede é metade da segurança.",
-    starter: initialNet,
+    starter: (lang) => initialNet(lang),
     missions: [
       { id: "netstat", title: "Liste suas conexões/portas locais em escuta", hint: "netstat -tuln", check: (s) => !!s._netstatViewed },
       { id: "tcpdump", title: "Capture os pacotes que passam pela interface", hint: "tcpdump -i eth0", check: (s) => !!s._tcpdumpViewed },
@@ -515,8 +551,8 @@ const LEVELS: LevelDef[] = [
     id: 6,
     title: "Brute Force & SMB Enum",
     briefing: "Recon te dá portas abertas — mas o que tem POR TRÁS delas? Nesse nível você vai forçar autenticação fraca com hydra, descobrir subdomínios escondidos com dnsrecon, e enumerar shares SMB para achar credenciais que ninguém deveria ter deixado expostas.",
-    starter: () => {
-      const s = initialNet();
+    starter: (lang) => {
+      const s = initialNet(lang);
       // pré-descoberto: já passou pelos níveis anteriores
       s.discovered.add("192.168.1.50");
       s.discovered.add("192.168.1.77");
@@ -563,8 +599,8 @@ const LEVELS: LevelDef[] = [
     id: 7,
     title: "Dentro do Servidor: Privilege Escalation",
     briefing: "Você logou no DB como 'postgres' usando creds vazadas. Mas user comum não te leva longe — quer ver o /root/flag.txt? Enumere o que tem de errado: SUIDs frouxos, sudo NOPASSWD, cron jobs vulneráveis. O caminho clássico do privesc Linux.",
-    starter: () => {
-      const s = initialNet();
+    starter: (lang) => {
+      const s = initialNet(lang);
       // pré-popular: descoberta + scan + sessão SSH como postgres@.77
       s.discovered.add("192.168.1.77");
       s.scanned.add("192.168.1.77");
@@ -615,14 +651,15 @@ const LEVELS: LevelDef[] = [
     id: 8,
     title: "Análise Forense de Captura",
     briefing: "O IDS gravou um arquivo capture.pcap durante um incidente. Use o Wireshark integrado para filtrar pacotes, achar a credencial em texto puro que o atacante usou, e identificar o IP suspeito. Comece gerando tráfego com ping/curl/nc — depois 'wireshark' abre o analisador visual.",
-    starter: () => {
-      const s = initialNet();
+    starter: (lang) => {
+      const s = initialNet(lang);
+      const isEn = (lang ?? getSavedLanguage()) === "en";
       // adiciona host fictício "atacante" pra missão
       s.hosts["192.168.1.99"] = {
         ip: "192.168.1.99", hostname: "kali-attacker.evil", os: "Kali Linux 2024", status: "up",
         ports: [
           { port: 22, state: "open", service: "ssh", version: "OpenSSH 9.0" },
-          { port: 4444, state: "open", service: "shell-handler", banner: "Metasploit reverse shell handler — porta de C2" },
+          { port: 4444, state: "open", service: "shell-handler", banner: isEn ? "Metasploit reverse shell handler — C2 port" : "Metasploit reverse shell handler — porta de C2" },
         ],
       };
       s.dnsCache["kali-attacker.evil"] = "192.168.1.99";
@@ -682,8 +719,8 @@ const LEVELS: LevelDef[] = [
     id: 9,
     title: "Hardening: Firewall (iptables)",
     briefing: "Vire o jogo: agora você é o sysadmin do servidor web 192.168.1.50. A varredura nmap do Nível 3 mostrou portas demais abertas. Configure iptables para bloquear o que não precisa ficar exposto à subrede inteira e restrinja SSH só pra workstation admin (192.168.1.42).",
-    starter: () => {
-      const s = initialNet();
+    starter: (lang) => {
+      const s = initialNet(lang);
       // contexto: você já mapeou a rede nos níveis anteriores
       s.discovered.add("192.168.1.50");
       s.discovered.add("192.168.1.77");
@@ -735,7 +772,27 @@ const LEVELS: LevelDef[] = [
   },
 ];
 
+const getLevels = (lang: AppLanguage): LevelDef[] => {
+  if (lang !== "en") return BASE_LEVELS;
+  return BASE_LEVELS.map((lv) => {
+    const tr = NETWORK_LEVELS_EN[lv.id];
+    if (!tr) return lv;
+    return {
+      ...lv,
+      title: tr.title,
+      briefing: tr.briefing,
+      missions: lv.missions.map((m) => {
+        const mTr = tr.missions[m.id];
+        return mTr ? { ...m, title: mTr.title, hint: mTr.hint ?? m.hint } : m;
+      }),
+    };
+  });
+};
+
 export function NetworkSimulator({ onBack }: Props) {
+  const { lang } = useLanguage();
+  const isEn = lang === "en";
+  const LEVELS = useMemo(() => getLevels(lang), [lang]);
   const [phase, setPhase] = useState<"intro" | "playing">(() => {
     return localStorage.getItem("network_sim_intro_seen") ? "playing" : "intro";
   });
@@ -743,11 +800,16 @@ export function NetworkSimulator({ onBack }: Props) {
   const [levelIdx, setLevelIdx] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<number>>(new Set([0]));
   const [completed, setCompleted] = useState<Set<number>>(new Set());
-  const [state, setState] = useState<NetState>(() => initialNet());
+  const [state, setState] = useState<NetState>(() => initialNet(lang));
   const [missionIdx, setMissionIdx] = useState(0);
-  const [lines, setLines] = useState<Line[]>([
-    { type: "info", text: "NetSim v2.0 inicializado. Digite 'help' para comandos." },
-    { type: "info", text: "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar as ferramentas (ex: Nmap, Wireshark)." },
+  const [lines, setLines] = useState<Line[]>(() => [
+    { type: "info", text: lang === "en" ? "NetSim v2.0 initialized. Type 'help' for commands." : "NetSim v2.0 inicializado. Digite 'help' para comandos." },
+    {
+      type: "info",
+      text: lang === "en"
+        ? "⚠️ Note: These commands are simulated. To use them on your real PC, you will need to install the tools (e.g., Nmap, Wireshark)."
+        : "⚠️ Nota: Estes comandos são simulados. Para usá-los no seu PC real, você precisará instalar as ferramentas (ex: Nmap, Wireshark).",
+    },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -772,10 +834,10 @@ export function NetworkSimulator({ onBack }: Props) {
   useEffect(() => {
     if (levelDone || !mission) return;
     if (mission.check(state)) {
-      setLines((l) => [...l, { type: "ok", text: `[+] Missão concluída: ${mission.title}` }]);
+      setLines((l) => [...l, { type: "ok", text: isEn ? `[+] Mission completed: ${mission.title}` : `[+] Missão concluída: ${mission.title}` }]);
       const next = missionIdx + 1;
       if (next >= level.missions.length) {
-        setLines((l) => [...l, { type: "ok", text: `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===` }]);
+        setLines((l) => [...l, { type: "ok", text: isEn ? `=== LEVEL ${level.id} COMPLETED: ${level.title} ===` : `=== NÍVEL ${level.id} CONCLUÍDO: ${level.title} ===` }]);
         setCompleted((s) => new Set(s).add(levelIdx));
         if (levelIdx + 1 < LEVELS.length) setUnlocked((s) => new Set(s).add(levelIdx + 1));
       }
@@ -804,10 +866,10 @@ export function NetworkSimulator({ onBack }: Props) {
 
   const loadLevel = (idx: number) => {
     setLevelIdx(idx);
-    setState(LEVELS[idx].starter());
+    setState(LEVELS[idx].starter(lang));
     setMissionIdx(0);
     setLines([
-      { type: "info", text: `=== NÍVEL ${LEVELS[idx].id}: ${LEVELS[idx].title} ===` },
+      { type: "info", text: isEn ? `=== LEVEL ${LEVELS[idx].id}: ${LEVELS[idx].title} ===` : `=== NÍVEL ${LEVELS[idx].id}: ${LEVELS[idx].title} ===` },
       { type: "info", text: LEVELS[idx].briefing },
     ]);
     setSelectedHost(null);
@@ -826,7 +888,7 @@ export function NetworkSimulator({ onBack }: Props) {
     const h = state.hosts[sess.ip];
     const fs = h?.victimFs;
     if (!fs) {
-      err("(simulador: host remoto sem filesystem definido)");
+      err(isEn ? "(simulator: remote host has no filesystem defined)" : "(simulador: host remoto sem filesystem definido)");
       return;
     }
     const args = cmd.split(/\s+/).filter(Boolean);
@@ -916,7 +978,7 @@ export function NetworkSimulator({ onBack }: Props) {
         }
       });
       const sorted = entries.sort((a, b) => a.name.localeCompare(b.name)).filter((e) => showAll || !e.name.startsWith("."));
-      if (!sorted.length) { out("(diretório vazio)"); return; }
+      if (!sorted.length) { out(isEn ? "(empty directory)" : "(diretório vazio)"); return; }
       if (longFmt) {
         out(`total ${sorted.length * 4}`);
         sorted.forEach((e) => {
@@ -935,7 +997,7 @@ export function NetworkSimulator({ onBack }: Props) {
     // cat <arq>
     if (c === "cat") {
       const target = args[1];
-      if (!target) { err("Uso: cat <arquivo>"); return; }
+      if (!target) { err(isEn ? "Usage: cat <file>" : "Uso: cat <arquivo>"); return; }
       const path = resolvePath(target);
       const file = fs.files[path];
       if (!file) { err(`cat: ${target}: No such file or directory`); return; }
@@ -978,19 +1040,19 @@ export function NetworkSimulator({ onBack }: Props) {
       // detectar -exec /bin/sh ou similar (escape para root shell)
       const isShellEscape = args.some((a, i) => a === "-exec" && /\/bin\/(sh|bash)/.test(args[i + 1] ?? ""));
       if (isShellEscape) {
-        out(`# (escalou para root via sudo find -exec /bin/sh — você é root agora!)`);
+        out(isEn ? `# (escalated to root via sudo find -exec /bin/sh — you are root now!)` : `# (escalou para root via sudo find -exec /bin/sh — você é root agora!)`);
         if (fs.rootFlag) {
           setState((s) => { const f = new Set(s.flags); f.add(fs.rootFlag!); f.add(`root-shell-${sess.ip}`); return { ...s, flags: f }; });
           out(`# cat /root/flag.txt`);
           out(fs.rootFlag);
           out(``);
-          out(`# (sessão elevada — comandos seguintes rodam como root)`);
+          out(isEn ? `# (elevated session — subsequent commands run as root)` : `# (sessão elevada — comandos seguintes rodam como root)`);
         }
         // promover sessão a root
         setState((s) => s.sshSession ? { ...s, sshSession: { ...s.sshSession, user: "root", cwd: "/root" } } : s);
         return;
       }
-      out(`(simulado: find executou. Use '-exec /bin/sh \\;' para escalar para root shell.)`);
+      out(isEn ? `(simulated: find executed. Use '-exec /bin/sh \\;' to escalate to a root shell.)` : `(simulado: find executou. Use '-exec /bin/sh \\;' para escalar para root shell.)`);
       return;
     }
 
@@ -1002,7 +1064,7 @@ export function NetworkSimulator({ onBack }: Props) {
         setState((s) => { const f = new Set(s.flags); f.add(`suid-listed-${sess.ip}`); return { ...s, flags: f }; });
         return;
       }
-      out("(use 'find / -perm -4000 2>/dev/null' para listar binários SUID)");
+      out(isEn ? "(use 'find / -perm -4000 2>/dev/null' to list SUID binaries)" : "(use 'find / -perm -4000 2>/dev/null' para listar binários SUID)");
       return;
     }
 
@@ -1017,7 +1079,7 @@ export function NetworkSimulator({ onBack }: Props) {
     // strings <arq>
     if (c === "strings") {
       const target = args[1];
-      if (!target) { err("Uso: strings <arquivo>"); return; }
+      if (!target) { err(isEn ? "Usage: strings <file>" : "Uso: strings <arquivo>"); return; }
       const path = resolvePath(target);
       const file = fs.files[path];
       if (!file) { err(`strings: '${target}': No such file`); return; }
@@ -1031,7 +1093,7 @@ export function NetworkSimulator({ onBack }: Props) {
     // hexdump -C <arq>
     if (c === "hexdump" || c === "xxd") {
       const target = args[args.length - 1];
-      if (!target || target.startsWith("-")) { err(`Uso: ${c} -C <arquivo>`); return; }
+      if (!target || target.startsWith("-")) { err(isEn ? `Usage: ${c} -C <file>` : `Uso: ${c} -C <arquivo>`); return; }
       const path = resolvePath(target);
       const file = fs.files[path];
       if (!file) { err(`${c}: '${target}': No such file`); return; }
@@ -1043,7 +1105,7 @@ export function NetworkSimulator({ onBack }: Props) {
         const ascii = slice.map((b) => b >= 32 && b < 127 ? String.fromCharCode(b) : ".").join("");
         out(`${i.toString(16).padStart(8, "0")}  ${hex}  |${ascii}|`);
       }
-      if (content.length > 64) out(`... (truncado: ${content.length} bytes total)`);
+      if (content.length > 64) out(isEn ? `... (truncated: ${content.length} bytes total)` : `... (truncado: ${content.length} bytes total)`);
       return;
     }
 
@@ -1062,7 +1124,9 @@ export function NetworkSimulator({ onBack }: Props) {
     }
 
     err(`-bash: ${c}: command not found`);
-    out(`(comandos disponíveis no shell remoto: ls, cat, cd, pwd, whoami, id, uname, sudo -l, sudo find, find, crontab -l, strings, hexdump, ps, echo, exit)`);
+    out(isEn
+      ? `(available commands in remote shell: ls, cat, cd, pwd, whoami, id, uname, sudo -l, sudo find, find, crontab -l, strings, hexdump, ps, echo, exit)`
+      : `(comandos disponíveis no shell remoto: ls, cat, cd, pwd, whoami, id, uname, sudo -l, sudo find, find, crontab -l, strings, hexdump, ps, echo, exit)`);
   };
 
   const run = (raw: string) => {
@@ -1084,72 +1148,7 @@ export function NetworkSimulator({ onBack }: Props) {
     }
 
     if (cmdLower === "help") {
-      out("Comandos suportados (case-insensitive):");
-      out("");
-      out("  RECONHECIMENTO");
-      out("  ifconfig | ip a                       sua interface de rede");
-      out("  ping <ip|host>                        ICMP echo");
-      out("  traceroute <host> | tracert           rastreia caminho");
-      out("  arp -a                                vizinhos no segmento");
-      out("");
-      out("  DNS");
-      out("  host <domain>                         resolução enxuta");
-      out("  nslookup <host>                       resolve via DNS");
-      out("  dig [TXT|MX|NS|+short] <host>         query DNS detalhada");
-      out("  dig -x <ip>                           reverse DNS (PTR)");
-      out("  whois <domain>                        registro do domínio");
-      out("");
-      out("  PORT SCAN");
-      out("  nmap [-sn|-sV|-O|-A] <ip|cidr>        varredura completa");
-      out("  nmap [-sS|-sT|-sU] <ip>               tipo de scan (SYN/Connect/UDP)");
-      out("  nmap -p <portas> <ip>                 ranges: 22,80,443  ou  1-1000  ou  -");
-      out("  nmap --top-ports <N> <ip>             N portas mais comuns");
-      out("");
-      out("  INTERAÇÃO COM SERVIÇOS");
-      out("  curl [-u user:pass] [-I] <url>        HTTP (URL pode omitir http://)");
-      out("  wget <url>                            alias de curl");
-      out("  nc <ip> <port> | telnet <ip> <port>   conexão TCP raw / banner grab");
-      out("  ssh <user@ip>                         tentativa interativa (vai falhar)");
-      out("  sshpass -p <senha> ssh <user@ip>      autenticação não-interativa");
-      out("");
-      out("  ENUMERAÇÃO AVANÇADA");
-      out("  dnsrecon -d <domain>                  enum DNS + brute subdomains");
-      out("  enum4linux <ip>                       enum SMB (workgroup/users/shares)");
-      out("  smbclient -L <ip> -N                  lista shares SMB anonimamente");
-      out("  smbclient //<ip>/<share> -N           conecta no share");
-      out("  nmap --script vuln <ip>               NSE scripts de vulnerabilidades");
-      out("  nmap --script smb-vuln-* <ip>         scripts SMB específicos");
-      out("");
-      out("  EXPLOITATION & FORENSE");
-      out("  hydra -l <user> -P <wl> <proto>://<ip>   brute force (ssh/ftp/http)");
-      out("  searchsploit <termo|ip|cve>           busca CVEs/exploits");
-      out("  netstat -tuln                         conexões locais (dinâmico)");
-      out("  tcpdump [host X] [port N] [-c N]      captura de pacotes (real)");
-      out("  wireshark                             abre análise visual de pacotes (modal)");
-      out("  openssl s_client -connect <host>:<port>  inspeciona certificado TLS");
-      out("  report                                relatório final");
-      out("");
-      out("  BLUE TEAM / DEFESAS (Nível 9+)");
-      out("  iptables -L                           lista regras de firewall");
-      out("  iptables -A <chain> -p tcp --dport N [-s IP] -j ACCEPT|DROP");
-      out("                                        adiciona regra (chain: INPUT/OUTPUT/FORWARD)");
-      out("  iptables -D <chain> <num>             remove regra N da chain");
-      out("  iptables -F                           flush (limpa todas as regras)");
-      out("  iptables-save                         persiste regras em /etc/iptables/rules.v4");
-      out("");
-      out("  PÓS-EXPLORAÇÃO (após sshpass bem-sucedido)");
-      out("  ls/ls -la, cat, cd, pwd, whoami, id, uname -a, hostname, ps");
-      out("  sudo -l                               vê o que pode rodar com sudo");
-      out("  find / -perm -4000 2>/dev/null        lista binários SUID");
-      out("  sudo find . -exec /bin/sh \\;          escala para root (GTFOBins)");
-      out("  strings <arq>, hexdump -C <arq>       análise de binários/arquivos");
-      out("  exit                                  sai do shell remoto");
-      out("");
-      out("  clear | reset | help");
-      out("Atalhos: ↑/↓ histórico  •  Tab autocomplete contextual  •  clique nos hosts do mapa");
-      out("");
-      out("⚠️ Estes comandos funcionam apenas neste ambiente simulado.");
-      out("Para usá-los no seu PC, instale as ferramentas reais (nmap.org, wireshark.org, etc).");
+      (isEn ? NETWORK_HELP_LINES_EN : NETWORK_HELP_LINES_PT).forEach((line) => out(line));
       return;
     }
 
@@ -1205,7 +1204,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // ping
       if (c === "ping") {
         const target = args[1];
-        if (!target) { err("Uso: ping <ip|host>"); return s; }
+        if (!target) { err(isEn ? "Usage: ping <ip|host>" : "Uso: ping <ip|host>"); return s; }
         const ip = resolve(s, target);
         if (!ip) { err(`ping: ${target}: Name or service not known`); return s; }
         const host = s.hosts[ip];
@@ -1228,7 +1227,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // traceroute
       if (c === "traceroute" || c === "tracert") {
         const target = args[1];
-        if (!target) { err("Uso: traceroute <host>"); return s; }
+        if (!target) { err(isEn ? "Usage: traceroute <host>" : "Uso: traceroute <host>"); return s; }
         const ip = resolve(s, target);
         if (!ip) { err(`traceroute: unknown host ${target}`); return s; }
         out(`traceroute to ${target} (${ip}), 30 hops max, 60 byte packets`);
@@ -1258,7 +1257,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // nslookup
       if (c === "nslookup") {
         const target = args[1];
-        if (!target) { err("Uso: nslookup <host>"); return s; }
+        if (!target) { err(isEn ? "Usage: nslookup <host>" : "Uso: nslookup <host>"); return s; }
         const ip = resolve(s, target);
         launchPacket(s.myIp, "192.168.1.1", "dns");
         out(`Server:\t\t192.168.1.1`);
@@ -1281,7 +1280,7 @@ export function NetworkSimulator({ onBack }: Props) {
         const reverseIp = isReverse ? dArgs[dArgs.indexOf("-x") + 1] : null;
         const recordType = (dArgs.find((a) => /^(A|TXT|MX|NS|AAAA|ANY)$/.test(a)) ?? "A").toUpperCase();
         const target = reverseIp ?? dArgs.find((a) => !a.startsWith("-") && !a.startsWith("+") && !/^(A|TXT|MX|NS|AAAA|ANY)$/i.test(a)) ?? "";
-        if (!target) { err("Uso: dig [TXT|MX|NS] <host>  |  dig -x <ip>  |  dig +short <host>"); return s; }
+        if (!target) { err(isEn ? "Usage: dig [TXT|MX|NS] <host>  |  dig -x <ip>  |  dig +short <host>" : "Uso: dig [TXT|MX|NS] <host>  |  dig -x <ip>  |  dig +short <host>"); return s; }
         launchPacket(s.myIp, "192.168.1.1", "dns");
 
         if (isReverse) {
@@ -1352,9 +1351,9 @@ export function NetworkSimulator({ onBack }: Props) {
       // whois
       if (c === "whois") {
         const target = args[1];
-        if (!target) { err("Uso: whois <domain>"); return s; }
+        if (!target) { err(isEn ? "Usage: whois <domain>" : "Uso: whois <domain>"); return s; }
         out(`Domain Name: ${target.toUpperCase()}`);
-        out(`Registrar: CorpHQ Internal Registry (interno)`);
+        out(isEn ? `Registrar: CorpHQ Internal Registry (internal)` : `Registrar: CorpHQ Internal Registry (interno)`);
         out(`Updated Date: 2024-08-12T14:32:11Z`);
         out(`Creation Date: 2018-03-15T09:21:54Z`);
         out(`Registrant Organization: CorpHQ Ltda`);
@@ -1368,7 +1367,9 @@ export function NetworkSimulator({ onBack }: Props) {
       // ===== BLUE TEAM: iptables / iptables-save =====
       if (c === "iptables" || c === "iptables-save") {
         if (!s.managedHost) {
-          err("iptables: você não está no shell de um host administrado (este comando estará disponível a partir do Nível 9).");
+          err(isEn
+            ? "iptables: you are not on a managed host shell (this command becomes available starting at Level 9)."
+            : "iptables: você não está no shell de um host administrado (este comando estará disponível a partir do Nível 9).");
           return s;
         }
         const host = s.hosts[s.managedHost];
@@ -1377,7 +1378,7 @@ export function NetworkSimulator({ onBack }: Props) {
         // iptables-save → persiste e indica sucesso
         if (c === "iptables-save") {
           if (next.firewallRules.length === 0) {
-            err("iptables-save: nenhuma regra para salvar.");
+            err(isEn ? "iptables-save: no rules to save." : "iptables-save: nenhuma regra para salvar.");
             return s;
           }
           out(`# Generated by iptables-save on ${hostLabel}`);
@@ -1396,9 +1397,9 @@ export function NetworkSimulator({ onBack }: Props) {
             out(parts.join(" "));
           });
           out(`COMMIT`);
-          out(`# Salvo em /etc/iptables/rules.v4`);
+          out(isEn ? `# Saved to /etc/iptables/rules.v4` : `# Salvo em /etc/iptables/rules.v4`);
           next.firewallSaved = true;
-          ok(`[+] Regras persistidas — sobreviverão a reboot.`);
+          ok(isEn ? `[+] Rules persisted — they will survive a reboot.` : `[+] Regras persistidas — sobreviverão a reboot.`);
           return next;
         }
 
@@ -1431,7 +1432,7 @@ export function NetworkSimulator({ onBack }: Props) {
         // iptables -F  (flush)
         if (fwArgs[0] === "-F" || fwArgs.includes("-F")) {
           next.firewallRules = [];
-          ok(`[+] Todas as regras foram limpas.`);
+          ok(isEn ? `[+] All rules flushed.` : `[+] Todas as regras foram limpas.`);
           return next;
         }
 
@@ -1439,7 +1440,9 @@ export function NetworkSimulator({ onBack }: Props) {
         if (fwArgs[0] === "-A") {
           const chain = (fwArgs[1] ?? "").toUpperCase() as FirewallRule["chain"];
           if (chain !== "INPUT" && chain !== "OUTPUT" && chain !== "FORWARD") {
-            err(`iptables: chain inválida '${fwArgs[1]}'. Use INPUT, OUTPUT ou FORWARD.`);
+            err(isEn
+              ? `iptables: invalid chain '${fwArgs[1]}'. Use INPUT, OUTPUT, or FORWARD.`
+              : `iptables: chain inválida '${fwArgs[1]}'. Use INPUT, OUTPUT ou FORWARD.`);
             return s;
           }
           let proto: FirewallRule["proto"] | undefined;
@@ -1458,7 +1461,7 @@ export function NetworkSimulator({ onBack }: Props) {
             else if (a === "-j") action = (fwArgs[++i] ?? "").toUpperCase() as FirewallRule["action"];
           }
           if (!action || (action !== "ACCEPT" && action !== "DROP" && action !== "REJECT")) {
-            err(`iptables: ação inválida — use -j ACCEPT | DROP | REJECT.`);
+            err(isEn ? `iptables: invalid action — use -j ACCEPT | DROP | REJECT.` : `iptables: ação inválida — use -j ACCEPT | DROP | REJECT.`);
             return s;
           }
           const rule: FirewallRule = {
@@ -1466,7 +1469,9 @@ export function NetworkSimulator({ onBack }: Props) {
             chain, action, proto, dport, sport, src, dst,
           };
           next.firewallRules = [...next.firewallRules, rule];
-          ok(`[+] Regra adicionada: ${chain} ${action} ${proto ?? "all"}${dport ? ` dport=${dport}` : ""}${src ? ` src=${src}` : ""}`);
+          ok(isEn
+            ? `[+] Rule added: ${chain} ${action} ${proto ?? "all"}${dport ? ` dport=${dport}` : ""}${src ? ` src=${src}` : ""}`
+            : `[+] Regra adicionada: ${chain} ${action} ${proto ?? "all"}${dport ? ` dport=${dport}` : ""}${src ? ` src=${src}` : ""}`);
           return next;
         }
 
@@ -1476,16 +1481,18 @@ export function NetworkSimulator({ onBack }: Props) {
           const num = Number(fwArgs[2]);
           const chainRules = next.firewallRules.filter((r) => r.chain === chain);
           if (!num || num < 1 || num > chainRules.length) {
-            err(`iptables: regra ${num} inexistente em ${chain}.`);
+            err(isEn ? `iptables: rule ${num} does not exist in ${chain}.` : `iptables: regra ${num} inexistente em ${chain}.`);
             return s;
           }
           const toRemove = chainRules[num - 1];
           next.firewallRules = next.firewallRules.filter((r) => r.id !== toRemove.id);
-          ok(`[+] Regra ${num} removida de ${chain}.`);
+          ok(isEn ? `[+] Rule ${num} deleted from ${chain}.` : `[+] Regra ${num} removida de ${chain}.`);
           return next;
         }
 
-        err(`iptables: uso — iptables [-L | -A <chain> ... -j <ACTION> | -D <chain> <num> | -F]`);
+        err(isEn
+          ? `iptables: usage — iptables [-L | -A <chain> ... -j <ACTION> | -D <chain> <num> | -F]`
+          : `iptables: uso — iptables [-L | -A <chain> ... -j <ACTION> | -D <chain> <num> | -F]`);
         return s;
       }
 
@@ -1697,7 +1704,7 @@ export function NetworkSimulator({ onBack }: Props) {
               out(`|_  /robots.txt: Disallow entries leak admin/.git paths`);
             }
             if (allCves.length === 0 && !wantsSmb && !wantsHttp && !wantsFtp) {
-              out(`(nenhum NSE script bateu — tente --script vuln em host vulnerável)`);
+              out(isEn ? `(no NSE script matched — try --script vuln on a vulnerable host)` : `(nenhum NSE script bateu — tente --script vuln em host vulnerável)`);
             }
           }
           out(`Nmap done: 1 IP address (1 host up) scanned in ${(Math.random() * 5 + 1).toFixed(2)} seconds`);
@@ -1706,7 +1713,7 @@ export function NetworkSimulator({ onBack }: Props) {
           return next;
         }
 
-        err("nmap: alvo inválido. Use IP, hostname ou CIDR (ex: 192.168.1.0/24).");
+        err(isEn ? "nmap: invalid target. Use IP, hostname, or CIDR (e.g., 192.168.1.0/24)." : "nmap: alvo inválido. Use IP, hostname ou CIDR (ex: 192.168.1.0/24).");
         return s;
       }
 
@@ -1730,12 +1737,12 @@ export function NetworkSimulator({ onBack }: Props) {
             urlArg = a;
           }
         }
-        if (!urlArg) { err(`Uso: ${c} [-u user:pass] [-I] <url>`); return s; }
+        if (!urlArg) { err(isEn ? `Usage: ${c} [-u user:pass] [-I] <url>` : `Uso: ${c} [-u user:pass] [-I] <url>`); return s; }
         // tolerância: aceitar URL sem scheme (assume http://)
         let url = urlArg;
         if (!/^https?:\/\//.test(url)) url = "http://" + url;
         const m = url.match(/^https?:\/\/([^\/:]+)(?::(\d+))?(\/[^\s]*)?/);
-        if (!m) { err(`${c}: (3) URL malformada`); return s; }
+        if (!m) { err(isEn ? `${c}: (3) URL using bad/illegal format or missing URL` : `${c}: (3) URL malformada`); return s; }
         const hostRef = m[1];
         const port = m[2] ? Number(m[2]) : 80;
         const path = m[3] ?? "/";
@@ -1761,7 +1768,7 @@ export function NetworkSimulator({ onBack }: Props) {
             out(`HTTP/1.1 401 Unauthorized`);
             Object.entries(resp.headers ?? {}).forEach(([k, v]) => out(`${k}: ${v}`));
             out(``);
-            if (!headOnly) out(`401 Unauthorized — autenticação necessária (Basic)`);
+            if (!headOnly) out(isEn ? `401 Unauthorized — authentication required (Basic)` : `401 Unauthorized — autenticação necessária (Basic)`);
             next.discovered.add(ip);
             return next;
           }
@@ -1795,7 +1802,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // nc (netcat) — também aceita 'telnet <ip> <port>' como alias
       if (c === "nc" || c === "telnet") {
         const ipArg = args[1]; const portArg = Number(args[2]);
-        if (!ipArg || !portArg) { err(`Uso: ${c} <ip> <porta>`); return s; }
+        if (!ipArg || !portArg) { err(isEn ? `Usage: ${c} <ip> <port>` : `Uso: ${c} <ip> <porta>`); return s; }
         const ip = resolve(s, ipArg);
         if (!ip) { err(`${c}: getaddrinfo for ${ipArg} failed`); return s; }
         const h = s.hosts[ip];
@@ -1837,20 +1844,20 @@ export function NetworkSimulator({ onBack }: Props) {
         let target = "";
         if (c === "sshpass") {
           const pIdx = args.indexOf("-p");
-          if (pIdx === -1 || !args[pIdx + 1]) { err("Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
+          if (pIdx === -1 || !args[pIdx + 1]) { err(isEn ? "Usage: sshpass -p <password> ssh <user@ip>" : "Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
           providedPass = args[pIdx + 1];
           const sshIdx = args.indexOf("ssh");
-          if (sshIdx === -1 || !args[sshIdx + 1]) { err("Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
+          if (sshIdx === -1 || !args[sshIdx + 1]) { err(isEn ? "Usage: sshpass -p <password> ssh <user@ip>" : "Uso: sshpass -p <senha> ssh <user@ip>"); return s; }
           const conn = args[sshIdx + 1];
           const mm = conn.match(/^(?:([^@]+)@)?(.+)$/);
-          if (!mm) { err("ssh: formato inválido"); return s; }
+          if (!mm) { err(isEn ? "ssh: invalid format" : "ssh: formato inválido"); return s; }
           user = mm[1] ?? "root";
           target = mm[2];
         } else {
           const conn = args[1];
-          if (!conn) { err("Uso: ssh <user@ip>   |   sshpass -p <senha> ssh <user@ip>"); return s; }
+          if (!conn) { err(isEn ? "Usage: ssh <user@ip>   |   sshpass -p <password> ssh <user@ip>" : "Uso: ssh <user@ip>   |   sshpass -p <senha> ssh <user@ip>"); return s; }
           const mm = conn.match(/^(?:([^@]+)@)?(.+)$/);
-          if (!mm) { err("ssh: formato inválido"); return s; }
+          if (!mm) { err(isEn ? "ssh: invalid format" : "ssh: formato inválido"); return s; }
           user = mm[1] ?? "root";
           target = mm[2];
         }
@@ -1881,7 +1888,9 @@ export function NetworkSimulator({ onBack }: Props) {
           out(``);
           out(`Last login: ${new Date().toUTCString()}`);
           const initialCwd = h.victimFs?.cwd ?? `/home/${user}`;
-          out(`${user}@${h.hostname ?? target}:${initialCwd === `/home/${user}` ? "~" : initialCwd}$ (sessão SSH ativa — comandos agora rodam no host remoto. Use 'exit' para sair)`);
+          out(isEn
+            ? `${user}@${h.hostname ?? target}:${initialCwd === `/home/${user}` ? "~" : initialCwd}$ (SSH session active — commands now run on the remote host. Use 'exit' to disconnect)`
+            : `${user}@${h.hostname ?? target}:${initialCwd === `/home/${user}` ? "~" : initialCwd}$ (sessão SSH ativa — comandos agora rodam no host remoto. Use 'exit' para sair)`);
           next.flags.add(`ssh-login-${ip}`);
           next.sshSession = { ip, user, cwd: initialCwd };
           return next;
@@ -1896,12 +1905,16 @@ export function NetworkSimulator({ onBack }: Props) {
           err(`Permission denied, please try again.`);
           err(`${user}@${target}: Permission denied (publickey,password).`);
           if (creds) {
-            out(`(dica: o host parece ter creds default — tente combinações comuns como '${creds.user}:****')`);
+            out(isEn
+              ? `(hint: host appears to have default creds — try common combinations like '${creds.user}:****')`
+              : `(dica: o host parece ter creds default — tente combinações comuns como '${creds.user}:****')`);
           }
         } else {
           out(`${user}@${target}'s password: ************`);
           err(`Permission denied, please try again.`);
-          out(`(use: sshpass -p <senha> ssh ${user}@${target}   para passar senha não-interativamente)`);
+          out(isEn
+            ? `(use: sshpass -p <password> ssh ${user}@${target}   to pass password non-interactively)`
+            : `(use: sshpass -p <senha> ssh ${user}@${target}   para passar senha não-interativamente)`);
         }
         return next;
       }
@@ -1909,7 +1922,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // host <domain>  — alias enxuto de dig +short
       if (c === "host") {
         const target = args[1];
-        if (!target) { err("Uso: host <domain>"); return s; }
+        if (!target) { err(isEn ? "Usage: host <domain>" : "Uso: host <domain>"); return s; }
         const ip = resolve(s, target);
         launchPacket(s.myIp, "192.168.1.1", "dns");
         if (ip) {
@@ -1935,7 +1948,7 @@ export function NetworkSimulator({ onBack }: Props) {
         const fresh = s.connections.filter((c0) => Date.now() - c0.ts < 60000);
         if (fresh.length > 0) {
           out(``);
-          out(`-- conexões iniciadas por VOCÊ:`);
+          out(isEn ? `-- connections initiated by YOU:` : `-- conexões iniciadas por VOCÊ:`);
           fresh.forEach((c0) => {
             const local = `${s.myIp}:${c0.localPort}`.padEnd(27);
             const foreign = `${c0.remoteIp}:${c0.remotePort}`.padEnd(29);
@@ -1968,7 +1981,9 @@ export function NetworkSimulator({ onBack }: Props) {
         });
         // se ainda não há nada capturado, mostra mensagem amigável
         if (filtered.length === 0) {
-          out(`(nenhum pacote capturado — use ping/curl/nc/dig para gerar tráfego primeiro)`);
+          out(isEn
+            ? `(no packets captured — use ping/curl/nc/dig to generate traffic first)`
+            : `(nenhum pacote capturado — use ping/curl/nc/dig para gerar tráfego primeiro)`);
           return { ...next, _tcpdumpViewed: true };
         }
         const slice = count ? filtered.slice(-count) : filtered.slice(-30);
@@ -1987,7 +2002,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // searchsploit (busca CVEs por termo, versão ou IP scaneado)
       if (c === "searchsploit") {
         const term = args.slice(1).join(" ").trim();
-        if (!term) { err("Uso: searchsploit <termo|versão|ip>"); return s; }
+        if (!term) { err(isEn ? "Usage: searchsploit <term|version|ip>" : "Uso: searchsploit <termo|versão|ip>"); return s; }
         out(`---------------------------------- ----------------------------------`);
         out(` Exploit Title                     |  Path`);
         out(`---------------------------------- ----------------------------------`);
@@ -2005,7 +2020,10 @@ export function NetworkSimulator({ onBack }: Props) {
 
         if (ipMatch) {
           const h = s.hosts[term];
-          if (!h || !s.scanned.has(term)) { err(`Sem dados para ${term}. Rode 'nmap -sV ${term}' antes.`); return s; }
+          if (!h || !s.scanned.has(term)) {
+            err(isEn ? `No data for ${term}. Run 'nmap -sV ${term}' first.` : `Sem dados para ${term}. Rode 'nmap -sV ${term}' antes.`);
+            return s;
+          }
           h.ports.forEach((p) => (p.cves ?? []).forEach((cve) => {
             const key = cve.split(" ")[0];
             const ent = cveDb[key];
@@ -2036,20 +2054,20 @@ export function NetworkSimulator({ onBack }: Props) {
       // report (final do nível 5)
       if (c === "report") {
         ok(`╔═══════════════════════════════════════════════════════╗`);
-        ok(`║  RELATÓRIO DE INVESTIGAÇÃO — REDE 192.168.1.0/24      ║`);
+        ok(isEn ? `║  INVESTIGATION REPORT — NETWORK 192.168.1.0/24        ║` : `║  RELATÓRIO DE INVESTIGAÇÃO — REDE 192.168.1.0/24      ║`);
         ok(`╚═══════════════════════════════════════════════════════╝`);
         out(``);
-        out(`Hosts descobertos:           ${s.discovered.size}`);
-        out(`Hosts totalmente scaneados:  ${s.scanned.size}`);
-        out(`Bandeiras CTF capturadas:    ${Array.from(s.flags).filter((f) => f.startsWith("CTF")).length}`);
+        out(isEn ? `Discovered hosts:            ${s.discovered.size}` : `Hosts descobertos:           ${s.discovered.size}`);
+        out(isEn ? `Fully scanned hosts:         ${s.scanned.size}` : `Hosts totalmente scaneados:  ${s.scanned.size}`);
+        out(isEn ? `Captured CTF flags:          ${Array.from(s.flags).filter((f) => f.startsWith("CTF")).length}` : `Bandeiras CTF capturadas:    ${Array.from(s.flags).filter((f) => f.startsWith("CTF")).length}`);
         out(``);
-        out(`Vulnerabilidades identificadas:`);
+        out(isEn ? `Identified vulnerabilities:` : `Vulnerabilidades identificadas:`);
         out(`  • 192.168.1.100 — vsftpd 2.3.4 (CVE-2011-2523, backdoor)`);
-        out(`  • 192.168.1.100 — Samba 3.6 (vulnerável a EternalBlue)`);
-        out(`  • 192.168.1.50  — info disclosure no HTML do portal (/admin)`);
-        out(`  • 192.168.1.150 — Boa httpd (CVE conhecida em câmeras IoT)`);
+        out(isEn ? `  • 192.168.1.100 — Samba 3.6 (vulnerable to EternalBlue)` : `  • 192.168.1.100 — Samba 3.6 (vulnerável a EternalBlue)`);
+        out(isEn ? `  • 192.168.1.50  — info disclosure in portal HTML (/admin)` : `  • 192.168.1.50  — info disclosure no HTML do portal (/admin)`);
+        out(isEn ? `  • 192.168.1.150 — Boa httpd (known CVE in IoT cameras)` : `  • 192.168.1.150 — Boa httpd (CVE conhecida em câmeras IoT)`);
         out(``);
-        ok(`Investigação encerrada com sucesso. Bom trabalho, operador.`);
+        ok(isEn ? `Investigation closed successfully. Good job, operator.` : `Investigação encerrada com sucesso. Bom trabalho, operador.`);
         next.flags.add("investigation-done");
         return next;
       }
@@ -2064,18 +2082,18 @@ export function NetworkSimulator({ onBack }: Props) {
         const PIdx = hArgs.findIndex((a) => a === "-P" || a === "-p");
         const proto = hArgs.find((a) => /^(ssh|ftp|http-get|http-post-form|smb):\/\//i.test(a));
         if (!proto || (lIdx === -1 && LIdx === -1) || PIdx === -1) {
-          err("Uso: hydra -l <user> -P <wordlist> <proto>://<ip>");
-          err("     hydra -L users.txt -P pass.txt ssh://192.168.1.150");
+          err(isEn ? "Usage: hydra -l <user> -P <wordlist> <proto>://<ip>" : "Uso: hydra -l <user> -P <wordlist> <proto>://<ip>");
+          err("       hydra -L users.txt -P pass.txt ssh://192.168.1.150");
           return s;
         }
         const protoMatch = proto.match(/^(\w+):\/\/(.+)$/);
-        if (!protoMatch) { err("hydra: protocolo inválido"); return s; }
+        if (!protoMatch) { err(isEn ? "hydra: invalid protocol" : "hydra: protocolo inválido"); return s; }
         const protocol = protoMatch[1].toLowerCase();
         const target = protoMatch[2];
         const ip = resolve(s, target);
-        if (!ip) { err(`hydra: host não resolvido: ${target}`); return s; }
+        if (!ip) { err(isEn ? `hydra: could not resolve host: ${target}` : `hydra: host não resolvido: ${target}`); return s; }
         const h = s.hosts[ip];
-        if (!h) { err(`hydra: host inexistente`); return s; }
+        if (!h) { err(isEn ? `hydra: host does not exist` : `hydra: host inexistente`); return s; }
 
         // verificar se serviço está aberto
         const portMap: Record<string, number> = { ssh: 22, ftp: 21, "http-get": 80, "http-post-form": 80, smb: 445 };
@@ -2131,7 +2149,7 @@ export function NetworkSimulator({ onBack }: Props) {
       // dnsrecon -d <domain>           enum DNS records + brute subdomains
       if (c === "dnsrecon") {
         const dIdx = args.indexOf("-d");
-        if (dIdx === -1 || !args[dIdx + 1]) { err("Uso: dnsrecon -d <domain>"); return s; }
+        if (dIdx === -1 || !args[dIdx + 1]) { err(isEn ? "Usage: dnsrecon -d <domain>" : "Uso: dnsrecon -d <domain>"); return s; }
         const domain = args[dIdx + 1];
         out(`[*] Performing General Enumeration of Domain: ${domain}`);
         out(`[-] DNSSEC is not configured for ${domain}`);
@@ -2170,12 +2188,12 @@ export function NetworkSimulator({ onBack }: Props) {
       // enum4linux <ip>                enum SMB básico
       if (c === "enum4linux") {
         const target = args[1];
-        if (!target) { err("Uso: enum4linux <ip>"); return s; }
+        if (!target) { err(isEn ? "Usage: enum4linux <ip>" : "Uso: enum4linux <ip>"); return s; }
         const ip = resolve(s, target);
-        if (!ip) { err(`enum4linux: host não resolvido`); return s; }
+        if (!ip) { err(isEn ? `enum4linux: could not resolve host` : `enum4linux: host não resolvido`); return s; }
         const h = s.hosts[ip];
         const smbPort = h?.ports.find((p) => (p.port === 445 || p.port === 139) && p.state === "open");
-        if (!smbPort) { err(`enum4linux: SMB/NetBIOS não está aberto em ${ip}`); return s; }
+        if (!smbPort) { err(isEn ? `enum4linux: SMB/NetBIOS is not open on ${ip}` : `enum4linux: SMB/NetBIOS não está aberto em ${ip}`); return s; }
         launchPacket(s.myIp, ip, "tcp");
         logPacket(s.myIp, ip, "TCP", `enum4linux SMB probe`, 445);
         trackConnection(ip, 445, "smb");
@@ -2222,7 +2240,7 @@ export function NetworkSimulator({ onBack }: Props) {
         const sArgs = args.slice(1);
         const isList = sArgs.includes("-L");
         const targetRaw = sArgs.find((a) => !a.startsWith("-"));
-        if (!targetRaw) { err("Uso: smbclient -L <ip> -N   |   smbclient //<ip>/<share> -N"); return s; }
+        if (!targetRaw) { err(isEn ? "Usage: smbclient -L <ip> -N   |   smbclient //<ip>/<share> -N" : "Uso: smbclient -L <ip> -N   |   smbclient //<ip>/<share> -N"); return s; }
         // parsear //<ip>/<share>
         const shareMatch = targetRaw.match(/^\/\/([^\/]+)\/(.+)$/);
         let ip: string | null;
@@ -2233,9 +2251,9 @@ export function NetworkSimulator({ onBack }: Props) {
         } else {
           ip = resolve(s, targetRaw);
         }
-        if (!ip) { err(`smbclient: host não resolvido`); return s; }
+        if (!ip) { err(isEn ? `smbclient: could not resolve host` : `smbclient: host não resolvido`); return s; }
         const h = s.hosts[ip];
-        if (!h?.smbShares) { err(`smbclient: SMB não disponível em ${ip}`); return s; }
+        if (!h?.smbShares) { err(isEn ? `smbclient: SMB not available on ${ip}` : `smbclient: SMB não disponível em ${ip}`); return s; }
         launchPacket(s.myIp, ip, "tcp");
         logPacket(s.myIp, ip, "TCP", `smbclient connect`, 445);
         trackConnection(ip, 445, "smb");
@@ -2263,13 +2281,17 @@ export function NetworkSimulator({ onBack }: Props) {
         });
         if (share.flag) next.flags.add(share.flag);
         out(``);
-        out(`smb: \\> (use 'smbclient //${ip}/${share.name} -N -c "get <arq>"' para baixar)`);
-        out(`(arquivos do share ficaram visíveis — verifique conteúdo com curl/cat se houver flag)`);
+        out(isEn
+          ? `smb: \\> (use 'smbclient //${ip}/${share.name} -N -c "get <file>"' to download)`
+          : `smb: \\> (use 'smbclient //${ip}/${share.name} -N -c "get <arq>"' para baixar)`);
+        out(isEn
+          ? `(share files are now visible — inspect contents for any flags)`
+          : `(arquivos do share ficaram visíveis — verifique conteúdo com curl/cat se houver flag)`);
         // expor conteúdo dos arquivos como text inline (pra simular get)
         (share.files ?? []).forEach((f) => {
           if (f.content) {
             out(``);
-            out(`--- conteúdo de ${f.name} ---`);
+            out(isEn ? `--- contents of ${f.name} ---` : `--- conteúdo de ${f.name} ---`);
             f.content.split("\n").forEach((l) => out(l));
             const fm = f.content.match(/CTF\{[^}]+\}/);
             if (fm) next.flags.add(fm[0]);
@@ -2282,11 +2304,13 @@ export function NetworkSimulator({ onBack }: Props) {
       if (c === "openssl") {
         const sub = args[1];
         if (sub !== "s_client") {
-          err(`openssl: subcomando '${sub}' não suportado. Use 's_client -connect <host>:<port>'`);
+          err(isEn
+            ? `openssl: subcommand '${sub}' not supported. Use 's_client -connect <host>:<port>'`
+            : `openssl: subcomando '${sub}' não suportado. Use 's_client -connect <host>:<port>'`);
           return s;
         }
         const cIdx = args.indexOf("-connect");
-        if (cIdx === -1 || !args[cIdx + 1]) { err("Uso: openssl s_client -connect <host>:<port>"); return s; }
+        if (cIdx === -1 || !args[cIdx + 1]) { err(isEn ? "Usage: openssl s_client -connect <host>:<port>" : "Uso: openssl s_client -connect <host>:<port>"); return s; }
         const [hostRef, portStr] = args[cIdx + 1].split(":");
         const port = Number(portStr ?? 443);
         const ip = resolve(s, hostRef);
@@ -2311,7 +2335,7 @@ export function NetworkSimulator({ onBack }: Props) {
         out(`---`);
         out(`Server certificate`);
         out(`-----BEGIN CERTIFICATE-----`);
-        out(`MIIDazCCAlOgAwIBAgIUF8j3a91...   (truncado)`);
+        out(isEn ? `MIIDazCCAlOgAwIBAgIUF8j3a91...   (truncated)` : `MIIDazCCAlOgAwIBAgIUF8j3a91...   (truncado)`);
         out(`-----END CERTIFICATE-----`);
         out(`subject=C = BR, ST = SP, O = CorpHQ Ltda, CN = ${hostRef}`);
         out(`issuer=C = US, O = CorpHQ Internal CA, CN = CorpHQ Root CA`);
@@ -2335,16 +2359,20 @@ export function NetworkSimulator({ onBack }: Props) {
       // ===== wireshark (modal) =====
       if (c === "wireshark") {
         if (s.packetLog.length === 0) {
-          err("wireshark: sem pacotes capturados. Gere tráfego com ping/curl/nc/dig primeiro.");
+          err(isEn
+            ? "wireshark: no captured packets. Generate traffic with ping/curl/nc/dig first."
+            : "wireshark: sem pacotes capturados. Gere tráfego com ping/curl/nc/dig primeiro.");
           return s;
         }
         setShowWireshark(true);
-        out(`Iniciando Wireshark — abrindo análise visual de ${s.packetLog.length} pacotes capturados`);
+        out(isEn
+          ? `Starting Wireshark — opening visual analysis of ${s.packetLog.length} captured packets`
+          : `Iniciando Wireshark — abrindo análise visual de ${s.packetLog.length} pacotes capturados`);
         next.flags.add("wireshark-opened");
         return next;
       }
 
-      err(`comando não reconhecido: ${c}. Digite 'help'.`);
+      err(isEn ? `unrecognized command: ${c}. Type 'help'.` : `comando não reconhecido: ${c}. Digite 'help'.`);
       return s;
     });
   };
@@ -2368,7 +2396,7 @@ export function NetworkSimulator({ onBack }: Props) {
       else if (matches.length > 1) {
         const common = longestCommonPrefix(matches);
         if (common.length > input.length) setInput(common);
-        info("Sugestões: " + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
+        info((isEn ? "Suggestions: " : "Sugestões: ") + matches.slice(0, 12).join(" | ") + (matches.length > 12 ? ` …(+${matches.length - 12})` : ""));
       }
     }
   };
@@ -2409,56 +2437,83 @@ export function NetworkSimulator({ onBack }: Props) {
     ];
     const steps: { title: string; content: React.ReactNode }[] = [
       {
-        title: "Boas-vindas",
+        title: isEn ? "Welcome" : "Boas-vindas",
         content: (
           <div className="text-center pt-6">
             <div className="inline-flex p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-5">
               <Wifi className="w-10 h-10" />
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">Network Simulator</h1>
-            <p className="text-cyan-400 font-mono text-xs uppercase tracking-[0.3em] mb-6">Mapeie. Sondoe. Domine a rede.</p>
+            <p className="text-cyan-400 font-mono text-xs uppercase tracking-[0.3em] mb-6">
+              {isEn ? "Map. Probe. Master the network." : "Mapeie. Sondoe. Domine a rede."}
+            </p>
             <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
-              Um laboratório virtual de redes e cibersegurança ofensiva. Você assume o papel de um operador investigando a infraestrutura interna de uma empresa fictícia. Use comandos reais (<code className="text-cyan-300 font-mono text-xs">nmap, dig, nc, tcpdump</code>...) e veja a topologia se revelar conforme você avança.
+              {isEn ? (
+                <>A virtual networking and offensive cybersecurity lab. You take on the role of an operator investigating the internal infrastructure of a fictional company. Use real commands (<code className="text-cyan-300 font-mono text-xs">nmap, dig, nc, tcpdump</code>...) and watch the topology reveal itself as you progress.</>
+              ) : (
+                <>Um laboratório virtual de redes e cibersegurança ofensiva. Você assume o papel de um operador investigando a infraestrutura interna de uma empresa fictícia. Use comandos reais (<code className="text-cyan-300 font-mono text-xs">nmap, dig, nc, tcpdump</code>...) e veja a topologia se revelar conforme você avança.</>
+              )}
             </p>
           </div>
         ),
       },
       {
-        title: "Por que aprender redes?",
+        title: isEn ? "Why learn networking?" : "Por que aprender redes?",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" /> Por que aprender redes?
+              <Lightbulb className="w-4 h-4" /> {isEn ? "Why learn networking?" : "Por que aprender redes?"}
             </h2>
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <Globe className="w-6 h-6 text-cyan-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">A internet é redes</p>
-                <p className="text-sm text-slate-400 leading-relaxed">Todo serviço (web, email, app, jogo) é tráfego de rede. Quem entende rede entende como tudo funciona.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? "The internet is networks" : "A internet é redes"}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  {isEn
+                    ? "Every service (web, email, app, game) is network traffic. Whoever understands networking understands how everything works."
+                    : "Todo serviço (web, email, app, jogo) é tráfego de rede. Quem entende rede entende como tudo funciona."}
+                </p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <ShieldAlert className="w-6 h-6 text-red-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">Segurança</p>
-                <p className="text-sm text-slate-400 leading-relaxed">Pra defender, você precisa pensar como atacante. As mesmas ferramentas servem pra ambos os lados.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? "Security" : "Segurança"}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  {isEn
+                    ? "To defend, you must think like an attacker. The very same tools serve both sides."
+                    : "Pra defender, você precisa pensar como atacante. As mesmas ferramentas servem pra ambos os lados."}
+                </p>
               </div>
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-5">
                 <FileSearch className="w-6 h-6 text-amber-400 mb-3" />
-                <p className="text-base font-bold text-white mb-2">Debug & SRE</p>
-                <p className="text-sm text-slate-400 leading-relaxed">"Por que esse serviço não responde?" 80% das vezes é rede. Saber sondar economiza horas.</p>
+                <p className="text-base font-bold text-white mb-2">{isEn ? "Debugging & SRE" : "Debug & SRE"}</p>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  {isEn
+                    ? '"Why is this service not responding?" 80% of the time it is networking. Knowing how to probe saves hours.'
+                    : '"Por que esse serviço não responde?" 80% das vezes é rede. Saber sondar economiza horas.'}
+                </p>
               </div>
             </div>
           </section>
         ),
       },
       {
-        title: "Conceitos fundamentais",
+        title: isEn ? "Core concepts" : "Conceitos fundamentais",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" /> Conceitos fundamentais
+              <BookOpen className="w-4 h-4" /> {isEn ? "Core concepts" : "Conceitos fundamentais"}
             </h2>
             <div className="bg-slate-900/40 border border-white/5 rounded-2xl divide-y divide-white/5 mb-6">
-              {[
+              {(isEn ? [
+                { t: "IP", d: "Unique numeric address of each machine on the network. E.g.: 192.168.1.42 (private), 8.8.8.8 (public).", c: "text-cyan-300" },
+                { t: "Subnet", d: "IP range on the same physical segment. 192.168.1.0/24 = 256 addresses (192.168.1.0 to 192.168.1.255).", c: "text-emerald-300" },
+                { t: "Gateway", d: "Router connecting your subnet to the rest of the world. Usually the first IP in the range.", c: "text-amber-300" },
+                { t: "DNS", d: "System that translates names (google.com) into IPs (142.250.78.78). Without DNS you would only memorize numbers.", c: "text-fuchsia-300" },
+                { t: "Port", d: "Service identifier within an IP. 80=HTTP, 443=HTTPS, 22=SSH, 25=SMTP, 5432=PostgreSQL.", c: "text-violet-300" },
+                { t: "Packet", d: "Unit of information traveling across the network. ICMP, TCP, and UDP are the most common types.", c: "text-rose-300" },
+                { t: "Banner", d: "Initial message many services send upon connection — often leaks the software version.", c: "text-pink-300" },
+                { t: "CIDR", d: "Compact way to express ranges: /24 = 256 IPs, /16 = 65536 IPs, /32 = 1 single IP.", c: "text-cyan-300" },
+              ] : [
                 { t: "IP", d: "Endereço numérico único de cada máquina na rede. Ex: 192.168.1.42 (privado), 8.8.8.8 (público).", c: "text-cyan-300" },
                 { t: "Subrede", d: "Faixa de IPs do mesmo segmento físico. 192.168.1.0/24 = 256 endereços (192.168.1.0 a 192.168.1.255).", c: "text-emerald-300" },
                 { t: "Gateway", d: "Roteador que conecta sua subrede ao resto do mundo. Geralmente o primeiro IP da faixa.", c: "text-amber-300" },
@@ -2467,7 +2522,7 @@ export function NetworkSimulator({ onBack }: Props) {
                 { t: "Pacote", d: "Unidade de informação que viaja na rede. ICMP, TCP e UDP são os tipos mais comuns.", c: "text-rose-300" },
                 { t: "Banner", d: "Mensagem inicial que muitos serviços enviam ao conectar — costuma vazar a versão do software.", c: "text-pink-300" },
                 { t: "CIDR", d: "Forma compacta de expressar faixas: /24 = 256 IPs, /16 = 65536 IPs, /32 = 1 IP só.", c: "text-cyan-300" },
-              ].map((it, i) => (
+              ]).map((it, i) => (
                 <div key={i} className="flex items-start gap-3 p-4">
                   <span className={`text-sm font-bold font-mono ${it.c} min-w-[120px] pt-0.5`}>{it.t}</span>
                   <span className="text-sm text-slate-400 leading-relaxed flex-1">{it.d}</span>
@@ -2478,7 +2533,7 @@ export function NetworkSimulator({ onBack }: Props) {
             <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden">
               <img
                 src="/assets/images/network_edu.png"
-                alt="Infográfico Educativo: Fluxo de Pacotes na Rede"
+                alt={isEn ? "Educational Infographic: Network Packet Flow" : "Infográfico Educativo: Fluxo de Pacotes na Rede"}
                 className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
               />
             </div>
@@ -2486,30 +2541,34 @@ export function NetworkSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Cenário CTF",
+        title: isEn ? "CTF Scenario" : "Cenário CTF",
         content: (
           <section className="bg-gradient-to-br from-red-900/10 via-slate-900/40 to-cyan-900/10 border border-red-500/20 rounded-2xl p-6">
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-400 mb-4 flex items-center gap-2">
-              <Flag className="w-4 h-4" /> Cenário CTF
+              <Flag className="w-4 h-4" /> {isEn ? "CTF Scenario" : "Cenário CTF"}
             </h2>
             <p className="text-base text-slate-300 leading-relaxed mb-4">
-              Você é um pentester contratado pela <strong>CorpHQ</strong> pra avaliar a segurança da rede interna. Sabe-se que existe um host vulnerável escondido entre as máquinas. Sua missão:
+              {isEn ? (
+                <>You are a pentester hired by <strong>CorpHQ</strong> to assess the security of its internal network. A vulnerable host is known to be hidden among the machines. Your mission:</>
+              ) : (
+                <>Você é um pentester contratado pela <strong>CorpHQ</strong> pra avaliar a segurança da rede interna. Sabe-se que existe um host vulnerável escondido entre as máquinas. Sua missão:</>
+              )}
             </p>
             <ol className="text-sm text-slate-400 leading-relaxed space-y-2 list-decimal list-inside ml-2">
-              <li>Mapear a topologia (descobrir todos os hosts ativos)</li>
-              <li>Identificar serviços expostos e suas versões</li>
-              <li>Encontrar a "bandeira" (CTF flag) escondida no servidor vulnerável</li>
-              <li>Gerar um relatório final com as vulnerabilidades descobertas</li>
+              <li>{isEn ? "Map the topology (discover all active hosts)" : "Mapear a topologia (descobrir todos os hosts ativos)"}</li>
+              <li>{isEn ? "Identify exposed services and their versions" : "Identificar serviços expostos e suas versões"}</li>
+              <li>{isEn ? 'Find the "flag" (CTF flag) hidden on the vulnerable server' : 'Encontrar a "bandeira" (CTF flag) escondida no servidor vulnerável'}</li>
+              <li>{isEn ? "Generate a final report with the discovered vulnerabilities" : "Gerar um relatório final com as vulnerabilidades descobertas"}</li>
             </ol>
           </section>
         ),
       },
       {
-        title: "Os níveis",
+        title: isEn ? "The levels" : "Os níveis",
         content: (
           <section>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6 flex items-center gap-2">
-              <Trophy className="w-4 h-4" /> Os {LEVELS.length} níveis
+              <Trophy className="w-4 h-4" /> {isEn ? `The ${LEVELS.length} levels` : `Os ${LEVELS.length} níveis`}
             </h2>
             <div className="space-y-2">
               {LEVELS.map((lv, i) => {
@@ -2518,7 +2577,7 @@ export function NetworkSimulator({ onBack }: Props) {
                   <div key={lv.id} className={`bg-slate-900/40 border ${s.border} rounded-xl p-4 flex items-start gap-4`}>
                     <div className={`w-9 h-9 rounded-lg ${s.bg} border ${s.borderInner} ${s.text} flex items-center justify-center font-black text-sm shrink-0`}>{lv.id}</div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white mb-1">{lv.title} <span className="text-[10px] text-slate-500 font-mono ml-2">{lv.missions.length} missões</span></p>
+                      <p className="text-sm font-bold text-white mb-1">{lv.title} <span className="text-[10px] text-slate-500 font-mono ml-2">{lv.missions.length} {isEn ? "missions" : "missões"}</span></p>
                       <p className="text-xs text-slate-400 leading-relaxed">{lv.briefing}</p>
                     </div>
                   </div>
@@ -2529,24 +2588,26 @@ export function NetworkSimulator({ onBack }: Props) {
         ),
       },
       {
-        title: "Pronto para começar",
+        title: isEn ? "Ready to start" : "Pronto para começar",
         content: (
           <section>
             <div className="bg-gradient-to-br from-cyan-900/10 via-slate-900/40 to-emerald-900/10 border border-cyan-500/20 rounded-2xl p-6 mb-6">
               <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" /> Dicas
+                <Lightbulb className="w-4 h-4" /> {isEn ? "Tips" : "Dicas"}
               </h2>
               <ul className="text-sm text-slate-400 space-y-2">
-                <li>• Digite <code className="text-cyan-300 font-mono">help</code> a qualquer momento para listar todos os comandos</li>
-                <li>• <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> navegam o histórico, <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> autocompleta</li>
-                <li>• <strong>Clique nos hosts do mapa de topologia</strong> para ver portas e detalhes</li>
-                <li>• Pacotes ICMP/TCP/DNS são animados no mapa quando você dispara comandos</li>
-                <li>• <code className="text-cyan-300 font-mono">reset</code> reinicia o nível, <code className="text-cyan-300 font-mono">clear</code> limpa o terminal</li>
+                <li>• {isEn ? <>Type <code className="text-cyan-300 font-mono">help</code> at any time to list all commands</> : <>Digite <code className="text-cyan-300 font-mono">help</code> a qualquer momento para listar todos os comandos</>}</li>
+                <li>• <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↑</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">↓</kbd> {isEn ? "navigate history," : "navegam o histórico,"} <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-xs font-mono">Tab</kbd> {isEn ? "autocompletes" : "autocompleta"}</li>
+                <li>• <strong>{isEn ? "Click hosts on the topology map" : "Clique nos hosts do mapa de topologia"}</strong> {isEn ? "to inspect ports and details" : "para ver portas e detalhes"}</li>
+                <li>• {isEn ? "ICMP/TCP/DNS packets are animated on the map when you run commands" : "Pacotes ICMP/TCP/DNS são animados no mapa quando você dispara comandos"}</li>
+                <li>• <code className="text-cyan-300 font-mono">reset</code> {isEn ? "restarts the level," : "reinicia o nível,"} <code className="text-cyan-300 font-mono">clear</code> {isEn ? "clears the terminal" : "limpa o terminal"}</li>
               </ul>
             </div>
             <div className="text-center">
-              <p className="text-base text-slate-300 mb-1">Pronto, operador.</p>
-              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">17 missões · 5 níveis · ~30 minutos</p>
+              <p className="text-base text-slate-300 mb-1">{isEn ? "Ready, operator." : "Pronto, operador."}</p>
+              <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">
+                {isEn ? `${LEVELS.reduce((acc, lv) => acc + lv.missions.length, 0)} missions · ${LEVELS.length} levels · ~45 minutes` : "17 missões · 5 níveis · ~30 minutos"}
+              </p>
             </div>
           </section>
         ),
@@ -2579,7 +2640,7 @@ export function NetworkSimulator({ onBack }: Props) {
               localStorage.setItem("network_sim_intro_seen", "true");
               setPhase("playing");
             }} className="text-xs text-slate-500 hover:text-cyan-400 font-mono uppercase tracking-widest transition-colors">
-              Pular tour →
+              {isEn ? "Skip tour →" : "Pular tour →"}
             </button>
           </div>
 
@@ -2602,21 +2663,21 @@ export function NetworkSimulator({ onBack }: Props) {
           <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-md border-t border-white/10">
             <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
               <Button variant="ghost" onClick={goPrev} disabled={introStep === 0} className="text-slate-400 hover:text-white disabled:opacity-30">
-                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> Voltar
+                <ChevronDown className="w-4 h-4 mr-1 rotate-90" /> {isEn ? "Back" : "Voltar"}
               </Button>
               <div className="flex-1 flex flex-col items-center gap-2">
-                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} de {steps.length}</p>
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{steps[introStep].title} · {introStep + 1} {isEn ? "of" : "de"} {steps.length}</p>
                 <div className="flex gap-1.5">
                   {steps.map((_, i) => (
                     <button key={i} onClick={() => setIntroStep(i)}
                       className={`h-1.5 rounded-full transition-all ${i === introStep ? "w-8 bg-cyan-400" :
                           i < introStep ? "w-1.5 bg-cyan-400/60" : "w-1.5 bg-slate-700"
-                        }`} aria-label={`Ir para passo ${i + 1}`} />
+                        }`} aria-label={isEn ? `Go to step ${i + 1}` : `Ir para passo ${i + 1}`} />
                   ))}
                 </div>
               </div>
               <Button onClick={goNext} className={isLast ? "bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold" : "bg-slate-800 text-white hover:bg-slate-700"}>
-                {isLast ? "Iniciar Operação" : "Próximo"} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
+                {isLast ? (isEn ? "Start Operation" : "Iniciar Operação") : (isEn ? "Next" : "Próximo")} <ChevronDown className="w-4 h-4 ml-1 -rotate-90" />
               </Button>
             </div>
           </div>
@@ -2641,9 +2702,11 @@ export function NetworkSimulator({ onBack }: Props) {
         <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
         <span className="ml-2 text-[11px] text-slate-500 font-mono">root@kali:~#</span>
         <span className="hidden min-w-0 flex-1 truncate text-[10px] text-cyan-300 font-mono uppercase tracking-widest sm:block">
-          {levelDone ? "nível concluído" : mission.hint}
+          {levelDone ? (isEn ? "level completed" : "nível concluído") : mission.hint}
         </span>
-        <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest animate-pulse">● digite aqui</span>
+        <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest animate-pulse">
+          {isEn ? "● type here" : "● digite aqui"}
+        </span>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
         {lines.map((l, i) => (
@@ -2659,7 +2722,7 @@ export function NetworkSimulator({ onBack }: Props) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             spellCheck={false} autoComplete="off"
-            placeholder={levelDone ? "Escolha o próximo nível" : mission.hint}
+            placeholder={levelDone ? (isEn ? "Choose the next level" : "Escolha o próximo nível") : mission.hint}
             className="flex-1 bg-transparent outline-none text-white caret-cyan-400 placeholder:text-slate-600 placeholder:italic" />
           <span className="w-2 h-4 bg-cyan-400 animate-pulse" aria-hidden />
         </form>
@@ -2689,14 +2752,18 @@ export function NetworkSimulator({ onBack }: Props) {
             </div>
             <div>
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Network Simulator</h2>
-              <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-[0.2em]">Operador {state.myIp}</p>
+              <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-[0.2em]">
+                {isEn ? `Operator ${state.myIp}` : `Operador ${state.myIp}`}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsManualOpen(true)} className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs">
               <BookOpen className="w-4 h-4 mr-2" /> Manual
             </Button>
-            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">Reset Nível</Button>
+            <Button variant="ghost" size="sm" onClick={resetLevel} className="text-slate-400 hover:text-white text-xs">
+              {isEn ? "Reset Level" : "Reset Nível"}
+            </Button>
           </div>
         </div>
 
@@ -2769,7 +2836,9 @@ export function NetworkSimulator({ onBack }: Props) {
             <BookOpen className="w-4 h-4" />
           </div>
           <div className="flex-1">
-            <p className="text-[10px] uppercase tracking-widest text-cyan-400 font-mono mb-1">Briefing do Nível {level.id}</p>
+            <p className="text-[10px] uppercase tracking-widest text-cyan-400 font-mono mb-1">
+              {isEn ? `Level ${level.id} Briefing` : `Briefing do Nível ${level.id}`}
+            </p>
             <p className="text-sm text-slate-300 leading-relaxed">{level.briefing}</p>
           </div>
         </div>
@@ -2781,14 +2850,16 @@ export function NetworkSimulator({ onBack }: Props) {
               <div className="w-6 h-6 rounded-full bg-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center justify-center shrink-0">{missionIdx + 1}</div>}
             <div className="flex-1 min-w-0">
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-mono">
-                {levelDone ? `Nível ${level.id} concluído` : `Nível ${level.id} • Missão ${missionIdx + 1} de ${level.missions.length}`}
+                {levelDone
+                  ? (isEn ? `Level ${level.id} completed` : `Nível ${level.id} concluído`)
+                  : (isEn ? `Level ${level.id} • Mission ${missionIdx + 1} of ${level.missions.length}` : `Nível ${level.id} • Missão ${missionIdx + 1} de ${level.missions.length}`)}
               </p>
-              <p className="text-sm font-bold text-white">{levelDone ? "Avance para o próximo nível!" : mission.title}</p>
-              {!levelDone && <p className="text-xs text-slate-400 font-mono mt-0.5">Dica: <span className="text-cyan-300">{mission.hint}</span></p>}
+              <p className="text-sm font-bold text-white">{levelDone ? (isEn ? "Advance to the next level!" : "Avance para o próximo nível!") : mission.title}</p>
+              {!levelDone && <p className="text-xs text-slate-400 font-mono mt-0.5">{isEn ? "Hint:" : "Dica:"} <span className="text-cyan-300">{mission.hint}</span></p>}
             </div>
             {levelDone && levelIdx + 1 < LEVELS.length && (
               <Button size="sm" onClick={() => loadLevel(levelIdx + 1)} className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold text-xs">
-                Próximo Nível →
+                {isEn ? "Next Level →" : "Próximo Nível →"}
               </Button>
             )}
           </div>
@@ -2799,15 +2870,19 @@ export function NetworkSimulator({ onBack }: Props) {
           <div className="mb-4 bg-slate-900/60 border border-emerald-500/30 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3 text-emerald-400">
               <Shield className="w-4 h-4" />
-              <h5 className="text-xs font-bold uppercase tracking-widest">Defesas — Firewall do {state.hosts[state.managedHost]?.hostname ?? state.managedHost}</h5>
+              <h5 className="text-xs font-bold uppercase tracking-widest">
+                {isEn ? `Defenses — Firewall on ${state.hosts[state.managedHost]?.hostname ?? state.managedHost}` : `Defesas — Firewall do ${state.hosts[state.managedHost]?.hostname ?? state.managedHost}`}
+              </h5>
               <span className="ml-auto text-[10px] text-slate-500 font-mono">
-                {state.firewallRules.length} regra{state.firewallRules.length === 1 ? "" : "s"}
-                {state.firewallSaved && <span className="ml-2 text-emerald-300">✓ persistido</span>}
+                {state.firewallRules.length} {isEn ? (state.firewallRules.length === 1 ? "rule" : "rules") : `regra${state.firewallRules.length === 1 ? "" : "s"}`}
+                {state.firewallSaved && <span className="ml-2 text-emerald-300">{isEn ? "✓ persisted" : "✓ persistido"}</span>}
               </span>
             </div>
             {state.firewallRules.length === 0 ? (
               <p className="text-[11px] text-slate-600 italic font-mono">
-                (nenhuma regra ativa — chains INPUT/OUTPUT/FORWARD usam policy ACCEPT por padrão)
+                {isEn
+                  ? "(no active rules — INPUT/OUTPUT/FORWARD chains use ACCEPT policy by default)"
+                  : "(nenhuma regra ativa — chains INPUT/OUTPUT/FORWARD usam policy ACCEPT por padrão)"}
               </p>
             ) : (
               <div className="space-y-1">
@@ -2838,8 +2913,10 @@ export function NetworkSimulator({ onBack }: Props) {
           <div className="lg:col-span-2 bg-slate-900/60 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3 text-cyan-400">
               <NetworkIcon className="w-4 h-4" />
-              <h5 className="text-xs font-bold uppercase tracking-widest">Topologia da Rede</h5>
-              <span className="ml-auto text-[10px] text-slate-500 font-mono">{state.discovered.size} de {Object.keys(state.hosts).length} hosts visíveis</span>
+              <h5 className="text-xs font-bold uppercase tracking-widest">{isEn ? "Network Topology" : "Topologia da Rede"}</h5>
+              <span className="ml-auto text-[10px] text-slate-500 font-mono">
+                {isEn ? `${state.discovered.size} of ${Object.keys(state.hosts).length} hosts visible` : `${state.discovered.size} de ${Object.keys(state.hosts).length} hosts visíveis`}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <svg width={topology.W} height={topology.H} className="w-full" viewBox={`0 0 ${topology.W} ${topology.H}`}>
@@ -2874,7 +2951,7 @@ export function NetworkSimulator({ onBack }: Props) {
                   <foreignObject x={-14} y={-14} width={28} height={28}>
                     <div className="w-full h-full flex items-center justify-center text-white"><Laptop className="w-5 h-5" /></div>
                   </foreignObject>
-                  <text x={0} y={48} fill="#cbd5e1" fontSize="11" fontFamily="monospace" textAnchor="middle">VOCÊ</text>
+                  <text x={0} y={48} fill="#cbd5e1" fontSize="11" fontFamily="monospace" textAnchor="middle">{isEn ? "YOU" : "VOCÊ"}</text>
                   <text x={0} y={62} fill="#64748b" fontSize="10" fontFamily="monospace" textAnchor="middle">{state.myIp}</text>
                 </g>
 
@@ -2928,7 +3005,7 @@ export function NetworkSimulator({ onBack }: Props) {
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />ICMP</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-400" />TCP</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400" />DNS</span>
-              <span className="flex items-center gap-1 ml-auto"><span className="w-2 h-2 rounded-full bg-red-400" />vulnerável</span>
+              <span className="flex items-center gap-1 ml-auto"><span className="w-2 h-2 rounded-full bg-red-400" />{isEn ? "vulnerable" : "vulnerável"}</span>
             </div>
           </div>
 
@@ -2936,7 +3013,7 @@ export function NetworkSimulator({ onBack }: Props) {
           <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3 text-cyan-400">
               <Shield className="w-4 h-4" />
-              <h5 className="text-xs font-bold uppercase tracking-widest">Detalhes do Host</h5>
+              <h5 className="text-xs font-bold uppercase tracking-widest">{isEn ? "Host Details" : "Detalhes do Host"}</h5>
               {sel && <button onClick={() => setSelectedHost(null)} className="ml-auto text-slate-500 hover:text-white"><X className="w-3.5 h-3.5" /></button>}
             </div>
             {!sel ? (
@@ -2944,10 +3021,12 @@ export function NetworkSimulator({ onBack }: Props) {
                 <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-3">
                   <div className="mb-2 flex items-center gap-2 text-cyan-300">
                     <Radio className="w-4 h-4" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Próxima ação</span>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest">{isEn ? "Next action" : "Próxima ação"}</span>
                   </div>
                   <p className="leading-5 text-slate-300">
-                    {levelDone ? "Nível concluído. Avance para abrir outro cenário." : "Execute a missão atual no terminal e observe o mapa mudar."}
+                    {levelDone
+                      ? (isEn ? "Level completed. Advance to open another scenario." : "Nível concluído. Avance para abrir outro cenário.")
+                      : (isEn ? "Run the current mission in the terminal and watch the map update." : "Execute a missão atual no terminal e observe o mapa mudar.")}
                   </p>
                   {!levelDone && (
                     <code className="mt-2 block rounded border border-white/10 bg-black/25 px-2 py-1.5 text-[11px] text-cyan-200">
@@ -2957,7 +3036,7 @@ export function NetworkSimulator({ onBack }: Props) {
                 </div>
 
                 <div className="rounded-lg border border-white/10 bg-slate-950/40 p-3">
-                  <p className="mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Hosts clicáveis</p>
+                  <p className="mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">{isEn ? "Clickable hosts" : "Hosts clicáveis"}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from(state.discovered).filter((ip) => ip !== state.myIp && state.hosts[ip]).map((ip) => (
                       <button
@@ -2973,7 +3052,11 @@ export function NetworkSimulator({ onBack }: Props) {
                 </div>
 
                 <p className="text-[11px] leading-5 text-slate-500">
-                  Depois de descobrir um host, clique nele. Depois de rodar <span className="font-mono text-cyan-300">nmap</span>, este painel mostra portas, versões, CVEs e credenciais suspeitas.
+                  {isEn ? (
+                    <>After discovering a host, click it. After running <span className="font-mono text-cyan-300">nmap</span>, this panel shows ports, versions, CVEs, and suspected credentials.</>
+                  ) : (
+                    <>Depois de descobrir um host, clique nele. Depois de rodar <span className="font-mono text-cyan-300">nmap</span>, este painel mostra portas, versões, CVEs e credenciais suspeitas.</>
+                  )}
                 </p>
               </div>
             ) : (
@@ -2987,11 +3070,13 @@ export function NetworkSimulator({ onBack }: Props) {
                   <p className="font-mono text-white">{sel.ip}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono">SO</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono">{isEn ? "OS" : "SO"}</p>
                   <p className="font-mono text-slate-300">{sel.os}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Portas {state.scanned.has(sel.ip) ? "" : "(rode nmap pra descobrir)"}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">
+                    {isEn ? "Ports" : "Portas"} {state.scanned.has(sel.ip) ? "" : (isEn ? "(run nmap to discover)" : "(rode nmap pra descobrir)")}
+                  </p>
                   {state.scanned.has(sel.ip) ? (
                     <div className="space-y-1">
                       {sel.ports.filter((p) => p.state !== "closed").map((p) => (
@@ -3008,7 +3093,7 @@ export function NetworkSimulator({ onBack }: Props) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-slate-600 italic font-mono">execute nmap {sel.ip}</p>
+                    <p className="text-[11px] text-slate-600 italic font-mono">{isEn ? `run nmap ${sel.ip}` : `execute nmap ${sel.ip}`}</p>
                   )}
                 </div>
                 {state.scanned.has(sel.ip) && (() => {
@@ -3017,7 +3102,7 @@ export function NetworkSimulator({ onBack }: Props) {
                   return (
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-red-400 font-mono mb-1 flex items-center gap-1">
-                        <ShieldAlert className="w-3 h-3" /> CVEs detectadas
+                        <ShieldAlert className="w-3 h-3" /> {isEn ? "Detected CVEs" : "CVEs detectadas"}
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {allCves.map((cve, i) => (
@@ -3026,13 +3111,15 @@ export function NetworkSimulator({ onBack }: Props) {
                           </span>
                         ))}
                       </div>
-                      <p className="text-[10px] text-slate-500 font-mono mt-1 italic">dica: searchsploit {sel.ip}</p>
+                      <p className="text-[10px] text-slate-500 font-mono mt-1 italic">{isEn ? `hint: searchsploit ${sel.ip}` : `dica: searchsploit ${sel.ip}`}</p>
                     </div>
                   );
                 })()}
                 {sel.defaultCreds && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-amber-400 font-mono mb-1">Credenciais padrão (suspeitas)</p>
+                    <p className="text-[10px] uppercase tracking-widest text-amber-400 font-mono mb-1">
+                      {isEn ? "Default credentials (suspected)" : "Credenciais padrão (suspeitas)"}
+                    </p>
                     <code className="text-[11px] text-amber-300 font-mono bg-amber-500/5 border border-amber-500/20 rounded px-2 py-1 inline-block">
                       {sel.defaultCreds.user}:{sel.defaultCreds.pass}
                     </code>
@@ -3055,11 +3142,11 @@ export function NetworkSimulator({ onBack }: Props) {
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">Roteiro do Nível</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">{isEn ? "Level Roadmap" : "Roteiro do Nível"}</p>
                 <h3 className="mt-1 text-sm font-black text-white">{level.title}</h3>
               </div>
               <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-right">
-                <p className="text-[9px] font-mono uppercase tracking-widest text-cyan-300">Progresso</p>
+                <p className="text-[9px] font-mono uppercase tracking-widest text-cyan-300">{isEn ? "Progress" : "Progresso"}</p>
                 <p className="text-base font-black text-white">{completedMissionCount}/{level.missions.length}</p>
               </div>
             </div>
@@ -3096,7 +3183,7 @@ export function NetworkSimulator({ onBack }: Props) {
                     </div>
                     <p className={`text-[10px] font-mono uppercase tracking-widest ${done ? "text-emerald-300" : current ? "text-cyan-300" : "text-slate-600"
                       }`}>
-                      {done ? "concluído" : current ? "em andamento" : "próximo"}
+                      {done ? (isEn ? "completed" : "concluído") : current ? (isEn ? "in progress" : "em andamento") : (isEn ? "upcoming" : "próximo")}
                     </p>
                   </div>
                 );
@@ -3108,11 +3195,11 @@ export function NetworkSimulator({ onBack }: Props) {
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
           <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3">
-            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">Hosts Descobertos</p>
+            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">{isEn ? "Discovered Hosts" : "Hosts Descobertos"}</p>
             <p className="text-lg font-black text-cyan-300 font-mono">{state.discovered.size}</p>
           </div>
           <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3">
-            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">Hosts Scaneados</p>
+            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">{isEn ? "Scanned Hosts" : "Hosts Scaneados"}</p>
             <p className="text-lg font-black text-emerald-300 font-mono">{state.scanned.size}</p>
           </div>
           <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3">
@@ -3120,7 +3207,7 @@ export function NetworkSimulator({ onBack }: Props) {
             <p className="text-lg font-black text-red-300 font-mono">{Array.from(state.flags).filter((f) => f.startsWith("CTF")).length}</p>
           </div>
           <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3">
-            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">Pacotes em Trânsito</p>
+            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-mono">{isEn ? "Packets in Transit" : "Pacotes em Trânsito"}</p>
             <p className="text-lg font-black text-fuchsia-300 font-mono flex items-center gap-1">{state.packets.length}<Zap className="w-4 h-4" /></p>
           </div>
         </div>
@@ -3146,7 +3233,7 @@ export function NetworkSimulator({ onBack }: Props) {
                   <Radio className="w-5 h-5 text-cyan-400" />
                   <div>
                     <h3 className="text-sm font-bold text-white">Wireshark · Network Analyzer</h3>
-                    <p className="text-[10px] text-slate-500 font-mono">capture.pcap · {state.packetLog.length} pacotes</p>
+                    <p className="text-[10px] text-slate-500 font-mono">capture.pcap · {state.packetLog.length} {isEn ? "packets" : "pacotes"}</p>
                   </div>
                 </div>
                 <button onClick={() => setShowWireshark(false)} className="text-slate-400 hover:text-white">
@@ -3159,7 +3246,7 @@ export function NetworkSimulator({ onBack }: Props) {
                 <input
                   value={wsFilter}
                   onChange={(e) => setWsFilter(e.target.value)}
-                  placeholder="ex: tcp.port == 80   |   dns   |   http   |   ip.addr == 192.168.1.50"
+                  placeholder={isEn ? "e.g.: tcp.port == 80   |   dns   |   http   |   ip.addr == 192.168.1.50" : "ex: tcp.port == 80   |   dns   |   http   |   ip.addr == 192.168.1.50"}
                   className="flex-1 bg-slate-950 border border-white/10 rounded px-2 py-1 text-xs font-mono text-cyan-300 outline-none focus:border-cyan-400 placeholder:text-slate-700"
                 />
                 {["dns", "http", "tcp", "icmp"].map((preset) => (
@@ -3167,7 +3254,7 @@ export function NetworkSimulator({ onBack }: Props) {
                     {preset}
                   </button>
                 ))}
-                <button onClick={() => setWsFilter("")} className="text-[10px] font-mono px-2 py-1 rounded text-slate-500 hover:text-white">limpar</button>
+                <button onClick={() => setWsFilter("")} className="text-[10px] font-mono px-2 py-1 rounded text-slate-500 hover:text-white">{isEn ? "clear" : "limpar"}</button>
               </div>
               {/* Packet list + detail */}
               <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
@@ -3200,7 +3287,7 @@ export function NetworkSimulator({ onBack }: Props) {
                           return false;
                         });
                         if (filtered.length === 0) return (
-                          <tr><td colSpan={6} className="px-2 py-4 text-center text-slate-600 italic">(nenhum pacote bate com o filtro)</td></tr>
+                          <tr><td colSpan={6} className="px-2 py-4 text-center text-slate-600 italic">{isEn ? "(no packets match the filter)" : "(nenhum pacote bate com o filtro)"}</td></tr>
                         );
                         return filtered.slice(-200).map((p) => {
                           const protoColor: Record<string, string> = {
@@ -3240,7 +3327,7 @@ export function NetworkSimulator({ onBack }: Props) {
                 {/* Detail */}
                 <div className="lg:w-96 max-h-72 lg:max-h-none overflow-auto p-3 bg-slate-950/50">
                   {wsSelectedPacket === null ? (
-                    <p className="text-[11px] text-slate-600 italic">Clique num pacote para ver detalhes</p>
+                    <p className="text-[11px] text-slate-600 italic">{isEn ? "Click a packet to view details" : "Clique num pacote para ver detalhes"}</p>
                   ) : (() => {
                     const p = state.packetLog.find((x) => x.id === wsSelectedPacket);
                     if (!p) return null;
@@ -3270,7 +3357,7 @@ export function NetworkSimulator({ onBack }: Props) {
                         </div>
                         {sniffedPlaintext && (
                           <div className="bg-rose-500/10 border border-rose-500/30 rounded p-2">
-                            <p className="text-[9px] text-rose-400 uppercase tracking-widest mb-1">⚠ credencial em texto puro</p>
+                            <p className="text-[9px] text-rose-400 uppercase tracking-widest mb-1">{isEn ? "⚠ plaintext credential" : "⚠ credencial em texto puro"}</p>
                             <code className="text-rose-300">{sniffedPlaintext}</code>
                           </div>
                         )}
@@ -3280,8 +3367,8 @@ export function NetworkSimulator({ onBack }: Props) {
                 </div>
               </div>
               <div className="px-4 py-2 border-t border-white/10 text-[10px] text-slate-500 font-mono flex items-center justify-between bg-slate-950">
-                <span>Filtros: <code className="text-cyan-400">tcp.port == 80</code>  ·  <code className="text-cyan-400">dns</code>  ·  <code className="text-cyan-400">ip.addr == 192.168.1.50</code></span>
-                <span>esc / clique fora p/ fechar</span>
+                <span>{isEn ? "Filters:" : "Filtros:"} <code className="text-cyan-400">tcp.port == 80</code>  ·  <code className="text-cyan-400">dns</code>  ·  <code className="text-cyan-400">ip.addr == 192.168.1.50</code></span>
+                <span>{isEn ? "esc / click outside to close" : "esc / clique fora p/ fechar"}</span>
               </div>
             </motion.div>
           </motion.div>

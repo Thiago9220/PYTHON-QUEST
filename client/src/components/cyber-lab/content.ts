@@ -7,6 +7,16 @@ import {
   TerminalSquare,
   type LucideIcon,
 } from "lucide-react";
+import type { AppLanguage } from "@/contexts/LanguageContext";
+import {
+  ATTACK_STEPS_EN,
+  ATTACK_TERMINAL_OUTPUT_EN,
+  ATTACKS_EN,
+  DEFENSES_EN,
+  INTRO_SLIDES_EN,
+  MISSION_CONCEPTS_EN,
+  PRINCIPLES_EN,
+} from "@/lib/i18n/cybersec_en";
 
 export interface KnowledgeItem {
   title: string;
@@ -771,3 +781,35 @@ export const ATTACK_TERMINAL_OUTPUT: Record<string, string[]> = {
     "Próxima rodada: revalidar em 30 dias e medir MTTD/MTTR do SOC.",
   ],
 };
+
+export function getPrinciples(lang: AppLanguage): KnowledgeItem[] {
+  return lang === "en" ? PRINCIPLES_EN : PRINCIPLES;
+}
+
+export function getAttacks(lang: AppLanguage): KnowledgeItem[] {
+  return lang === "en" ? ATTACKS_EN : ATTACKS;
+}
+
+export function getDefenses(lang: AppLanguage): KnowledgeItem[] {
+  return lang === "en" ? DEFENSES_EN : DEFENSES;
+}
+
+export function getIntroSlides(lang: AppLanguage): IntroSlide[] {
+  if (lang !== "en") return INTRO_SLIDES;
+  return INTRO_SLIDES.map((slide, idx) => {
+    const en = INTRO_SLIDES_EN[idx];
+    return en ? { ...slide, ...en } : slide;
+  });
+}
+
+export function getAttackSteps(lang: AppLanguage): AttackStep[] {
+  return lang === "en" ? ATTACK_STEPS_EN : ATTACK_STEPS;
+}
+
+export function getMissionConcepts(lang: AppLanguage): Record<string, MissionConcept> {
+  return lang === "en" ? MISSION_CONCEPTS_EN : MISSION_CONCEPTS;
+}
+
+export function getAttackTerminalOutput(lang: AppLanguage): Record<string, string[]> {
+  return lang === "en" ? ATTACK_TERMINAL_OUTPUT_EN : ATTACK_TERMINAL_OUTPUT;
+}

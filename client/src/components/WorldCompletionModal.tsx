@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Star, ArrowRight, Code2, Cpu, Database, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { World } from "@/lib/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   isOpen: boolean;
@@ -10,16 +11,28 @@ interface Props {
 }
 
 export function WorldCompletionModal({ isOpen, onClose, world }: Props) {
-  const summaryItems = [
-    { icon: Cpu, label: "Variáveis & Memória", desc: "Criação de identificadores, atribuição múltipla e swap de valores." },
-    { icon: Database, label: "Tipos & Casting", desc: "Manipulação de Inteiros, Floats e conversão de tipos (casting)." },
-    { icon: Terminal, label: "Entrada e Saída", desc: "Comunicação com o sistema via print() e captura de dados com input()." },
-    { icon: Code2, label: "Métodos de String", desc: "Uso de .strip(), .split(), .replace(), .upper() e .lower()." },
-    { icon: Star, label: "Aritmética Python", desc: "Operadores de divisão inteira (//), resto (%) e potência (**)." },
-    { icon: Star, label: "Slicing & Busca", desc: "Fatiamento de strings [start:end] e localização de índices com .find()." },
-    { icon: Star, label: "Formatação f-string", desc: "Interpolação moderna de variáveis e expressões dentro de textos." },
-    { icon: Star, label: "Análise de Dados", desc: "Medição de tamanho com len() e contagem de ocorrências com .count()." },
-  ];
+  const { lang, t } = useLanguage();
+  const summaryItems = lang === "en"
+    ? [
+        { icon: Cpu, label: "Variables & Memory", desc: "Creating identifiers, multiple assignment, and value swapping." },
+        { icon: Database, label: "Types & Casting", desc: "Working with integers, floats, and explicit type casting." },
+        { icon: Terminal, label: "Input & Output", desc: "Communicating via print() and capturing data with input()." },
+        { icon: Code2, label: "String Methods", desc: "Using .strip(), .split(), .replace(), .upper(), and .lower()." },
+        { icon: Star, label: "Python Arithmetic", desc: "Integer division (//), modulo (%), and exponentiation (**) operators." },
+        { icon: Star, label: "Slicing & Search", desc: "String slicing [start:end] and locating indices with .find()." },
+        { icon: Star, label: "f-string Formatting", desc: "Modern variable and expression interpolation inside strings." },
+        { icon: Star, label: "Data Analysis", desc: "Measuring length with len() and counting occurrences with .count()." },
+      ]
+    : [
+        { icon: Cpu, label: "Variáveis & Memória", desc: "Criação de identificadores, atribuição múltipla e swap de valores." },
+        { icon: Database, label: "Tipos & Casting", desc: "Manipulação de Inteiros, Floats e conversão de tipos (casting)." },
+        { icon: Terminal, label: "Entrada e Saída", desc: "Comunicação com o sistema via print() e captura de dados com input()." },
+        { icon: Code2, label: "Métodos de String", desc: "Uso de .strip(), .split(), .replace(), .upper() e .lower()." },
+        { icon: Star, label: "Aritmética Python", desc: "Operadores de divisão inteira (//), resto (%) e potência (**)." },
+        { icon: Star, label: "Slicing & Busca", desc: "Fatiamento de strings [start:end] e localização de índices com .find()." },
+        { icon: Star, label: "Formatação f-string", desc: "Interpolação moderna de variáveis e expressões dentro de textos." },
+        { icon: Star, label: "Análise de Dados", desc: "Medição de tamanho com len() e contagem de ocorrências com .count()." },
+      ];
 
   return (
     <AnimatePresence>
@@ -60,8 +73,8 @@ export function WorldCompletionModal({ isOpen, onClose, world }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h2 className="mb-2 text-4xl font-black text-white tracking-tight">Setor Comprometido!</h2>
-                <p className="mb-8 text-sky-400 font-mono text-sm uppercase tracking-[0.3em]">Handshake Completo: {world.title}</p>
+                <h2 className="mb-2 text-4xl font-black text-white tracking-tight">{t("worldCompleteTitle")}</h2>
+                <p className="mb-8 text-sky-400 font-mono text-sm uppercase tracking-[0.3em]">{t("worldCompleteHandshake")} {world.title}</p>
               </motion.div>
 
               <motion.div 
@@ -92,10 +105,10 @@ export function WorldCompletionModal({ isOpen, onClose, world }: Props) {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-widest">
                     <Star className="h-4 w-4 fill-emerald-400" />
-                    Mestre do Terminal
+                    {t("worldCompleteBadge")}
                   </div>
                   <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-                    Próximo Alvo: Nó de Roteamento (Estruturas de Decisão)
+                    {t("worldCompleteNextTarget")}
                   </div>
                 </div>
                 
@@ -103,7 +116,7 @@ export function WorldCompletionModal({ isOpen, onClose, world }: Props) {
                   onClick={onClose}
                   className="w-full sm:w-auto h-14 px-10 bg-sky-600 hover:bg-sky-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_15px_30px_-10px_rgba(14,165,233,0.5)] transition-all active:scale-95"
                 >
-                  Continuar Ritual
+                  {t("worldCompleteBtn")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>

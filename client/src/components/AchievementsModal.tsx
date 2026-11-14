@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Lock, Trophy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedAchievement, getLocalizedTitleReward } from "@/lib/i18n/localize";
 
 type Props = {
   isOpen: boolean;
@@ -11,6 +13,7 @@ type Props = {
 
 export function AchievementsModal({ isOpen, onClose }: Props) {
   const { state, dispatch } = useGame();
+  const { lang, t } = useLanguage();
   const unlockedAchievements = state.achievements.filter((a) => a.unlocked);
 
   useEffect(() => {
@@ -47,10 +50,10 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                   <div className="absolute -inset-1 rounded-2xl border border-sky-500/10 blur-sm" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">Terminal de Conquistas</h2>
+                  <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">{t("achTitle")}</h2>
                   <div className="mt-2 flex items-center gap-3">
                     <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                      {unlockedAchievements.length} / {state.achievements.length} registros ativos
+                      {unlockedAchievements.length} / {state.achievements.length} {t("achActiveRecords")}
                     </p>
                     <div className="h-1 w-32 overflow-hidden rounded-full bg-slate-800">
                       <motion.div 
@@ -69,8 +72,10 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
 
             <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-10">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {state.achievements.map((ach) => {
+                {state.achievements.map((rawAch) => {
+                  const ach = getLocalizedAchievement(rawAch, lang);
                   const isUnlocked = ach.unlocked;
+                  const equippedLocalized = getLocalizedTitleReward(state.equippedTitle, lang);
                   return (
                     <motion.div
                       key={ach.id}
@@ -122,27 +127,27 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                           <div className="flex items-center justify-between">
                             {ach.titleReward ? (
                               <div className="min-w-0">
-                                <span className="block font-mono text-[9px] font-bold uppercase tracking-widest text-slate-500">Privilégio</span>
+                                <span className="block font-mono text-[9px] font-bold uppercase tracking-widest text-slate-500">{t("achPrivilege")}</span>
                                 <span className="block truncate text-sm font-black text-emerald-400">{ach.titleReward}</span>
                               </div>
                             ) : (
                               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-500/60">
                                 <Check className="h-3 w-3" />
-                                Validado
+                                {t("achValidated")}
                               </div>
                             )}
 
-                            {ach.titleReward && (
-                              state.equippedTitle === ach.titleReward ? (
+                            {rawAch.titleReward && (
+                              (state.equippedTitle === rawAch.titleReward || (equippedLocalized && equippedLocalized === ach.titleReward)) ? (
                                 <span className="rounded-lg bg-emerald-500/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase text-emerald-400 border border-emerald-500/20">
-                                  Ativo
+                                  {t("achActive")}
                                 </span>
                               ) : (
                                 <button
-                                  onClick={() => dispatch({ type: "SET_TITLE", title: ach.titleReward! })}
+                                  onClick={() => dispatch({ type: "SET_TITLE", title: rawAch.titleReward! })}
                                   className="rounded-lg bg-slate-800 px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 transition-all hover:bg-sky-500 hover:text-white"
                                 >
-                                  Equipar
+                                  {t("achEquip")}
                                 </button>
                               )
                             )}
@@ -158,13 +163,13 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
             {/* Footer */}
             <div className="flex shrink-0 items-center justify-between border-t border-white/5 bg-slate-900/30 p-6 md:px-10">
               <p className="hidden font-mono text-[10px] uppercase tracking-widest text-slate-600 md:block">
-                Sessão segura // Logs criptografados
+                {t("achSecureFooter")}
               </p>
               <Button 
                 onClick={onClose} 
                 className="h-12 w-full rounded-2xl bg-white text-slate-950 px-12 font-black transition-all hover:bg-slate-200 active:scale-95 md:w-auto"
               >
-                Retornar ao Terminal
+                {t("achReturnBtn")}
               </Button>
             </div>
 

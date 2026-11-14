@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGame } from "@/contexts/GameContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "./ui/button";
 import { RotateCcw, Terminal, Trash2, Zap, Unlock, X, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 export function DevPanel() {
   const { user } = useAuth();
   const { dispatch, state, resetAllProgress, resetWorldProgress } = useGame();
+  const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   // Ferramentas locais de desenvolvimento nao devem aparecer no build publicado.
@@ -35,41 +37,41 @@ export function DevPanel() {
 
   const handleAddXP = () => {
     dispatch({ type: "DEBUG_ADD_XP", amount: 1000 });
-    toast.success("Adicionado 1000 XP (DEV)");
+    toast.success(lang === "en" ? "Added 1000 XP (DEV)" : "Adicionado 1000 XP (DEV)");
   };
 
   const handleCompleteWorld = () => {
     const activeWorldId = getActiveWorldId();
     if (!activeWorldId) {
-      toast.error("Entre em um mundo primeiro para completá-lo.");
+      toast.error(lang === "en" ? "Enter a world first to complete it." : "Entre em um mundo primeiro para completá-lo.");
       return;
     }
     dispatch({ type: "DEBUG_COMPLETE_WORLD", worldId: activeWorldId });
-    toast.success("Mundo atual completado (DEV)");
+    toast.success(lang === "en" ? "Current world completed (DEV)" : "Mundo atual completado (DEV)");
   };
 
   const handleUnlockAllAchievements = () => {
     dispatch({ type: "DEBUG_UNLOCK_ALL_ACHIEVEMENTS" });
-    toast.success("Todas as conquistas desbloqueadas (DEV)");
+    toast.success(lang === "en" ? "All achievements unlocked (DEV)" : "Todas as conquistas desbloqueadas (DEV)");
   };
 
   const handleCompleteAll = () => {
     dispatch({ type: "DEBUG_COMPLETE_ALL" });
-    toast.success("Tudo completado (DEV)");
+    toast.success(lang === "en" ? "Everything completed (DEV)" : "Tudo completado (DEV)");
   };
 
   const handleResetWorld = async () => {
     const activeWorldId = getActiveWorldId();
     if (!activeWorldId) {
-      toast.error("Entre em um mundo primeiro para zerá-lo.");
+      toast.error(lang === "en" ? "Enter a world first to reset it." : "Entre em um mundo primeiro para zerá-lo.");
       return;
     }
-    if (!window.confirm("Zerar o progresso do mundo atual?")) return;
+    if (!window.confirm(lang === "en" ? "Reset progress for the current world?" : "Zerar o progresso do mundo atual?")) return;
     await resetWorldProgress(activeWorldId);
   };
 
   const handleResetAll = async () => {
-    if (!window.confirm("Zerar TODO o progresso da conta?")) return;
+    if (!window.confirm(lang === "en" ? "Reset ALL account progress?" : "Zerar TODO o progresso da conta?")) return;
     await resetAllProgress();
   };
 
@@ -85,7 +87,7 @@ export function DevPanel() {
           >
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
               <div className="flex items-center gap-2 text-fuchsia-400 font-black text-xs uppercase tracking-widest">
-                <Terminal size={14} /> Painel Master
+                <Terminal size={14} /> {lang === "en" ? "Master Panel" : "Painel Master"}
               </div>
               <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white">
                 <X size={14} />
@@ -94,22 +96,22 @@ export function DevPanel() {
             
             <div className="space-y-2">
               <Button onClick={handleAddXP} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5">
-                <Zap className="mr-2 h-3 w-3 text-sky-400" /> Dar 1000 XP
+                <Zap className="mr-2 h-3 w-3 text-sky-400" /> {lang === "en" ? "Grant 1000 XP" : "Dar 1000 XP"}
               </Button>
               <Button onClick={handleCompleteWorld} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5">
-                <CheckCircle2 className="mr-2 h-3 w-3 text-emerald-400" /> Completar Mundo Atual
+                <CheckCircle2 className="mr-2 h-3 w-3 text-emerald-400" /> {lang === "en" ? "Complete Current World" : "Completar Mundo Atual"}
               </Button>
               <Button onClick={handleUnlockAllAchievements} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5">
-                <TrophyIcon className="mr-2 h-3 w-3 text-amber-400" /> Liberar Conquistas
+                <TrophyIcon className="mr-2 h-3 w-3 text-amber-400" /> {lang === "en" ? "Unlock Achievements" : "Liberar Conquistas"}
               </Button>
               <Button onClick={handleCompleteAll} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5 text-fuchsia-400 hover:text-fuchsia-300 border-fuchsia-500/30">
-                <Unlock className="mr-2 h-3 w-3" /> Modo Deus (Tudo)
+                <Unlock className="mr-2 h-3 w-3" /> {lang === "en" ? "God Mode (All)" : "Modo Deus (Tudo)"}
               </Button>
               <Button onClick={handleResetWorld} variant="outline" size="sm" className="w-full justify-start text-xs border-white/10 hover:bg-white/5 text-amber-300 hover:text-amber-200">
-                <RotateCcw className="mr-2 h-3 w-3" /> Zerar Mundo Atual
+                <RotateCcw className="mr-2 h-3 w-3" /> {lang === "en" ? "Reset Current World" : "Zerar Mundo Atual"}
               </Button>
               <Button onClick={handleResetAll} variant="outline" size="sm" className="w-full justify-start text-xs border-red-500/30 hover:bg-red-500/10 text-red-300 hover:text-red-200">
-                <Trash2 className="mr-2 h-3 w-3" /> Zerar Tudo
+                <Trash2 className="mr-2 h-3 w-3" /> {lang === "en" ? "Reset All" : "Zerar Tudo"}
               </Button>
             </div>
           </motion.div>

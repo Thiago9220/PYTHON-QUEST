@@ -5,11 +5,17 @@ import {
   usePomodoro,
   formatPomodoroTime,
   POMODORO_DURATIONS,
-  POMODORO_LABELS,
   type PomodoroMode,
 } from "@/contexts/PomodoroContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function PomodoroTimer() {
+  const { t } = useLanguage();
+  const modeLabels: Record<PomodoroMode, string> = {
+    focus: t("pomodoroFocus"),
+    shortBreak: t("pomodoroShortBreak"),
+    longBreak: t("pomodoroLongBreak"),
+  };
   const [isOpen, setIsOpen] = useState(false);
   const {
     mode,
@@ -40,12 +46,12 @@ export function PomodoroTimer() {
             ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 animate-pulse"
             : "border-white/10 bg-slate-900/80 text-sky-400 hover:border-white/20 hover:text-sky-300"
         }`}
-        title={justCompleted ? "Sessão concluída — abra para ver" : "Abrir Pomodoro"}
+        title={justCompleted ? t("pomodoroDoneTooltip") : t("pomodoroOpenTooltip")}
       >
         <Timer className="h-4 w-4" />
         {(isRunning || justCompleted) && (
           <span className="font-mono text-[10px] font-black tracking-widest uppercase">
-            {justCompleted ? "Descansar!" : formatPomodoroTime(secondsLeft)}
+            {justCompleted ? t("pomodoroRestLabel") : formatPomodoroTime(secondsLeft)}
           </span>
         )}
       </motion.button>
@@ -74,7 +80,7 @@ export function PomodoroTimer() {
             type="button"
             onClick={() => setIsOpen(false)}
             className="text-slate-500 hover:text-white transition-colors"
-            title="Fechar"
+            title={t("pomodoroCloseTooltip")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -88,19 +94,19 @@ export function PomodoroTimer() {
           >
             <Trophy className="mx-auto mb-3 h-8 w-8 text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
             <p className="mb-1 text-base font-black text-white uppercase tracking-tight">
-              Sessão Concluída!
+              {t("pomodoroSessionDoneTitle")}
             </p>
             <p className="text-[10px] font-medium text-slate-400 leading-relaxed">
               {isBreak
-                ? "Sua determinação é inabalável. Hora de retomar o código."
-                : "Você manteve o foco. Respire fundo e recupere suas energias."}
+                ? t("pomodoroBreakDoneMsg")
+                : t("pomodoroFocusDoneMsg")}
             </p>
             <button
               type="button"
               onClick={dismissCompletion}
               className="mt-4 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-emerald-900/20"
             >
-              Continuar
+              {t("pomodoroContinue")}
             </button>
           </motion.div>
         ) : (
@@ -117,7 +123,7 @@ export function PomodoroTimer() {
                       : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
-                  {POMODORO_LABELS[m]}
+                  {modeLabels[m]}
                 </button>
               ))}
             </div>
@@ -152,11 +158,11 @@ export function PomodoroTimer() {
               >
                 {isRunning ? (
                   <>
-                    <Pause className="h-3.5 w-3.5" /> Pausar
+                    <Pause className="h-3.5 w-3.5" /> {t("pomodoroPause")}
                   </>
                 ) : (
                   <>
-                    <Play className="h-3.5 w-3.5" /> Iniciar
+                    <Play className="h-3.5 w-3.5" /> {t("pomodoroStart")}
                   </>
                 )}
               </button>
@@ -164,7 +170,7 @@ export function PomodoroTimer() {
                 type="button"
                 onClick={reset}
                 className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 text-slate-400 hover:text-white hover:border-white/20 transition-all"
-                title="Reiniciar"
+                title={t("pomodoroResetTooltip")}
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
@@ -173,7 +179,7 @@ export function PomodoroTimer() {
         )}
 
         <div className="flex items-center justify-between border-t border-white/5 pt-3">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Sessões de Foco</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{t("pomodoroFocusSessions")}</span>
           <span className="text-[10px] font-black text-sky-400 font-mono">{completedFocus}</span>
         </div>
       </motion.div>
