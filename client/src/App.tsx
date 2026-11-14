@@ -10,6 +10,7 @@ import WorldMap from "./pages/WorldMap";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 import { DevPanel } from "./components/DevPanel";
+import { SteamControls } from "./components/SteamControls";
 
 // Code splitting for heavy screens & interactive simulators
 const ChallengeList = lazy(() => import("./pages/ChallengeList"));
@@ -203,6 +204,7 @@ function AppContentWrapper() {
     <GameProvider userId={user?.id}>
       <PomodoroProvider>
         <AppContent />
+        <SteamControls />
         {import.meta.env.DEV && <DevPanel />}
       </PomodoroProvider>
     </GameProvider>

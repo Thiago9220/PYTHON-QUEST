@@ -107,3 +107,4 @@ export async function quitDesktopGame(): Promise<void> {
     window.close();
   }
 }
+

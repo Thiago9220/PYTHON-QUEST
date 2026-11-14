@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   useContext,
   useEffect,
@@ -549,6 +549,12 @@ export function GameProvider({
   // Actions
   const resetAllProgress = async () => {
     if (!userId) return;
+    if (isSteamMode()) {
+      dispatch({ type: "RESET_STATE" });
+      await persistSteamSaveSnapshot({ state: INITIAL_STATE, purchasedWorlds: [] });
+      toast.success("Progresso local da Steam zerado!");
+      return;
+    }
     try {
       loadingRef.current = true;
       setIsLoading(true);
