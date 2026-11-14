@@ -6,12 +6,16 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import AuthPage from "./pages/AuthPage";
+import MainMenu from "./pages/MainMenu";
 import Welcome from "./pages/Welcome";
 import WorldMap from "./pages/WorldMap";
 import { PomodoroProvider } from "./contexts/PomodoroContext";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 import { DevPanel } from "./components/DevPanel";
 import { SteamControls } from "./components/SteamControls";
+import { BootSplash } from "./components/BootSplash";
+import { PauseMenuModal } from "./components/PauseMenuModal";
+import { isSteamMode, toggleDesktopFullscreen } from "./lib/platform";
 
 // Code splitting for heavy screens & interactive simulators
 const ChallengeList = lazy(() => import("./pages/ChallengeList"));
@@ -32,6 +36,7 @@ const CyberSecSimulator = lazy(() =>
 );
 
 type View =
+  | { name: "mainmenu" }
   | { name: "welcome" }
   | { name: "map" }
   | { name: "list"; worldId: string }
@@ -55,9 +60,20 @@ function ViewFallback() {
   );
 }
 
-function AppContent() {
+function AppContent({
+  bootDone,
+  onBootComplete,
+}: {
+  bootDone: boolean;
+  onBootComplete: () => void;
+}) {
   const { state, hasHydrated } = useGame();
+  const [pauseOpen, setPauseOpen] = useState(false);
   const [view, setViewState] = useState<View>(() => {
+    // Steam desktop always opens into Main Menu like a native PC game
+    if (isSteamMode()) {
+      return { name: "mainmenu" };
+    }
     if (typeof window !== "undefined" && window.history.state?.pythonQuestView) {
       return window.history.state.pythonQuestView as View;
     }
@@ -99,9 +115,22 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Global F11 fullscreen shortcut
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        void toggleDesktopFullscreen();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   // Persist view changes
   useEffect(() => {
     localStorage.setItem("python_quest_current_view", JSON.stringify(view));
+    setPauseOpen(false);
     window.scrollTo(0, 0);
   }, [view]);
 
@@ -112,6 +141,7 @@ function AppContent() {
     }
   }, [hasHydrated, state.hasSeenTutorial, view.name, navigate]);
 
+  const goMainMenu = () => navigate({ name: "mainmenu" });
   const goWelcome = () => navigate({ name: "welcome" });
   const goMap = () => navigate({ name: "map" });
   const goProfile = () => navigate({ name: "profile" });
@@ -119,10 +149,26 @@ function AppContent() {
   const goArena = (challengeId: string, worldId: string) =>
     navigate({ name: "arena", challengeId, worldId });
   const goBoss = (worldId: string) => navigate({ name: "boss", worldId });
+  const goHome = isSteamMode() ? goMainMenu : goWelcome;
+
+  const isInGameplay =
+    bootDone && view.name !== "mainmenu" && view.name !== "welcome";
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-      <Suspense fallback={<ViewFallback />}>
+      {!bootDone && (
+        <BootSplash isDataReady={hasHydrated} onComplete={onBootComplete} />
+      )}
+
+      {bootDone && (
+        <Suspense fallback={<ViewFallback />}>
+          {view.name === "mainmenu" && (
+            <MainMenu
+              onContinue={goMap}
+              onStartNewGame={goWelcome}
+            />
+          )}
+
         {view.name === "welcome" && <Welcome onStart={goMap} />}
 
         {view.name === "map" && (
@@ -149,7 +195,7 @@ function AppContent() {
             onSelectChallenge={(id) => goArena(id, view.worldId)}
             onSelectBoss={() => goBoss(view.worldId)}
             onBack={goMap}
-            onBackToHome={goWelcome}
+            onBackToHome={goHome}
             onOpenProfile={goProfile}
           />
         )}
@@ -165,7 +211,7 @@ function AppContent() {
           <GameArena
             challengeId={view.challengeId}
             onBack={() => goList(view.worldId)}
-            onBackToHome={goWelcome}
+            onBackToHome={goHome}
             onNext={(nextId) =>
               nextId ? goArena(nextId, view.worldId) : goList(view.worldId)
             }
@@ -173,9 +219,21 @@ function AppContent() {
         )}
 
         {view.name === "profile" && <Profile onBack={goMap} />}
-      </Suspense>
+        </Suspense>
+      )}
 
-      {view.name !== "welcome" && <PomodoroTimer />}
+      {isInGameplay && <PomodoroTimer />}
+      {isInGameplay && <SteamControls onOpenPause={() => setPauseOpen(true)} />}
+      {isInGameplay && (
+        <PauseMenuModal
+          isOpen={pauseOpen}
+          onClose={() => setPauseOpen(false)}
+          onTogglePause={() => setPauseOpen((prev) => !prev)}
+          canReturnToMap={view.name !== "map"}
+          onGoToMap={goMap}
+          onGoToMainMenu={goMainMenu}
+        />
+      )}
 
       <Toaster position="top-center" expand={false} theme="dark" />
     </div>
@@ -184,6 +242,7 @@ function AppContent() {
 
 function AppContentWrapper() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const [bootDone, setBootDone] = useState(() => !isSteamMode());
 
   if (isLoading) {
     return (
@@ -205,8 +264,7 @@ function AppContentWrapper() {
   return (
     <GameProvider userId={user?.id}>
       <PomodoroProvider>
-        <AppContent />
-        <SteamControls />
+        <AppContent bootDone={bootDone} onBootComplete={() => setBootDone(true)} />
         {import.meta.env.DEV && <DevPanel />}
       </PomodoroProvider>
     </GameProvider>

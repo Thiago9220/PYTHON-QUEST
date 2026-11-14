@@ -5,7 +5,7 @@ import { isSteamMode, toggleDesktopFullscreen, quitDesktopGame } from "@/lib/pla
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SettingsModal } from "./SettingsModal";
 
-export function SteamControls() {
+export function SteamControls({ onOpenPause }: { onOpenPause?: () => void }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -36,6 +36,16 @@ export function SteamControls() {
           <Globe className="w-3 h-3 text-emerald-400" />
           <span>{lang.toUpperCase()}</span>
         </button>
+
+        {onOpenPause && (
+          <button
+            onClick={onOpenPause}
+            title={lang === "en" ? "Pause Menu (ESC)" : "Menu de Pausa (ESC)"}
+            className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-mono font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <span>ESC</span>
+          </button>
+        )}
 
         <button
           onClick={() => setShowSettings(true)}

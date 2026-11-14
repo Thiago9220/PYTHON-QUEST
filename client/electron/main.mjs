@@ -118,6 +118,13 @@ function getAppIconPath() {
 
     mainWindow.setMenuBarVisibility(false);
 
+    mainWindow.webContents.on("before-input-event", (event, input) => {
+      if (input.type === "keyDown" && input.key === "F11") {
+        event.preventDefault();
+        mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      }
+    });
+
     let allowedOrigin = "";
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
       if (url.startsWith("https://")) {
