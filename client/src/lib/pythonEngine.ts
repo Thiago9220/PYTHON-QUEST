@@ -38,7 +38,7 @@ async function ensurePyodide(localBaseUrl) {
   if (pyodide) return pyodide;
   if (!initPromise) {
     initPromise = (async () => {
-      const cdnBaseUrl = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/";
+      const cdnBaseUrl = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/";
       let activeBaseUrl = cdnBaseUrl;
 
       if (localBaseUrl) {
@@ -56,20 +56,122 @@ async function ensurePyodide(localBaseUrl) {
       pyodide = await self.loadPyodide({
         indexURL: activeBaseUrl,
       });
-      // Snapshot initial globals to clean between runs
+      // Snapshot initial globals and install mock module bridge for offline DS/ML challenges
       await pyodide.runPythonAsync(\`
-import sys, io
-_INITIAL_GLOBALS = set(globals().keys()) | {"_INITIAL_GLOBALS"}
+import sys, io, types, importlib.abc, importlib.machinery
+
+_MOCKED_ROOTS = {
+    "scipy", "matplotlib", "sklearn", "statsmodels", "seaborn",
+    "tensorflow", "torch", "transformers", "nltk", "spacy",
+    "sentence_transformers", "prophet", "openai", "anthropic",
+    "langchain", "tiktoken",
+}
+_ALIAS_TARGET = {
+    "matplotlib.pyplot": "plt",
+    "seaborn": "sns",
+    "statsmodels.api": "sm",
+    "scipy.stats": "stats",
+    "torch.nn": "nn",
+    "torch.optim": "optim",
+    "nltk": "nltk",
+    "spacy": "spacy",
+    "tiktoken": "tiktoken",
+    "torch": "torch",
+}
+_MOCK_GLOBALS = {}
+_MOCK_ACTIVE = False
+_INITIAL_SYS_MODULES = set(sys.modules.keys())
+
+class _MockModule(types.ModuleType):
+    def __init__(self, fullname):
+        super().__init__(fullname)
+        self.__path__ = []
+        self.__package__ = fullname
+    def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+        alias = _ALIAS_TARGET.get(self.__name__)
+        if alias and alias in _MOCK_GLOBALS:
+            target = _MOCK_GLOBALS[alias]
+            if hasattr(target, name):
+                return getattr(target, name)
+        if name in _MOCK_GLOBALS:
+            return _MOCK_GLOBALS[name]
+        if self.__name__ == "spacy" and name == "load" and "nlp" in _MOCK_GLOBALS:
+            return lambda *args, **kwargs: _MOCK_GLOBALS["nlp"]
+        if self.__name__ == "sentence_transformers" and name == "SentenceTransformer" and "model" in _MOCK_GLOBALS:
+            return lambda *args, **kwargs: _MOCK_GLOBALS["model"]
+        child_name = f"{self.__name__}.{name}"
+        if child_name in sys.modules:
+            return sys.modules[child_name]
+        if any(k == child_name or k.startswith(child_name + ".") for k in _ALIAS_TARGET):
+            mod = _MockModule(child_name)
+            sys.modules[child_name] = mod
+            return mod
+        raise AttributeError(f"module '{self.__name__}' has no attribute '{name}'")
+
+class _MockLoader(importlib.abc.Loader):
+    def create_module(self, spec):
+        return _MockModule(spec.name)
+    def exec_module(self, module):
+        pass
+
+class _MockFinder(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path, target=None):
+        if not _MOCK_ACTIVE:
+            return None
+        root = fullname.split(".")[0]
+        if root not in _MOCKED_ROOTS:
+            return None
+        return importlib.machinery.ModuleSpec(fullname, _MockLoader(), is_package=True)
+
+sys.meta_path.insert(0, _MockFinder())
+
+def _activate_mock_bridge():
+    global _MOCK_GLOBALS, _MOCK_ACTIVE
+    _MOCK_GLOBALS = {
+        k: v for k, v in globals().items()
+        if k not in _INITIAL_GLOBALS and not k.startswith("__")
+    }
+    _MOCK_ACTIVE = bool(_MOCK_GLOBALS)
+
 def _reset_globals():
+    global _MOCK_GLOBALS, _MOCK_ACTIVE
+    _MOCK_GLOBALS = {}
+    _MOCK_ACTIVE = False
+    for mod_name in list(sys.modules.keys()):
+        if mod_name.split(".")[0] in _MOCKED_ROOTS and mod_name not in _INITIAL_SYS_MODULES:
+            del sys.modules[mod_name]
     for k in list(globals().keys()):
         if k not in _INITIAL_GLOBALS and not k.startswith("__"):
             del globals()[k]
     sys.stdout = io.StringIO()
+
+_INITIAL_GLOBALS = set(globals().keys()) | {"_INITIAL_GLOBALS"}
 \`);
       return pyodide;
     })();
   }
   return initPromise;
+}
+
+const _MOCKED_IMPORT_PREFIXES = [
+  "scipy", "matplotlib", "sklearn", "statsmodels", "seaborn",
+  "tensorflow", "torch", "transformers", "nltk", "spacy",
+  "sentence_transformers", "prophet", "openai", "anthropic",
+  "langchain", "tiktoken",
+];
+
+function stripMockedImportsForLoader(code, hasSetupMocks) {
+  if (!hasSetupMocks || !code) return code;
+  const mockedPattern = new RegExp(
+    "^\\\\s*(?:import|from)\\\\s+(?:" + _MOCKED_IMPORT_PREFIXES.join("|") + ")(?:\\\\b|\\\\.)",
+    "i"
+  );
+  return String(code)
+    .split(new RegExp("\\\\r?\\\\n"))
+    .filter((line) => !mockedPattern.test(line))
+    .join("\\n");
 }
 
 function formatPythonError(err, lang = "pt") {
@@ -107,10 +209,12 @@ self.onmessage = async (event) => {
       const { code, setupCode = "" } = payload;
       try {
         await py.runPythonAsync("_reset_globals()");
+        const hasSetup = Boolean(setupCode && setupCode.trim());
         const fullCode = setupCode ? \`\${setupCode}\\n\${code}\` : code;
-        await py.loadPackagesFromImports(fullCode);
+        await py.loadPackagesFromImports(stripMockedImportsForLoader(fullCode, hasSetup));
         if (setupCode) {
           await py.runPythonAsync(setupCode);
+          await py.runPythonAsync("_activate_mock_bridge()");
         }
         await py.runPythonAsync(code);
         const output = await py.runPythonAsync("sys.stdout.getvalue()");
@@ -143,10 +247,12 @@ self.onmessage = async (event) => {
 
       try {
         await py.runPythonAsync("_reset_globals()");
+        const hasSetup = Boolean(setupCode && setupCode.trim());
         const fullCode = setupCode ? \`\${setupCode}\\n\${userCode}\` : userCode;
-        await py.loadPackagesFromImports(fullCode);
+        await py.loadPackagesFromImports(stripMockedImportsForLoader(fullCode, hasSetup));
         if (setupCode) {
           await py.runPythonAsync(setupCode);
+          await py.runPythonAsync("_activate_mock_bridge()");
         }
         await py.runPythonAsync(userCode);
         userOutput = await py.runPythonAsync("sys.stdout.getvalue()");

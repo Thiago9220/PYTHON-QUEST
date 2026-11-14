@@ -8,9 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "steam:window": "electron .",
-    "steam:build": "tsc && vite build && electron .",
-    "steam:exe": "tsc && vite build && electron-builder --win dir",
-    "steam:installer": "tsc && vite build && electron-builder --win nsis",
+    "steam:build": "tsc && vite build --mode steam && electron .",
+    "steam:exe": "tsc && vite build --mode steam && electron-builder --win dir",
+    "steam:installer": "tsc && vite build --mode steam && electron-builder --win nsis",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

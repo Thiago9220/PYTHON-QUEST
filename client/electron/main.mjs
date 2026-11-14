@@ -6,7 +6,7 @@
  * compatível com Steam Auto-Cloud e hook pronto para Steamworks SDK.
  */
 
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
@@ -112,20 +112,48 @@ function getAppIconPath() {
         preload: path.join(__dirname, "preload.cjs"),
         contextIsolation: true,
         nodeIntegration: false,
+        sandbox: true,
       },
     });
 
     mainWindow.setMenuBarVisibility(false);
 
+    let allowedOrigin = "";
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      if (url.startsWith("https://")) {
+        void shell.openExternal(url);
+      }
+      return { action: "deny" };
+    });
+
+    mainWindow.webContents.on("will-navigate", (event, url) => {
+      try {
+        const targetOrigin = new URL(url).origin;
+        if (allowedOrigin && targetOrigin === allowedOrigin) {
+          return;
+        }
+      } catch {
+        // Ignore malformed URLs and block navigation
+      }
+      event.preventDefault();
+      if (url.startsWith("https://")) {
+        void shell.openExternal(url);
+      }
+    });
+
     const devServerUrl = process.env.VITE_DEV_SERVER_URL;
     if (devServerUrl) {
       const separator = devServerUrl.includes("?") ? "&" : "?";
-      await mainWindow.loadURL(`${devServerUrl}${separator}steam=1`);
+      const targetUrl = `${devServerUrl}${separator}steam=1`;
+      allowedOrigin = new URL(targetUrl).origin;
+      await mainWindow.loadURL(targetUrl);
     } else {
       const distDir = path.join(__dirname, "..", "dist");
       const { server, port } = await startLocalStaticServer(distDir);
       staticServer = server;
-      await mainWindow.loadURL(`http://127.0.0.1:${port}/?steam=1`);
+      const targetUrl = `http://127.0.0.1:${port}/?steam=1`;
+      allowedOrigin = new URL(targetUrl).origin;
+      await mainWindow.loadURL(targetUrl);
     }
 
     // Atalho nativo F11 para alternar Tela Cheia e bloqueio de atalhos de navegador

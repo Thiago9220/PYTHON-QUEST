@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getLocalizedLevelTitle, getLocalizedWorld, getLocalizedWorldTag } from "@/lib/i18n/localize";
+import { isSteamMode } from "@/lib/platform";
 import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -288,17 +289,19 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
               </Button>
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
-              title={lang === "en" ? "Learn SQL (Query Quest)" : "Aprender SQL (Query Quest)"}
-            >
-              <a href="https://queryquest.com.br/" target="_blank" rel="noopener noreferrer">
-                <Database className="w-4 h-4" />
-              </a>
-            </Button>
+            {!isSteamMode() && (
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="h-9 w-9 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-xl transition-all border border-white/5 shadow-sm"
+                title={lang === "en" ? "Learn SQL (Query Quest)" : "Aprender SQL (Query Quest)"}
+              >
+                <a href="https://queryquest.com.br/" target="_blank" rel="noopener noreferrer">
+                  <Database className="w-4 h-4" />
+                </a>
+              </Button>
+            )}
 
             <div className="h-8 w-px bg-white/10 mx-1 hidden md:block" />
 
