@@ -21,6 +21,12 @@ import {
   getAchievementConditions,
 } from "@/lib/achievements";
 import { WORLDS } from "@/lib/challenges";
+import {
+  isSteamMode,
+  loadSteamSaveSnapshot,
+  persistSteamSaveSnapshot,
+  notifySteamAchievement,
+} from "@/lib/platform";
 
 type GameContextType = {
   state: GameState;
@@ -118,6 +124,36 @@ export function GameProvider({
 
   const refreshGameData = useCallback(async () => {
     if (!userId) return;
+
+    if (isSteamMode()) {
+      setIsLoading(true);
+      setLoadError(null);
+      const steamSnapshot = await loadSteamSaveSnapshot();
+      if (steamSnapshot?.state) {
+        setPurchasedWorlds(steamSnapshot.purchasedWorlds ?? []);
+        dispatch({
+          type: "LOAD_STATE",
+          state: {
+            ...INITIAL_STATE,
+            ...steamSnapshot.state,
+            isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
+          },
+        });
+      } else {
+        dispatch({
+          type: "LOAD_STATE",
+          state: {
+            ...INITIAL_STATE,
+            playerName: "Operador Steam",
+            isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
+          },
+        });
+        setPurchasedWorlds([]);
+      }
+      setHasHydrated(true);
+      setIsLoading(false);
+      return;
+    }
 
     const loadId = ++latestLoadRef.current;
     loadingRef.current = true;
@@ -337,7 +373,7 @@ export function GameProvider({
 
   // 2. PROFILE SYNC (Supabase)
   useEffect(() => {
-    if (!userId || loadingRef.current || !hasHydrated) return;
+    if (!userId || loadingRef.current || !hasHydrated || isSteamMode()) return;
 
     const profilePayload = {
       id: userId,
@@ -427,10 +463,13 @@ export function GameProvider({
     newlyUnlocked.forEach(id => {
       processedAchievementsRef.current.add(id);
       dispatch({ type: "UNLOCK_ACHIEVEMENT", achievementId: id });
-      supabase
-        .from("user_achievements")
-        .insert({ user_id: userId, achievement_id: id })
-        .then(() => {});
+      void notifySteamAchievement(id);
+      if (!isSteamMode()) {
+        supabase
+          .from("user_achievements")
+          .insert({ user_id: userId, achievement_id: id })
+          .then(() => {});
+      }
     });
 
     // Add to toast queue
@@ -478,7 +517,7 @@ export function GameProvider({
 
   // 4. PROGRESS SYNC
   useEffect(() => {
-    if (!userId || loadingRef.current || !hasHydrated) return;
+    if (!userId || loadingRef.current || !hasHydrated || isSteamMode()) return;
 
     const challengesArr = Object.entries(state.challengeProgress);
     if (challengesArr.length === 0) return;
@@ -655,9 +694,14 @@ export function GameProvider({
     soundManager.enabled = !state.isMuted;
   }, [state.isMuted]);
 
-  // 5. GUEST PERSISTENCE (localStorage fallback)
+  // 5. GUEST & STEAM DESKTOP PERSISTENCE (localStorage + Steam Save File)
   useEffect(() => {
-    if (!userId && hasHydrated) {
+    if (!hasHydrated) return;
+    if (isSteamMode()) {
+      void persistSteamSaveSnapshot({ state, purchasedWorlds });
+      return;
+    }
+    if (!userId) {
       persistSnapshot(undefined, { state, purchasedWorlds });
     }
   }, [state, purchasedWorlds, userId, hasHydrated]);

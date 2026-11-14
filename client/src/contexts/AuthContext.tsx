@@ -13,6 +13,7 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import { type AuthChangeEvent, type Session, type User } from "@supabase/supabase-js";
+import { isSteamMode, STEAM_DEFAULT_USER_ID } from "@/lib/platform";
 
 export type UserAccount = {
   id: string;
@@ -168,6 +169,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     let lastProfileUserId: string | null = null;
     let initialAuthResolved = false;
+
+    // Modo Steam / Desktop Offline-First: pula login do Supabase e usa conta local Steam
+    if (isSteamMode()) {
+      const savedSteamProfile = localStorage.getItem("python_quest_steam_profile");
+      let parsed: Partial<UserAccount> = {};
+      if (savedSteamProfile) {
+        try {
+          parsed = JSON.parse(savedSteamProfile);
+        } catch {
+          parsed = {};
+        }
+      }
+
+      const initSteamUser = async () => {
+        const bridgeProfile = await window.steamBridge?.getPlayerProfile?.().catch(() => null);
+        if (!mounted) return;
+        setAuthState({
+          user: {
+            id: bridgeProfile?.id || STEAM_DEFAULT_USER_ID,
+            email: "steam@local",
+            displayName: parsed.displayName || bridgeProfile?.displayName || "Operador Steam",
+            avatarEmoji: parsed.avatarEmoji || bridgeProfile?.avatarEmoji || "/avatars/hacker.webp",
+            avatarUrl: parsed.avatarUrl || null,
+          },
+          isLoading: false,
+          isPasswordRecovery: false,
+        });
+      };
+
+      void initSteamUser();
+      return () => {
+        mounted = false;
+      };
+    }
 
     // Seta o usuário com dados mínimos da sessão (sem bloquear em fetchProfile).
     // Permite que GameProvider monte e carregue dados em paralelo com o fetch
@@ -329,6 +364,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = useCallback(
     async (updates: Partial<Pick<UserAccount, "displayName" | "avatarEmoji" | "avatarUrl">>) => {
       if (!authState.user) return;
+
+      if (isSteamMode()) {
+        const nextUser = { ...authState.user, ...updates };
+        localStorage.setItem("python_quest_steam_profile", JSON.stringify(nextUser));
+        setAuthState(prev => ({
+          ...prev,
+          user: nextUser,
+        }));
+        return;
+      }
 
       const payload: any = {};
       if (updates.displayName) payload.display_name = updates.displayName;
