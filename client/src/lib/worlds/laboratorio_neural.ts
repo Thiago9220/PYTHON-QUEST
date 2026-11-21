@@ -19,7 +19,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class LinearRegression:\n    def fit(self, X, y): print('Treinado.')\nX = [[1], [2], [3]]\ny = [10, 20, 30]",
       expectedOutput: "Treinado.",
-      testCode: "assert 'LinearRegression' in code and 'fit' in code",
+      testCode: "assert 'LinearRegression' in code and 'fit' in code\nassert output.strip() == 'Treinado.'",
       starterCode: "from sklearn.linear_model import LinearRegression\n# Crie instância e fit\n",
       hints: [
         { text: "Em sklearn, cada algoritmo é uma classe: importe, instancie com (), depois chame .fit().", cost: 20 },
@@ -43,7 +43,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def train_test_split(X, y, test_size=0.2): return X[:8], X[8:], y[:8], y[8:]\nX = list(range(10))\ny = list(range(10))",
       expectedOutput: "Split realizado.",
-      testCode: "assert 'train_test_split' in code and 'test_size' in code",
+      testCode: "assert 'train_test_split' in code and 'test_size' in code\nassert output.strip() == 'Split realizado.'",
       starterCode: "from sklearn.model_selection import train_test_split\n# Faça o split e confirme\n",
       hints: [
         { text: "train_test_split retorna QUATRO valores: X_train, X_test, y_train, y_test. Desempacote com vírgulas.", cost: 20 },
@@ -67,7 +67,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Modelo:\n    def predict(self, X): return [v[0] * 10 for v in X]\nmodelo = Modelo()",
       expectedOutput: "40",
-      testCode: "assert 'modelo.predict' in code and 'previsao' in code and '[0]' in code",
+      testCode: "assert 'modelo.predict' in code and 'previsao' in code and '[0]' in code\n_esperado = [40.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "# previsao = modelo.predict([[4]])\n# imprima o primeiro valor\n",
       hints: [
         { text: "predict retorna uma lista de previsoes, mesmo para um unico exemplo.", cost: 20 },
@@ -91,7 +91,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def score(self, X, y): return 0.95\nmodelo = Modelo()\nX_test = [[1], [2]]\ny_test = [10, 20]",
       expectedOutput: "True",
-      testCode: "assert 'modelo.score' in code and 'score' in code and '>= 0.9' in code",
+      testCode: "assert 'modelo.score' in code and 'score' in code and '>= 0.9' in code\nassert output.strip() == 'True'",
       starterCode: "# calcule o score e teste se passou do limiar 0.9\n",
       hints: [
         { text: "Guarde o retorno de modelo.score em uma variavel.", cost: 20 },
@@ -115,7 +115,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class LogisticRegression:\n    def fit(self, X, y): print('LogReg treinada.')\nX = [[1], [2], [3], [4]]\ny = [0, 0, 1, 1]",
       expectedOutput: "LogReg treinada.",
-      testCode: "assert 'LogisticRegression' in code and 'fit' in code",
+      testCode: "assert 'LogisticRegression' in code and 'fit' in code\nassert output.strip() == 'LogReg treinada.'",
       starterCode: "from sklearn.linear_model import LogisticRegression\n# Instancie 'clf' e treine\n",
       hints: [
         { text: "Apesar do nome 'regression', LogisticRegression é um CLASSIFICADOR — para problemas binários (0/1) ou multiclasse.", cost: 20 },
@@ -139,7 +139,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class DecisionTreeClassifier:\n    def fit(self, X, y): print('Árvore treinada.')\nX = [[1], [2], [3]]\ny = [0, 1, 1]",
       expectedOutput: "Árvore treinada.",
-      testCode: "assert 'DecisionTreeClassifier' in code",
+      testCode: "assert 'DecisionTreeClassifier' in code\nassert output.strip() == 'Árvore treinada.'",
       starterCode: "from sklearn.tree import DecisionTreeClassifier\n# Instancie 'tree' e treine\n",
       hints: [
         { text: "DecisionTreeClassifier vem de sklearn.tree. Mesma API.", cost: 20 },
@@ -163,7 +163,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class RandomForestClassifier:\n    def fit(self, X, y): print('Floresta treinada.')\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "Floresta treinada.",
-      testCode: "assert 'RandomForestClassifier' in code",
+      testCode: "assert 'RandomForestClassifier' in code\nassert output.strip() == 'Floresta treinada.'",
       starterCode: "from sklearn.ensemble import RandomForestClassifier\n# rf = ...\n",
       hints: [
         { text: "RandomForestClassifier está em sklearn.ensemble. Parâmetro n_estimators define quantas árvores (padrão 100).", cost: 25 },
@@ -187,7 +187,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class KNeighborsClassifier:\n    def __init__(self, n_neighbors=5): self.n = n_neighbors\n    def fit(self, X, y): print(f'KNN k={self.n} treinado.')\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "KNN k=3 treinado.",
-      testCode: "assert 'KNeighborsClassifier' in code and 'n_neighbors' in code",
+      testCode: "assert 'KNeighborsClassifier' in code and 'n_neighbors' in code\nassert output.strip() == 'KNN k=3 treinado.'",
       starterCode: "from sklearn.neighbors import KNeighborsClassifier\n# knn com n_neighbors=3\n",
       hints: [
         { text: "Vem de sklearn.neighbors. n_neighbors define K — quantos vizinhos consultar.", cost: 20 },
@@ -211,7 +211,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class SVC:\n    def fit(self, X, y): print('SVM treinado.')\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "SVM treinado.",
-      testCode: "assert 'SVC' in code",
+      testCode: "assert 'SVC' in code\nassert output.strip() == 'SVM treinado.'",
       starterCode: "from sklearn.svm import SVC\n# svm = ...\n",
       hints: [
         { text: "SVC (Support Vector Classifier) está em sklearn.svm. SVR para regressão.", cost: 25 },
@@ -235,7 +235,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class GaussianNB:\n    def fit(self, X, y): print('NB treinado.')\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "NB treinado.",
-      testCode: "assert 'GaussianNB' in code",
+      testCode: "assert 'GaussianNB' in code\nassert output.strip() == 'NB treinado.'",
       starterCode: "from sklearn.naive_bayes import GaussianNB\n# nb = ...\n",
       hints: [
         { text: "GaussianNB de sklearn.naive_bayes. Outras variantes: MultinomialNB (texto), BernoulliNB (binário).", cost: 25 },
@@ -259,7 +259,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Ridge:\n    def __init__(self, alpha=1.0): self.a = alpha\n    def fit(self, X, y): print(f'Ridge a={self.a}')\nX = [[1], [2]]\ny = [1, 2]",
       expectedOutput: "Ridge a=1.0",
-      testCode: "assert 'Ridge' in code and 'alpha' in code",
+      testCode: "assert 'Ridge' in code and 'alpha' in code\nassert output.strip() == 'Ridge a=1.0'",
       starterCode: "from sklearn.linear_model import Ridge\n# ridge com alpha=1.0\n",
       hints: [
         { text: "Ridge = LinearRegression + penalidade L2 (soma dos pesos²). alpha controla a força da penalidade.", cost: 25 },
@@ -283,7 +283,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Lasso:\n    def __init__(self, alpha=1.0): self.a = alpha\n    def fit(self, X, y): print(f'Lasso a={self.a}')\nX = [[1], [2]]\ny = [1, 2]",
       expectedOutput: "Lasso a=0.1",
-      testCode: "assert 'Lasso' in code and 'alpha' in code",
+      testCode: "assert 'Lasso' in code and 'alpha' in code\nassert output.strip() == 'Lasso a=0.1'",
       starterCode: "from sklearn.linear_model import Lasso\n# lasso com alpha=0.1\n",
       hints: [
         { text: "Lasso usa penalidade L1 (soma dos VALORES ABSOLUTOS dos pesos). Tende a ZERAR pesos de features irrelevantes.", cost: 25 },
@@ -307,7 +307,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class GradientBoostingClassifier:\n    def fit(self, X, y): print('GB treinado.')\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "GB treinado.",
-      testCode: "assert 'GradientBoostingClassifier' in code",
+      testCode: "assert 'GradientBoostingClassifier' in code\nassert output.strip() == 'GB treinado.'",
       starterCode: "from sklearn.ensemble import GradientBoostingClassifier\n# gb = ...\n",
       hints: [
         { text: "GradientBoostingClassifier está em sklearn.ensemble.", cost: 25 },
@@ -331,7 +331,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class StandardScaler:\n    def fit_transform(self, X): print('Escalado.'); return X\nX = [[1, 100], [2, 200]]",
       expectedOutput: "Escalado.",
-      testCode: "assert 'StandardScaler' in code and 'fit_transform' in code",
+      testCode: "assert 'StandardScaler' in code and 'fit_transform' in code\nassert output.strip() == 'Escalado.'",
       starterCode: "from sklearn.preprocessing import StandardScaler\n# Crie scaler e use fit_transform(X)\n",
       hints: [
         { text: "StandardScaler subtrai média e divide pelo desvio padrão (z-score) — média 0, desvio 1.", cost: 20 },
@@ -355,7 +355,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class MinMaxScaler:\n    def fit_transform(self, X): print('Min-Max aplicado.'); return X\nX = [[1], [10]]",
       expectedOutput: "Min-Max aplicado.",
-      testCode: "assert 'MinMaxScaler' in code",
+      testCode: "assert 'MinMaxScaler' in code\nassert output.strip() == 'Min-Max aplicado.'",
       starterCode: "from sklearn.preprocessing import MinMaxScaler\n# scaler com fit_transform\n",
       hints: [
         { text: "MinMaxScaler mapeia cada feature para [0, 1] linearmente: (x - min) / (max - min).", cost: 20 },
@@ -379,7 +379,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class LabelEncoder:\n    def fit_transform(self, y): print('Encoded.'); return [0, 1, 0]",
       expectedOutput: "Encoded.",
-      testCode: "assert 'LabelEncoder' in code",
+      testCode: "assert 'LabelEncoder' in code\nassert output.strip() == 'Encoded.'",
       starterCode: "from sklearn.preprocessing import LabelEncoder\nlabels = ['gato', 'cao', 'gato']\n# Encode\n",
       hints: [
         { text: "LabelEncoder converte rótulos categóricos em inteiros consecutivos: 'gato'→0, 'cao'→1, etc.", cost: 20 },
@@ -403,7 +403,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class OneHotEncoder:\n    def fit_transform(self, X): print('OneHot.'); return X",
       expectedOutput: "OneHot.",
-      testCode: "assert 'OneHotEncoder' in code",
+      testCode: "assert 'OneHotEncoder' in code\nassert output.strip() == 'OneHot.'",
       starterCode: "from sklearn.preprocessing import OneHotEncoder\n# ohe com fit_transform\n",
       hints: [
         { text: "OneHotEncoder transforma cada categoria em uma COLUNA binária: 'A'→[1,0], 'B'→[0,1], 'C'→[0,0,1].", cost: 25 },
@@ -427,7 +427,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class SimpleImputer:\n    def __init__(self, strategy='mean'): self.s = strategy\n    def fit_transform(self, X): print(f'Imputado.'); return X\nimport numpy as np\nX = [[1, np.nan], [2, 3]]",
       expectedOutput: "Imputado.",
-      testCode: "assert 'SimpleImputer' in code and 'strategy' in code",
+      testCode: "assert 'SimpleImputer' in code and 'strategy' in code\nassert output.strip() == 'Imputado.'",
       starterCode: "from sklearn.impute import SimpleImputer\n# imp com strategy='mean'\n",
       hints: [
         { text: "SimpleImputer está em sklearn.impute. strategy define a estratégia: 'mean', 'median', 'most_frequent', 'constant'.", cost: 20 },
@@ -451,7 +451,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def accuracy_score(a, b): return sum(1 for x,y in zip(a,b) if x==y)/len(a)\ny_real = [0, 1, 1, 0]\ny_pred = [0, 1, 0, 0]",
       expectedOutput: "0.75",
-      testCode: "assert 'accuracy_score' in code",
+      testCode: "assert 'accuracy_score' in code\n_esperado = [0.75]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.metrics import accuracy_score\n# Calcule e imprima\n",
       hints: [
         { text: "accuracy_score(y_real, y_pred) calcula proporção de acertos — argumentos: ordem importa pouco aqui (simétrica).", cost: 20 },
@@ -475,7 +475,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def confusion_matrix(a, b): return [[2, 0], [1, 1]]\ny_real = [0, 1, 1, 0]\ny_pred = [0, 1, 0, 0]",
       expectedOutput: "[[2, 0], [1, 1]]",
-      testCode: "assert 'confusion_matrix' in code",
+      testCode: "assert 'confusion_matrix' in code\nassert output.strip() == '[[2, 0], [1, 1]]'",
       starterCode: "from sklearn.metrics import confusion_matrix\n# Imprima a matriz de confusão\n",
       hints: [
         { text: "confusion_matrix(y_real, y_pred) retorna matriz: linhas=classe real, colunas=classe prevista.", cost: 20 },
@@ -499,7 +499,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def classification_report(a, b): return 'precision recall f1-score'\ny_real = [0, 1]\ny_pred = [0, 1]",
       expectedOutput: "precision recall f1-score",
-      testCode: "assert 'classification_report' in code",
+      testCode: "assert 'classification_report' in code\nassert output.strip() == 'precision recall f1-score'",
       starterCode: "from sklearn.metrics import classification_report\n# Imprima o relatório\n",
       hints: [
         { text: "classification_report retorna uma string formatada com precision, recall, f1 e suporte para CADA classe.", cost: 20 },
@@ -523,7 +523,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def precision_score(a, b): return 0.5\ny_real = [0, 1, 1]\ny_pred = [1, 1, 1]",
       expectedOutput: "0.5",
-      testCode: "assert 'precision_score' in code",
+      testCode: "assert 'precision_score' in code\n_esperado = [0.5]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.metrics import precision_score\n# Calcule e imprima\n",
       hints: [
         { text: "precision_score, recall_score e f1_score estão em sklearn.metrics. Assinatura igual a accuracy_score.", cost: 25 },
@@ -547,7 +547,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def mean_squared_error(a, b): return sum((x-y)**2 for x,y in zip(a,b))/len(a)\ny_real = [1, 2, 3]\ny_pred = [1.1, 1.9, 3.2]",
       expectedOutput: "0.020000000000000018",
-      testCode: "assert 'mean_squared_error' in code",
+      testCode: "assert 'mean_squared_error' in code\n_esperado = [0.020000000000000035]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.metrics import mean_squared_error\n# Imprima MSE\n",
       hints: [
         { text: "mean_squared_error calcula média dos erros AO QUADRADO: amplifica erros grandes.", cost: 20 },
@@ -571,7 +571,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def r2_score(a, b): return 0.95\ny_real = [1, 2, 3]\ny_pred = [1.1, 1.9, 3.2]",
       expectedOutput: "0.95",
-      testCode: "assert 'r2_score' in code",
+      testCode: "assert 'r2_score' in code\n_esperado = [0.95]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.metrics import r2_score\n# Imprima R²\n",
       hints: [
         { text: "r2_score retorna entre -infinito e 1. 1 = previsão perfeita; 0 = igual à média; negativo = pior que prever média.", cost: 20 },
@@ -595,7 +595,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class StandardScaler: pass\nclass LogisticRegression: pass\nclass Pipeline:\n    def __init__(self, steps): self.s = steps",
       expectedOutput: "2",
-      testCode: "assert 'Pipeline' in code and 'steps' in code and 'len' in code and 'pipe' in code",
+      testCode: "assert 'Pipeline' in code and 'steps' in code and 'len' in code and 'pipe' in code\n_esperado = [2.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\n# Crie o Pipeline e imprima o total de steps\n",
       hints: [
         { text: "Pipeline recebe lista de tuplas no parametro steps.", cost: 30 },
@@ -619,7 +619,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def cross_val_score(m, X, y, cv): return [0.8, 0.9, 1.0, 0.7, 0.9]\nclass Modelo: pass\nmodelo = Modelo()\nX = [[1], [2]]\ny = [0, 1]",
       expectedOutput: "0.86",
-      testCode: "assert 'cross_val_score' in code and 'cv=5' in code and 'sum' in code and 'len' in code and 'round' in code",
+      testCode: "assert 'cross_val_score' in code and 'cv=5' in code and 'sum' in code and 'len' in code and 'round' in code\n_esperado = [0.86]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.model_selection import cross_val_score\n# Calcule scores com cv=5 e imprima a media\n",
       hints: [
         { text: "cross_val_score retorna uma lista de scores, um por fold.", cost: 30 },
@@ -643,7 +643,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class GridSearchCV:\n    def __init__(self, m, param_grid, cv):\n        self.param_grid = param_grid\n        self.cv = cv\nclass Modelo: pass\nmodelo = Modelo()",
       expectedOutput: "3",
-      testCode: "assert 'GridSearchCV' in code and 'param_grid' in code and \"'C'\" in code and 'len' in code",
+      testCode: "assert 'GridSearchCV' in code and 'param_grid' in code and \"'C'\" in code and 'len' in code\n_esperado = [3.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from sklearn.model_selection import GridSearchCV\n# Crie o grid e imprima quantos valores de C existem\n",
       hints: [
         { text: "param_grid e um dicionario; a chave 'C' guarda a lista de valores.", cost: 30 },
@@ -667,7 +667,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class KMeans:\n    def __init__(self, n_clusters): self.n = n_clusters\n    def fit(self, X):\n        self.labels_ = [0, 0, 1]\n        return self\nX = [[1, 2], [1, 4], [10, 8]]",
       expectedOutput: "[0, 0, 1]",
-      testCode: "assert 'KMeans' in code and 'n_clusters=3' in code and '.fit' in code and 'labels_' in code",
+      testCode: "assert 'KMeans' in code and 'n_clusters=3' in code and '.fit' in code and 'labels_' in code\nassert output.strip() == '[0, 0, 1]'",
       starterCode: "from sklearn.cluster import KMeans\n# n_clusters=3, fit e imprima labels_\n",
       hints: [
         { text: "KMeans aprende labels de cluster depois do fit.", cost: 25 },
@@ -691,7 +691,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class DBSCAN:\n    def fit(self, X): print('DBSCAN ok.')\nX = [[1,2],[1,3]]",
       expectedOutput: "DBSCAN ok.",
-      testCode: "assert 'DBSCAN' in code",
+      testCode: "assert 'DBSCAN' in code\nassert output.strip() == 'DBSCAN ok.\\nDBSCAN ok.'",
       starterCode: "from sklearn.cluster import DBSCAN\n# fit e print\n",
       hints: [
         { text: "DBSCAN está em sklearn.cluster. Não precisa pré-definir número de clusters.", cost: 30 },
@@ -715,7 +715,7 @@ export const LABORATORIO_NEURAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class PCA:\n    def __init__(self, n_components): self.n = n_components\n    def fit_transform(self, X): return [[1, 2], [4, 5]]\nX = [[1,2,3],[4,5,6]]",
       expectedOutput: "[1, 2]",
-      testCode: "assert 'PCA' in code and 'n_components=2' in code and 'fit_transform' in code and 'reduzido' in code and '[0]' in code",
+      testCode: "assert 'PCA' in code and 'n_components=2' in code and 'fit_transform' in code and 'reduzido' in code and '[0]' in code\nassert output.strip() == '[1, 2]'",
       starterCode: "from sklearn.decomposition import PCA\n# pca com n_components=2, salve em reduzido\n",
       hints: [
         { text: "fit_transform retorna a nova matriz com menos colunas.", cost: 30 },

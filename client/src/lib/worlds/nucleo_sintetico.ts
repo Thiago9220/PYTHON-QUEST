@@ -19,7 +19,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "",
       expectedOutput: "128",
-      testCode: "assert 'config' in code and 'camadas_ocultas' in code and 'tensores' in code and \"['tensores']\" in code",
+      testCode: "assert 'config' in code and 'camadas_ocultas' in code and 'tensores' in code and \"['tensores']\" in code\n_esperado = [128.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "# Crie config com camadas_ocultas e tensores\n",
       hints: [
         { text: "Use um dicionario Python para representar a configuracao da rede.", cost: 10 },
@@ -43,7 +43,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dense:\n    def __init__(self, n): self.n = n\nclass Sequential:\n    def __init__(self, layers): self.l = layers",
       expectedOutput: "2",
-      testCode: "assert 'Sequential' in code and 'Dense' in code and 'len' in code and 'modelo.l' in code",
+      testCode: "assert 'Sequential' in code and 'Dense' in code and 'len' in code and 'modelo.l' in code\n_esperado = [2.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\n# Modelo com 2 Dense e print do total de camadas\n",
       hints: [
         { text: "Sequential recebe uma lista de camadas.", cost: 20 },
@@ -67,7 +67,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def compile(self, optimizer, loss):\n        self.optimizer = optimizer\n        self.loss = loss\nmodelo = Modelo()",
       expectedOutput: "mse",
-      testCode: "assert 'compile' in code and 'adam' in code and 'mse' in code and 'modelo.loss' in code",
+      testCode: "assert 'compile' in code and 'adam' in code and 'mse' in code and 'modelo.loss' in code\nassert output.strip() == 'mse'",
       starterCode: "# compile com adam e mse, depois imprima modelo.loss\n",
       hints: [
         { text: "compile configura optimizer e loss antes do treino.", cost: 20 },
@@ -91,7 +91,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def fit(self, X, y, epochs): print(f'Treinando por {epochs} epochs...')\nmodelo = Modelo()\nX = [[1, 2], [3, 4]]\ny = [0, 1]",
       expectedOutput: "Treinando por 5 epochs...\nTreinamento concluído.",
-      testCode: "assert 'fit' in code and 'epochs' in code",
+      testCode: "assert 'fit' in code and 'epochs' in code\nassert output.strip() == 'Treinando por 5 epochs...\\nTreinamento concluído.'",
       starterCode: "# fit por 5 epochs\n",
       hints: [
         { text: "fit é onde acontece o treino real. Passe X, y e epochs.", cost: 20 },
@@ -115,7 +115,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dense:\n    def __init__(self, n, activation=None): self.a = activation",
       expectedOutput: "ReLU ativada.",
-      testCode: "assert \"activation='relu'\" in code or 'activation=\"relu\"' in code",
+      testCode: "assert \"activation='relu'\" in code or 'activation=\"relu\"' in code\nassert output.strip() == 'ReLU ativada.'",
       starterCode: "from tensorflow.keras.layers import Dense\n# Dense com 64 neurônios e ReLU\n",
       hints: [
         { text: "Passe activation='relu' ao criar a camada. Sem ativação, a rede é só uma sequência de operações lineares.", cost: 20 },
@@ -139,7 +139,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dense:\n    def __init__(self, n, activation=None): self.a = activation",
       expectedOutput: "Sigmoid pronta.",
-      testCode: "assert 'sigmoid' in code",
+      testCode: "assert 'sigmoid' in code\nassert output.strip() == 'Sigmoid pronta.'",
       starterCode: "from tensorflow.keras.layers import Dense\n# Saída binária com sigmoid\n",
       hints: [
         { text: "Para problema binário, use 1 neurônio com sigmoid — saída entre 0 e 1 (probabilidade).", cost: 25 },
@@ -163,7 +163,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dense:\n    def __init__(self, n, activation=None): self.a = activation",
       expectedOutput: "Softmax configurada.",
-      testCode: "assert 'softmax' in code",
+      testCode: "assert 'softmax' in code\nassert output.strip() == 'Softmax configurada.'",
       starterCode: "from tensorflow.keras.layers import Dense\n# Saída para 10 classes com softmax\n",
       hints: [
         { text: "Softmax: N saídas que somam 1 — vetor de probabilidades por classe.", cost: 25 },
@@ -187,7 +187,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dense:\n    def __init__(self, n, input_shape=None): self.s = input_shape",
       expectedOutput: "Input definido.",
-      testCode: "assert 'input_shape' in code",
+      testCode: "assert 'input_shape' in code\nassert output.strip() == 'Input definido.'",
       starterCode: "from tensorflow.keras.layers import Dense\n# Dense(64) com input_shape (784,)\n",
       hints: [
         { text: "input_shape é uma TUPLA — defina apenas na PRIMEIRA camada (as seguintes inferem do anterior).", cost: 25 },
@@ -211,7 +211,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Dropout:\n    def __init__(self, rate): self.r = rate",
       expectedOutput: "Dropout ativo.",
-      testCode: "assert 'Dropout' in code",
+      testCode: "assert 'Dropout' in code\nassert output.strip() == 'Dropout ativo.'",
       starterCode: "from tensorflow.keras.layers import Dropout\n# Dropout 0.5\n",
       hints: [
         { text: "Dropout(taxa) recebe a probabilidade de desligar cada neurônio (entre 0 e 1).", cost: 25 },
@@ -235,7 +235,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class BatchNormalization: pass",
       expectedOutput: "BatchNorm.",
-      testCode: "assert 'BatchNormalization' in code",
+      testCode: "assert 'BatchNormalization' in code\nassert output.strip() == 'BatchNorm.'",
       starterCode: "from tensorflow.keras.layers import BatchNormalization\n# Instancie e imprima\n",
       hints: [
         { text: "BatchNormalization() não recebe parâmetros obrigatórios. Adicione após camadas Dense/Conv.", cost: 30 },
@@ -259,7 +259,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Flatten: pass",
       expectedOutput: "Flatten ok.",
-      testCode: "assert 'Flatten' in code",
+      testCode: "assert 'Flatten' in code\nassert output.strip() == 'Flatten ok.'",
       starterCode: "from tensorflow.keras.layers import Flatten\n# Instancie\n",
       hints: [
         { text: "Flatten() converte tensor (h, w, c) em vetor 1D — usado entre Conv2D e Dense.", cost: 25 },
@@ -283,7 +283,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Conv2D:\n    def __init__(self, n, kernel_size=None, activation=None): pass",
       expectedOutput: "Conv2D pronta.",
-      testCode: "assert 'Conv2D' in code and 'kernel_size' in code",
+      testCode: "assert 'Conv2D' in code and 'kernel_size' in code\nassert output.strip() == 'Conv2D pronta.'",
       starterCode: "from tensorflow.keras.layers import Conv2D\n# 32 filtros 3x3 com ReLU\n",
       hints: [
         { text: "Conv2D(filtros, kernel_size, activation). Filtros = quantos mapas de features extrair.", cost: 30 },
@@ -307,7 +307,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class MaxPooling2D:\n    def __init__(self, pool_size=None): pass",
       expectedOutput: "Pool ok.",
-      testCode: "assert 'MaxPooling2D' in code",
+      testCode: "assert 'MaxPooling2D' in code\nassert output.strip() == 'Pool ok.'",
       starterCode: "from tensorflow.keras.layers import MaxPooling2D\n# Pool 2x2\n",
       hints: [
         { text: "MaxPooling2D(pool_size=(2,2)) reduz a imagem pela metade pegando o MÁXIMO em cada janela 2x2.", cost: 30 },
@@ -331,7 +331,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class LSTM:\n    def __init__(self, n): pass",
       expectedOutput: "LSTM ativa.",
-      testCode: "assert 'LSTM' in code",
+      testCode: "assert 'LSTM' in code\nassert output.strip() == 'LSTM ativa.'",
       starterCode: "from tensorflow.keras.layers import LSTM\n# LSTM com 64 unidades\n",
       hints: [
         { text: "LSTM(unidades) cria uma camada recorrente. Útil para sequências (texto, séries temporais).", cost: 30 },
@@ -355,7 +355,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Embedding:\n    def __init__(self, input_dim, output_dim): pass",
       expectedOutput: "Embedding criado.",
-      testCode: "assert 'Embedding' in code and 'output_dim' in code",
+      testCode: "assert 'Embedding' in code and 'output_dim' in code\nassert output.strip() == 'Embedding criado.'",
       starterCode: "from tensorflow.keras.layers import Embedding\n# vocab 10000, dimensão 128\n",
       hints: [
         { text: "Embedding(vocab_size, dim) mapeia inteiros (índices de palavras) para vetores densos.", cost: 30 },
@@ -379,7 +379,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def predict(self, X): return [[0.8]]\nmodelo = Modelo()\nX = [[1, 2]]",
       expectedOutput: "0.8",
-      testCode: "assert 'predict' in code and 'pred' in code and '[0][0]' in code",
+      testCode: "assert 'predict' in code and 'pred' in code and '[0][0]' in code\n_esperado = [0.8]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "# pred = modelo.predict(X)\n# imprima o primeiro valor\n",
       hints: [
         { text: "predict retorna uma estrutura 2D neste simulador.", cost: 25 },
@@ -403,7 +403,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def evaluate(self, X, y): return [0.1, 0.95]\nmodelo = Modelo()\nX_test = [[1], [2]]\ny_test = [0, 1]",
       expectedOutput: "0.95",
-      testCode: "assert 'evaluate' in code and 'metricas' in code and '[1]' in code",
+      testCode: "assert 'evaluate' in code and 'metricas' in code and '[1]' in code\n_esperado = [0.95]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "# metricas = modelo.evaluate(X_test, y_test)\n# imprima a acuracia\n",
       hints: [
         { text: "evaluate costuma retornar [loss, metricas...].", cost: 25 },
@@ -427,7 +427,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Modelo:\n    def summary(self): print('Sumário gerado.')\nmodelo = Modelo()",
       expectedOutput: "Sumário gerado.",
-      testCode: "assert 'summary' in code",
+      testCode: "assert 'summary' in code\nassert output.strip() == 'Sumário gerado.'",
       starterCode: "# Imprima o summary\n",
       hints: [
         { text: "modelo.summary() imprime tabela com camadas, shapes e parâmetros.", cost: 15 },
@@ -451,7 +451,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class EarlyStopping:\n    def __init__(self, patience=5): pass",
       expectedOutput: "Callback configurado.",
-      testCode: "assert 'EarlyStopping' in code",
+      testCode: "assert 'EarlyStopping' in code\nassert output.strip() == 'Callback configurado.'",
       starterCode: "from tensorflow.keras.callbacks import EarlyStopping\n# patience=5\n",
       hints: [
         { text: "EarlyStopping monitora uma métrica de validação (val_loss por padrão).", cost: 30 },
@@ -475,7 +475,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class ModelCheckpoint:\n    def __init__(self, path, save_best_only=False): pass",
       expectedOutput: "Checkpoint armado.",
-      testCode: "assert 'ModelCheckpoint' in code",
+      testCode: "assert 'ModelCheckpoint' in code\nassert output.strip() == 'Checkpoint armado.'",
       starterCode: "from tensorflow.keras.callbacks import ModelCheckpoint\n# best.h5, save_best_only=True\n",
       hints: [
         { text: "ModelCheckpoint(caminho, save_best_only=True) salva durante o treino, mantendo só o melhor.", cost: 30 },
@@ -499,7 +499,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Adam:\n    def __init__(self, learning_rate=0.001): pass",
       expectedOutput: "LR configurado.",
-      testCode: "assert 'learning_rate' in code",
+      testCode: "assert 'learning_rate' in code\nassert output.strip() == 'LR configurado.'",
       starterCode: "from tensorflow.keras.optimizers import Adam\n# Adam com lr=0.001\n",
       hints: [
         { text: "Em vez de passar string 'adam' no compile, instancie Adam(learning_rate=X) para controlar o LR.", cost: 30 },
@@ -523,7 +523,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Modelo:\n    def save(self, path): print('Modelo salvo.')\nmodelo = Modelo()",
       expectedOutput: "Modelo salvo.",
-      testCode: "assert '.save' in code",
+      testCode: "assert '.save' in code\nassert output.strip() == 'Modelo salvo.'",
       starterCode: "# modelo.save('rede.h5')\n",
       hints: [
         { text: "modelo.save('arquivo.h5') salva arquitetura + pesos + otimizador em arquivo único.", cost: 20 },
@@ -547,7 +547,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def load_model(path): print('Modelo carregado.')",
       expectedOutput: "Modelo carregado.",
-      testCode: "assert 'load_model' in code",
+      testCode: "assert 'load_model' in code\nassert output.strip() == 'Modelo carregado.'",
       starterCode: "from tensorflow.keras.models import load_model\n# carregue 'rede.h5'\n",
       hints: [
         { text: "load_model(caminho) restaura modelo completo do arquivo salvo.", cost: 20 },
@@ -571,7 +571,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class torch_mock:\n    @staticmethod\n    def tensor(d): return f'tensor({d})'\ntorch = torch_mock()",
       expectedOutput: "tensor([1, 2, 3])",
-      testCode: "assert 'torch.tensor' in code",
+      testCode: "assert 'torch.tensor' in code\nassert output.strip() == 'tensor([1, 2, 3])'",
       starterCode: "import torch\n# t = torch.tensor([1,2,3])\n",
       hints: [
         { text: "Sem alias — escreva 'import torch'.", cost: 20 },
@@ -595,7 +595,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class nn_mock:\n    class Linear:\n        def __init__(self, in_features, out_features): pass\nnn = nn_mock()",
       expectedOutput: "Linear pronta.",
-      testCode: "assert 'nn.Linear' in code",
+      testCode: "assert 'nn.Linear' in code\nassert output.strip() == 'Linear pronta.'",
       starterCode: "import torch.nn as nn\n# Linear 10 -> 5\n",
       hints: [
         { text: "nn.Linear(in, out) é a equivalente PyTorch da Dense.", cost: 25 },
@@ -619,7 +619,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class nn_mock:\n    class Module: pass\nnn = nn_mock()",
       expectedOutput: "Módulo criado.",
-      testCode: "assert 'nn.Module' in code and 'class' in code",
+      testCode: "assert 'nn.Module' in code and 'class' in code\nassert output.strip() == 'Módulo criado.'",
       starterCode: "import torch.nn as nn\n# Defina a classe e imprima\n",
       hints: [
         { text: "Em PyTorch, modelos são classes que HERDAM de nn.Module.", cost: 30 },
@@ -643,7 +643,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class torch_mock:\n    @staticmethod\n    def tensor(d, requires_grad=False): return None\ntorch = torch_mock()",
       expectedOutput: "Gradiente ativado.",
-      testCode: "assert 'requires_grad' in code",
+      testCode: "assert 'requires_grad' in code\nassert output.strip() == 'Gradiente ativado.'",
       starterCode: "import torch\n# Crie tensor com requires_grad=True\n",
       hints: [
         { text: "Passe requires_grad=True ao criar o tensor — PyTorch passará a rastrear operações.", cost: 30 },
@@ -667,7 +667,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class optim_mock:\n    class Adam:\n        def __init__(self, params, lr=0.001): pass\noptim = optim_mock()\nparametros = []",
       expectedOutput: "Optim Adam criado.",
-      testCode: "assert 'optim.Adam' in code and 'lr' in code",
+      testCode: "assert 'optim.Adam' in code and 'lr' in code\nassert output.strip() == 'Optim Adam criado.'",
       starterCode: "import torch.optim as optim\n# Adam com lr=0.001\n",
       hints: [
         { text: "optim.Adam recebe parâmetros do modelo (model.parameters()) e learning rate.", cost: 30 },
@@ -691,7 +691,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Tensor:\n    def __init__(self): self.device = 'cpu'\n    def cuda(self):\n        self.device = 'cuda'\n        return self",
       expectedOutput: "cuda",
-      testCode: "assert 'Tensor' in code and '.cuda()' in code and '.device' in code",
+      testCode: "assert 'Tensor' in code and '.cuda()' in code and '.device' in code\nassert output.strip() == 'cuda'",
       starterCode: "# Crie Tensor, chame cuda e imprima device\n",
       hints: [
         { text: "cuda() move o tensor para GPU e aqui retorna o proprio tensor.", cost: 25 },
@@ -715,7 +715,7 @@ export const NUCLEO_SINTETICO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class ResNet50:\n    def __init__(self, weights): self.weights = weights",
       expectedOutput: "imagenet",
-      testCode: "assert 'ResNet50' in code and 'weights' in code and 'imagenet' in code and '.weights' in code",
+      testCode: "assert 'ResNet50' in code and 'weights' in code and 'imagenet' in code and '.weights' in code\nassert output.strip() == 'imagenet'",
       starterCode: "# Use ResNet50 com weights='imagenet'\n",
       hints: [
         { text: "Transfer learning comeca carregando pesos pre-treinados.", cost: 25 },

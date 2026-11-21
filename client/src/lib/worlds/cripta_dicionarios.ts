@@ -21,7 +21,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "",
       expectedOutput: "{'nome': 'Neo', 'nivel': 5}",
-      testCode: "assert type(usuario) is dict and usuario['nome'] == 'Neo' and usuario['nivel'] == 5",
+      testCode: "assert type(usuario) is dict and usuario['nome'] == 'Neo' and usuario['nivel'] == 5\nimport ast as _ast\nassert _ast.literal_eval(output.strip()) == {'nome': 'Neo', 'nivel': 5}",
       starterCode: "# Crie o dicionário 'usuario' e imprima-o\n",
       hints: [
         { text: "Dicionários usam chaves {}. A sintaxe é {'chave': 'valor'}.", cost: 10 },
@@ -90,7 +90,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "perfil = {'nome': 'Trinity'}",
       expectedOutput: "{'nome': 'Trinity', 'role': 'admin'}",
-      testCode: "assert 'role' in perfil and perfil['role'] == 'admin'",
+      testCode: "assert 'role' in perfil and perfil['role'] == 'admin'\nimport ast as _ast\nassert _ast.literal_eval(output.strip()) == {'nome': 'Trinity', 'role': 'admin'}",
       starterCode: "perfil = {'nome': 'Trinity'}\n# Adicione a nova chave e imprima o perfil\n",
       hints: [
         { text: "Você pode adicionar ou modificar chaves apenas fazendo: dicionario['nova_chave'] = valor.", cost: 10 },
@@ -270,7 +270,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "base = {'host': 'localhost', 'porta': 80}\nextra = {'porta': 8080, 'ssl': True}",
       expectedOutput: "{'host': 'localhost', 'porta': 8080, 'ssl': True}",
-      testCode: "assert 'update' in code and base.get('porta') == 8080 and base.get('ssl') == True",
+      testCode: "assert 'update' in code and base.get('porta') == 8080 and base.get('ssl') == True\nimport ast as _ast\nassert _ast.literal_eval(output.strip()) == {'host': 'localhost', 'porta': 8080, 'ssl': True}",
       starterCode: "base = {'host': 'localhost', 'porta': 80}\nextra = {'porta': 8080, 'ssl': True}\n# Mescle extra dentro de base e imprima base\n",
       hints: [
         { text: "base.update(extra) modifica 'base' adicionando/sobrescrevendo as chaves de 'extra'.", cost: 10 },
@@ -452,7 +452,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
       difficulty: "avancado",
       setupCode: "eventos = ['login', 'erro', 'login', 'login', 'erro', 'logout']",
       expectedOutput: "{'login': 3, 'erro': 2, 'logout': 1}",
-      testCode: "assert 'contagem' in locals() and contagem.get('login') == 3 and contagem.get('erro') == 2 and contagem.get('logout') == 1",
+      testCode: "assert 'contagem' in locals() and contagem.get('login') == 3 and contagem.get('erro') == 2 and contagem.get('logout') == 1\nimport ast as _ast\nassert _ast.literal_eval(output.strip()) == {'login': 3, 'erro': 2, 'logout': 1}",
       starterCode: "eventos = ['login', 'erro', 'login', 'login', 'erro', 'logout']\ncontagem = {}\n# Itere e use .get(evento, 0) + 1\n",
       hints: [
         { text: "Para cada evento na lista: contagem[evento] = contagem.get(evento, 0) + 1", cost: 10 },

@@ -601,7 +601,7 @@ export const NINHO_LISTAS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "header = ['SOF', 'LEN']\npayload = ['D1', 'D2', 'D3']",
       expectedOutput: "['SOF', 'LEN', 'D1', 'D2', 'D3']",
-      testCode: "assert ' + ' in code and pacote == ['SOF', 'LEN', 'D1', 'D2', 'D3'] and header == ['SOF', 'LEN']",
+      testCode: "assert ' + ' in code and pacote == ['SOF', 'LEN', 'D1', 'D2', 'D3'] and header == ['SOF', 'LEN']\nassert output.strip() == \"['SOF', 'LEN', 'D1', 'D2', 'D3']\"",
       starterCode: "header = ['SOF', 'LEN']\npayload = ['D1', 'D2', 'D3']\n# pacote = header + payload\n",
       hints: [
         { text: "O operador '+' em listas cria uma NOVA lista concatenada (não modifica originais).", cost: 10 },

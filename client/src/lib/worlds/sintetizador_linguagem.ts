@@ -19,7 +19,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "frase = 'O sistema foi invadido'",
       expectedOutput: "['O', 'sistema', 'foi', 'invadido']",
-      testCode: "assert '.split' in code",
+      testCode: "assert '.split' in code\nassert output.strip() == \"['O', 'sistema', 'foi', 'invadido']\"",
       starterCode: "frase = 'O sistema foi invadido'\n# Tokenize com .split() e imprima\n",
       hints: [
         { text: "str.split() (sem argumento) divide a string por espaços em branco. Retorna lista.", cost: 10 },
@@ -43,7 +43,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class nltk_mock:\n    @staticmethod\n    def word_tokenize(s): return ['Olá', ',', 'mundo', '!']\nnltk = nltk_mock()",
       expectedOutput: "['Olá', ',', 'mundo', '!']",
-      testCode: "assert 'word_tokenize' in code",
+      testCode: "assert 'word_tokenize' in code\nassert output.strip() == \"['Olá', ',', 'mundo', '!']\"",
       starterCode: "import nltk\n# nltk.word_tokenize\n",
       hints: [
         { text: "nltk.word_tokenize separa palavras E pontuação em tokens distintos.", cost: 15 },
@@ -67,7 +67,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "tokens = ['o', 'sistema', 'foi', 'invadido']\nstopwords = {'o', 'foi', 'a', 'de'}",
       expectedOutput: "['sistema', 'invadido']",
-      testCode: "assert 'stopwords' in code",
+      testCode: "assert 'stopwords' in code\nassert output.strip() == \"['sistema', 'invadido']\"",
       starterCode: "tokens = ['o', 'sistema', 'foi', 'invadido']\nstopwords = {'o', 'foi', 'a', 'de'}\n# Filtre tokens não-stopword\n",
       hints: [
         { text: "Use list comprehension: [t for t in tokens if t not in stopwords].", cost: 20 },
@@ -91,7 +91,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "texto = 'SISTEMA INVADIDO'",
       expectedOutput: "sistema invadido",
-      testCode: "assert '.lower' in code",
+      testCode: "assert '.lower' in code\nassert output.strip() == 'sistema invadido'",
       starterCode: "texto = 'SISTEMA INVADIDO'\n# Imprima em minúsculas\n",
       hints: [
         { text: "str.lower() retorna uma cópia em minúsculas. Não modifica o original (strings são imutáveis).", cost: 10 },
@@ -115,7 +115,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Stemmer:\n    def stem(self, w): return 'corr'\nstemmer = Stemmer()",
       expectedOutput: "corr",
-      testCode: "assert 'stem' in code",
+      testCode: "assert 'stem' in code\nassert output.strip() == 'corr'",
       starterCode: "# Imprima stemmer.stem('correndo')\n",
       hints: [
         { text: "stemmer.stem(palavra) corta sufixos mecanicamente.", cost: 20 },
@@ -139,7 +139,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Lemma:\n    def lemmatize(self, w, pos): return 'run'\nlemmatizer = Lemma()",
       expectedOutput: "run",
-      testCode: "assert 'lemmatize' in code",
+      testCode: "assert 'lemmatize' in code\nassert output.strip() == 'run'",
       starterCode: "# Imprima lemmatizer.lemmatize('running', 'v')\n",
       hints: [
         { text: "lemmatize(palavra, pos) — pos é POS tag: 'v' verbo, 'n' substantivo, 'a' adjetivo.", cost: 20 },
@@ -163,7 +163,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "tokens = ['o', 'sistema', 'foi', 'invadido']",
       expectedOutput: "[('o', 'sistema'), ('sistema', 'foi'), ('foi', 'invadido')]",
-      testCode: "assert 'zip' in code or 'bigrams' in code or 'ngrams' in code",
+      testCode: "assert 'zip' in code or 'bigrams' in code or 'ngrams' in code\nassert output.strip() == \"[('o', 'sistema'), ('sistema', 'foi'), ('foi', 'invadido')]\"",
       starterCode: "tokens = ['o', 'sistema', 'foi', 'invadido']\n# Gere bigrams com zip(tokens, tokens[1:])\n",
       hints: [
         { text: "Bigrams = pares consecutivos. zip(tokens, tokens[1:]) gera os pares automaticamente.", cost: 25 },
@@ -187,7 +187,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class CountVectorizer:\n    def fit_transform(self, c): print('BoW gerado.'); return None\ncorpus = ['o sistema falhou', 'sistema seguro']",
       expectedOutput: "BoW gerado.",
-      testCode: "assert 'CountVectorizer' in code",
+      testCode: "assert 'CountVectorizer' in code\nassert output.strip() == 'BoW gerado.'",
       starterCode: "from sklearn.feature_extraction.text import CountVectorizer\n# fit_transform no corpus\n",
       hints: [
         { text: "CountVectorizer cria vocabulário automaticamente do corpus e gera matriz de contagens.", cost: 25 },
@@ -211,7 +211,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class TfidfVectorizer:\n    def fit_transform(self, c): print('TF-IDF gerado.'); return None\ncorpus = ['sistema falhou', 'sistema seguro']",
       expectedOutput: "TF-IDF gerado.",
-      testCode: "assert 'TfidfVectorizer' in code",
+      testCode: "assert 'TfidfVectorizer' in code\nassert output.strip() == 'TF-IDF gerado.'",
       starterCode: "from sklearn.feature_extraction.text import TfidfVectorizer\n# fit_transform no corpus\n",
       hints: [
         { text: "TfidfVectorizer combina TF (Term Frequency) com IDF (Inverse Document Frequency).", cost: 30 },
@@ -235,7 +235,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def cosine_similarity(a, b): print('Similaridade calculada.'); return [[0.85]]\nv1 = [[1, 0, 1]]\nv2 = [[1, 1, 0]]",
       expectedOutput: "Similaridade calculada.",
-      testCode: "assert 'cosine_similarity' in code",
+      testCode: "assert 'cosine_similarity' in code\nassert output.strip() == 'Similaridade calculada.'",
       starterCode: "from sklearn.metrics.pairwise import cosine_similarity\nv1 = [[1, 0, 1]]\nv2 = [[1, 1, 0]]\n# Calcule similaridade\n",
       hints: [
         { text: "cosine_similarity(v1, v2) calcula o cosseno do ângulo entre vetores — varia de -1 a 1.", cost: 25 },
@@ -259,7 +259,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import re",
       expectedOutput: "['192', '168', '1', '5']",
-      testCode: "assert 're.findall' in code",
+      testCode: "assert 're.findall' in code\nassert output.strip() == \"['192', '168', '1', '5']\"",
       starterCode: "import re\n# Encontre todos os números\n",
       hints: [
         { text: "re.findall(padrão, texto) retorna LISTA de todas as ocorrências.", cost: 20 },
@@ -283,7 +283,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import re",
       expectedOutput: "Olá",
-      testCode: "assert 're.sub' in code",
+      testCode: "assert 're.sub' in code\nassert output.strip() == 'Olá'",
       starterCode: "import re\n# Remova as tags HTML\n",
       hints: [
         { text: "re.sub(padrão, substituto, texto) substitui ocorrências.", cost: 20 },
@@ -355,7 +355,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def nlp(s): print('Doc processado.'); return None",
       expectedOutput: "Doc processado.",
-      testCode: "assert 'nlp(' in code",
+      testCode: "assert 'nlp(' in code\nassert output.strip() == 'Doc processado.'",
       starterCode: "import spacy\nnlp = spacy.load('pt_core_news_sm')\n# Processe o texto e confirme\n",
       hints: [
         { text: "Carregue o modelo: nlp = spacy.load('pt_core_news_sm'). Depois: doc = nlp(texto).", cost: 25 },
@@ -379,7 +379,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Ent:\n    text = 'São Paulo'\nclass Doc:\n    ents = [Ent()]\ndoc = Doc()",
       expectedOutput: "São Paulo",
-      testCode: "assert 'doc.ents' in code or '.ents' in code",
+      testCode: "assert 'doc.ents' in code or '.ents' in code\nassert output.strip() == 'São Paulo'",
       starterCode: "# for ent in doc.ents: print(ent.text)\n",
       hints: [
         { text: "doc.ents retorna iterador de entidades. Cada entidade tem .text e .label_.", cost: 25 },
@@ -427,7 +427,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class WV:\n    def __getitem__(self, k): print('Vetor obtido.'); return [0.1, 0.2]\nclass Model:\n    wv = WV()\nmodel = Model()",
       expectedOutput: "Vetor obtido.",
-      testCode: "assert 'model.wv' in code",
+      testCode: "assert 'model.wv' in code\nassert output.strip() == 'Vetor obtido.'",
       starterCode: "# Acesse model.wv['rei']\n",
       hints: [
         { text: "model.wv é o KeyedVectors. Indexar por palavra retorna o vetor.", cost: 25 },
@@ -451,7 +451,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class WV:\n    def most_similar(self, w, topn=10): print('Similares calculadas.'); return []\nclass Model:\n    wv = WV()\nmodel = Model()",
       expectedOutput: "Similares calculadas.",
-      testCode: "assert 'most_similar' in code",
+      testCode: "assert 'most_similar' in code\nassert output.strip() == 'Similares calculadas.'",
       starterCode: "# model.wv.most_similar('rei', topn=3)\n",
       hints: [
         { text: "most_similar retorna lista de (palavra, similaridade), ordenada decrescentemente.", cost: 25 },
@@ -475,7 +475,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "def sentiment(t): return 'positivo'",
       expectedOutput: "positivo",
-      testCode: "assert 'sentiment' in code",
+      testCode: "assert 'sentiment' in code\nassert output.strip() == 'positivo'",
       starterCode: "# Imprima o resultado de sentiment('Adorei o produto!')\n",
       hints: [
         { text: "Apenas chame a função e imprima.", cost: 20 },
@@ -499,7 +499,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def pipeline(task): print('Pipeline criado.'); return None",
       expectedOutput: "Pipeline criado.",
-      testCode: "assert 'pipeline' in code",
+      testCode: "assert 'pipeline' in code\nassert output.strip() == 'Pipeline criado.'",
       starterCode: "from transformers import pipeline\n# Crie pipeline('sentiment-analysis')\n",
       hints: [
         { text: "pipeline(task) baixa o modelo padrão para a tarefa automaticamente.", cost: 30 },
@@ -523,7 +523,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def tokenizer(t, return_tensors=None): print('BERT tokenizado.'); return None",
       expectedOutput: "BERT tokenizado.",
-      testCode: "assert 'return_tensors' in code",
+      testCode: "assert 'return_tensors' in code\nassert output.strip() == 'BERT tokenizado.'",
       starterCode: "# Tokenize 'Olá mundo' com return_tensors='pt'\n",
       hints: [
         { text: "tokenizer(texto, return_tensors='pt') retorna tensores PyTorch prontos para o modelo.", cost: 30 },
@@ -547,7 +547,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def pipeline(task, model=None): print('Tradutor pronto.'); return None",
       expectedOutput: "Tradutor pronto.",
-      testCode: "assert 'translation' in code",
+      testCode: "assert 'translation' in code\nassert output.strip() == 'Tradutor pronto.'",
       starterCode: "from transformers import pipeline\n# pipeline de tradução en->pt\n",
       hints: [
         { text: "Para tradução, sempre especifique model — modelos cobrem pares específicos (en→pt, pt→en, etc.).", cost: 30 },
@@ -571,7 +571,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def pipeline(task): print('QA pronto.'); return None",
       expectedOutput: "QA pronto.",
-      testCode: "assert 'question-answering' in code",
+      testCode: "assert 'question-answering' in code\nassert output.strip() == 'QA pronto.'",
       starterCode: "from transformers import pipeline\n# pipeline de QA\n",
       hints: [
         { text: "pipeline('question-answering') usa modelo treinado em SQuAD por padrão.", cost: 30 },
@@ -595,7 +595,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def pipeline(task): print('Resumidor pronto.'); return None",
       expectedOutput: "Resumidor pronto.",
-      testCode: "assert 'summarization' in code",
+      testCode: "assert 'summarization' in code\nassert output.strip() == 'Resumidor pronto.'",
       starterCode: "from transformers import pipeline\n# pipeline de summarization\n",
       hints: [
         { text: "pipeline('summarization') usa BART ou T5 por padrão.", cost: 30 },
@@ -619,7 +619,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def pipeline(task): print('Zero-shot pronto.'); return None",
       expectedOutput: "Zero-shot pronto.",
-      testCode: "assert 'zero-shot' in code",
+      testCode: "assert 'zero-shot' in code\nassert output.strip() == 'Zero-shot pronto.'",
       starterCode: "from transformers import pipeline\n# pipeline de zero-shot\n",
       hints: [
         { text: "Zero-shot = sem dados de treino para suas labels específicas — usa entailment.", cost: 30 },
@@ -643,7 +643,7 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Model:\n    def encode(self, l): print('Embeddings gerados.'); return None\nmodel = Model()",
       expectedOutput: "Embeddings gerados.",
-      testCode: "assert 'encode' in code",
+      testCode: "assert 'encode' in code\nassert output.strip() == 'Embeddings gerados.'",
       starterCode: "from sentence_transformers import SentenceTransformer\nmodel = SentenceTransformer('all-MiniLM-L6-v2')\n# Encode as frases\n",
       hints: [
         { text: "SentenceTransformer transforma sentenças/parágrafos inteiros em vetor único.", cost: 30 },

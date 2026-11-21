@@ -19,7 +19,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import statistics\ndados = [2, 4, 4, 4, 5, 5, 7, 9]",
       expectedOutput: "5\n4.5",
-      testCode: "assert 'statistics.mean' in code and 'statistics.median' in code",
+      testCode: "assert 'statistics.mean' in code and 'statistics.median' in code\n_esperado = [5.0, 4.5]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import statistics\ndados = [2, 4, 4, 4, 5, 5, 7, 9]\n# Imprima média e mediana, uma por linha\n",
       hints: [
         { text: "statistics.mean(dados) calcula a média; statistics.median(dados) calcula a mediana.", cost: 10 },
@@ -43,7 +43,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import statistics\ndados = [2, 4, 4, 4, 5, 5, 7, 9]",
       expectedOutput: "4.571428571428571\n2.138089935299395",
-      testCode: "assert 'statistics.variance' in code and 'statistics.stdev' in code",
+      testCode: "assert 'statistics.variance' in code and 'statistics.stdev' in code\n_esperado = [4.571428571428571, 2.138089935299395]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import statistics\ndados = [2, 4, 4, 4, 5, 5, 7, 9]\n# Imprima variância e desvio padrão\n",
       hints: [
         { text: "statistics.variance(dados) calcula a variância amostral; stdev é a raiz da variância.", cost: 10 },
@@ -67,7 +67,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class norm_mock:\n    @staticmethod\n    def pdf(x, loc=0, scale=1): return 0.3989422804014327\nclass stats_mock:\n    norm = norm_mock()\nstats = stats_mock()",
       expectedOutput: "0.3989422804014327",
-      testCode: "assert 'norm.pdf' in code",
+      testCode: "assert 'norm.pdf' in code\n_esperado = [0.3989422804014327]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\n# Imprima a densidade no ponto 0\n",
       hints: [
         { text: "stats.norm é a distribuição normal. PDF (densidade) é avaliada em um ponto.", cost: 20 },
@@ -91,7 +91,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "valor = 85\nmedia = 70\ndesvio = 10",
       expectedOutput: "1.5",
-      testCode: "assert '/ desvio' in code or '/desvio' in code",
+      testCode: "assert '/ desvio' in code or '/desvio' in code\n_esperado = [1.5]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "valor = 85\nmedia = 70\ndesvio = 10\n# Calcule e imprima o z-score\n",
       hints: [
         { text: "Z-score = (valor - média) / desvio padrão. Mede quantos desvios padrão o valor está da média.", cost: 15 },
@@ -115,7 +115,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class norm_mock:\n    @staticmethod\n    def cdf(x): return 0.9750021048517795\nclass stats_mock:\n    norm = norm_mock()\nstats = stats_mock()",
       expectedOutput: "0.9750021048517795",
-      testCode: "assert 'norm.cdf' in code",
+      testCode: "assert 'norm.cdf' in code\n_esperado = [0.9750021048517795]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\n# stats.norm.cdf(1.96)\n",
       hints: [
         { text: "CDF (Cumulative Distribution Function) retorna P(X ≤ valor) — probabilidade acumulada até esse ponto.", cost: 20 },
@@ -139,7 +139,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class binom_mock:\n    @staticmethod\n    def pmf(k, n, p): return 0.1171875\nclass stats_mock:\n    binom = binom_mock()\nstats = stats_mock()",
       expectedOutput: "0.1171875",
-      testCode: "assert 'binom.pmf' in code",
+      testCode: "assert 'binom.pmf' in code\n_esperado = [0.1171875]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\n# stats.binom.pmf(k=3, n=10, p=0.5)\n",
       hints: [
         { text: "Binomial conta sucessos em N tentativas independentes com mesma probabilidade p.", cost: 20 },
@@ -163,7 +163,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class poisson_mock:\n    @staticmethod\n    def pmf(k, mu): return 0.10081881344492448\nclass stats_mock:\n    poisson = poisson_mock()\nstats = stats_mock()",
       expectedOutput: "0.10081881344492448",
-      testCode: "assert 'poisson.pmf' in code",
+      testCode: "assert 'poisson.pmf' in code\n_esperado = [0.10081881344492448]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\n# stats.poisson.pmf(k=5, mu=3)\n",
       hints: [
         { text: "Poisson modela contagem de eventos quando você só sabe a taxa média (mu) — não precisa de N tentativas fixo.", cost: 20 },
@@ -187,7 +187,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import numpy as np\ndados = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
       expectedOutput: "7.75",
-      testCode: "assert 'np.percentile' in code or 'np.quantile' in code",
+      testCode: "assert 'np.percentile' in code or 'np.quantile' in code\n_esperado = [7.75]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import numpy as np\ndados = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\n# Imprima o percentil 75\n",
       hints: [
         { text: "np.percentile(dados, 75) retorna o valor abaixo do qual ficam 75% dos dados.", cost: 20 },
@@ -211,7 +211,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class stats_mock:\n    @staticmethod\n    def pearsonr(x, y): return (1.0, 0.0)\nstats = stats_mock()\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]",
       expectedOutput: "1.0",
-      testCode: "assert 'pearsonr' in code",
+      testCode: "assert 'pearsonr' in code\n_esperado = [1.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\n# Imprima o coeficiente de correlação (primeiro retorno)\n",
       hints: [
         { text: "stats.pearsonr retorna TUPLA (coeficiente, p_value). Use [0] ou desempacote.", cost: 20 },
@@ -235,7 +235,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def spearmanr(x, y): return (1.0, 0.0)\nstats = stats_mock()\nx = [1, 2, 3, 4, 5]\ny = [1, 8, 27, 64, 125]",
       expectedOutput: "1.0",
-      testCode: "assert 'spearmanr' in code",
+      testCode: "assert 'spearmanr' in code\n_esperado = [1.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\nx = [1, 2, 3, 4, 5]\ny = [1, 8, 27, 64, 125]\n# Imprima o coeficiente de Spearman\n",
       hints: [
         { text: "spearmanr trabalha com RANKS (posições ordenadas) em vez de valores brutos.", cost: 25 },
@@ -259,7 +259,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "p_value = 0.03\nalpha = 0.05",
       expectedOutput: "Rejeitar H0",
-      testCode: "assert 'p_value' in code and 'alpha' in code and 'if' in code",
+      testCode: "assert 'p_value' in code and 'alpha' in code and 'if' in code\nassert output.strip() == 'Rejeitar H0'",
       starterCode: "p_value = 0.03\nalpha = 0.05\n# Decida: rejeitar ou não rejeitar H0\n",
       hints: [
         { text: "H0 (hipótese nula) é o status quo. Rejeitamos quando temos EVIDÊNCIA FORTE contra ela: p < alpha.", cost: 20 },
@@ -283,7 +283,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def ttest_1samp(d, popmean): return (2.5, 0.03)\nstats = stats_mock()\ndados = [48, 50, 52, 53, 49, 51, 54, 50, 49, 52]",
       expectedOutput: "0.03",
-      testCode: "assert 'ttest_1samp' in code",
+      testCode: "assert 'ttest_1samp' in code\n_esperado = [0.03]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\ndados = [48, 50, 52, 53, 49, 51, 54, 50, 49, 52]\n# Imprima o p-value de teste contra média=50\n",
       hints: [
         { text: "ttest_1samp testa se a média da amostra é DIFERENTE de um valor fixo (popmean).", cost: 25 },
@@ -307,7 +307,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def ttest_ind(a, b): return (3.2, 0.005)\nstats = stats_mock()\ngrupo_a = [70, 72, 75, 68, 71]\ngrupo_b = [80, 82, 85, 78, 81]",
       expectedOutput: "0.005",
-      testCode: "assert 'ttest_ind' in code",
+      testCode: "assert 'ttest_ind' in code\n_esperado = [0.005]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\ngrupo_a = [70, 72, 75, 68, 71]\ngrupo_b = [80, 82, 85, 78, 81]\n# Imprima o p-value\n",
       hints: [
         { text: "ttest_ind testa se as MÉDIAS de DOIS grupos independentes diferem significativamente.", cost: 25 },
@@ -331,7 +331,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def ttest_rel(a, b): return (4.5, 0.001)\nstats = stats_mock()\nantes = [70, 72, 75, 68, 71]\ndepois = [75, 76, 80, 73, 75]",
       expectedOutput: "0.001",
-      testCode: "assert 'ttest_rel' in code",
+      testCode: "assert 'ttest_rel' in code\n_esperado = [0.001]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\nantes = [70, 72, 75, 68, 71]\ndepois = [75, 76, 80, 73, 75]\n# Imprima o p-value\n",
       hints: [
         { text: "ttest_rel é para MEDIDAS REPETIDAS — mesmo indivíduo medido em duas condições.", cost: 25 },
@@ -355,7 +355,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def f_oneway(*args): return (5.0, 0.01)\nstats = stats_mock()\ng1 = [80, 85, 78]\ng2 = [70, 72, 68]\ng3 = [90, 92, 88]",
       expectedOutput: "0.01",
-      testCode: "assert 'f_oneway' in code",
+      testCode: "assert 'f_oneway' in code\n_esperado = [0.01]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\ng1 = [80, 85, 78]\ng2 = [70, 72, 68]\ng3 = [90, 92, 88]\n# Imprima o p-value\n",
       hints: [
         { text: "f_oneway (ANOVA de uma via) testa se pelo menos UM grupo difere dos outros.", cost: 25 },
@@ -379,7 +379,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def chi2_contingency(t): return (10.0, 0.001, 1, [[0]])\nstats = stats_mock()\ntabela = [[30, 10], [20, 40]]",
       expectedOutput: "0.001",
-      testCode: "assert 'chi2_contingency' in code",
+      testCode: "assert 'chi2_contingency' in code\n_esperado = [0.001]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\ntabela = [[30, 10], [20, 40]]\n# Imprima o p-value\n",
       hints: [
         { text: "chi2_contingency recebe matriz de frequências e testa INDEPENDÊNCIA entre as duas variáveis.", cost: 25 },
@@ -403,7 +403,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class stats_mock:\n    @staticmethod\n    def shapiro(d): return (0.95, 0.6)\nstats = stats_mock()\ndados = [10, 12, 11, 13, 14, 11, 12, 13]",
       expectedOutput: "0.6",
-      testCode: "assert 'shapiro' in code",
+      testCode: "assert 'shapiro' in code\n_esperado = [0.6]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\ndados = [10, 12, 11, 13, 14, 11, 12, 13]\n# Imprima o p-value de Shapiro-Wilk\n",
       hints: [
         { text: "shapiro testa H0: dados são normais. p > 0.05 → não rejeita normalidade.", cost: 20 },
@@ -427,7 +427,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class stats_mock:\n    @staticmethod\n    def mannwhitneyu(a, b): return (5.0, 0.02)\nstats = stats_mock()\na = [1, 3, 5, 7]\nb = [2, 4, 6, 8]",
       expectedOutput: "0.02",
-      testCode: "assert 'mannwhitneyu' in code",
+      testCode: "assert 'mannwhitneyu' in code\n_esperado = [0.02]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\na = [1, 3, 5, 7]\nb = [2, 4, 6, 8]\n# Imprima o p-value\n",
       hints: [
         { text: "mannwhitneyu é o equivalente não-paramétrico do ttest_ind — usa ranks em vez de valores.", cost: 25 },
@@ -451,7 +451,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "media = 50\nsem = 2",
       expectedOutput: "46.08\n53.92",
-      testCode: "assert '1.96' in code",
+      testCode: "assert '1.96' in code\n_esperado = [46.08, 53.92]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "media = 50\nsem = 2  # erro padrão da média\n# Imprima limite inferior e superior do IC 95%\n",
       hints: [
         { text: "IC 95% = média ± Z * SEM, onde Z=1.96 para 95% (na normal).", cost: 20 },
@@ -475,7 +475,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import math\ndesvio = 10\nn = 25",
       expectedOutput: "2.0",
-      testCode: "assert 'sqrt' in code",
+      testCode: "assert 'sqrt' in code\n_esperado = [2.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import math\ndesvio = 10\nn = 25\n# Calcule e imprima SEM\n",
       hints: [
         { text: "SEM (Standard Error of the Mean) = σ / √n. Quanto maior N, menor o SEM.", cost: 20 },
@@ -547,7 +547,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "p_value = 0.02",
       expectedOutput: "Variante B significativamente melhor.",
-      testCode: "assert 'p_value' in code and 'if' in code",
+      testCode: "assert 'p_value' in code and 'if' in code\nassert output.strip() == 'Variante B significativamente melhor.'",
       starterCode: "p_value = 0.02\n# Decida com base em p < 0.05\n",
       hints: [
         { text: "Estrutura: if p_value < 0.05 → vencedor; else → inconclusivo.", cost: 20 },
@@ -595,7 +595,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "alpha = 0.05\nn_testes = 5",
       expectedOutput: "0.01",
-      testCode: "assert 'alpha' in code and 'n_testes' in code",
+      testCode: "assert 'alpha' in code and 'n_testes' in code\n_esperado = [0.01]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "alpha = 0.05\nn_testes = 5\n# Imprima alpha ajustado\n",
       hints: [
         { text: "Bonferroni: alpha_novo = alpha / n_testes.", cost: 20 },
@@ -619,7 +619,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class OLS:\n    def __init__(self, y, X): pass\n    def fit(self): print('Regressão ajustada.'); return self\nclass sm_mock:\n    OLS = OLS\nsm = sm_mock()\nX = [[1, 1], [1, 2]]\ny = [1, 2]",
       expectedOutput: "Regressão ajustada.",
-      testCode: "assert 'OLS' in code and 'fit' in code",
+      testCode: "assert 'OLS' in code and 'fit' in code\nassert output.strip() == 'Regressão ajustada.'",
       starterCode: "import statsmodels.api as sm\nX = [[1, 1], [1, 2]]\ny = [1, 2]\n# Ajuste OLS e confirme\n",
       hints: [
         { text: "sm.OLS(y, X) cria o modelo; .fit() retorna os resultados.", cost: 30 },
@@ -643,7 +643,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "r2 = 0.85\nn = 100\nk = 5",
       expectedOutput: "0.8420212765957447",
-      testCode: "assert 'r2' in code and 'n' in code and 'k' in code",
+      testCode: "assert 'r2' in code and 'n' in code and 'k' in code\n_esperado = [0.8420212765957447]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "r2 = 0.85\nn = 100\nk = 5\n# Calcule R² ajustado\n",
       hints: [
         { text: "Fórmula: 1 - (1 - r²) * (n - 1) / (n - k - 1).", cost: 25 },
@@ -691,7 +691,7 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class t_mock:\n    @staticmethod\n    def cdf(x, df): return 0.9633289987124468\nclass stats_mock:\n    t = t_mock()\nstats = stats_mock()",
       expectedOutput: "0.9633289987124468",
-      testCode: "assert 'stats.t.cdf' in code",
+      testCode: "assert 'stats.t.cdf' in code\n_esperado = [0.9633289987124468]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from scipy import stats\n# stats.t.cdf(2.0, df=10)\n",
       hints: [
         { text: "Distribuição t-Student tem parâmetro 'df' (graus de liberdade). df=n-1 em teste t de uma amostra.", cost: 25 },

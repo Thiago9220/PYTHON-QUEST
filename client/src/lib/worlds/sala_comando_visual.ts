@@ -19,7 +19,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print(f'Gráfico: {d}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Gráfico: [1, 2, 3]\nExibido.",
-      testCode: "assert 'plt.plot' in code and 'plt.show' in code",
+      testCode: "assert 'plt.plot' in code and 'plt.show' in code\nassert output.strip() == 'Gráfico: [1, 2, 3]\\nExibido.'",
       starterCode: "import matplotlib.pyplot as plt\n# Plote [1,2,3] e exiba\n",
       hints: [
         { text: "O alias 'plt' é convenção universal para matplotlib.pyplot.", cost: 10 },
@@ -43,7 +43,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def title(t): print(f'T: {t}')\n    @staticmethod\n    def xlabel(x): print(f'X: {x}')\n    @staticmethod\n    def ylabel(y): print(f'Y: {y}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "T: Ataques por Hora\nX: Hora\nY: Quantidade\nExibido.",
-      testCode: "assert 'plt.title' in code and 'plt.xlabel' in code and 'plt.ylabel' in code",
+      testCode: "assert 'plt.title' in code and 'plt.xlabel' in code and 'plt.ylabel' in code\nassert output.strip() == 'T: Ataques por Hora\\nX: Hora\\nY: Quantidade\\nExibido.'",
       starterCode: "# Título, rótulos X e Y, depois show()\n",
       hints: [
         { text: "Cada função recebe uma string. plt.title (título), plt.xlabel (eixo X), plt.ylabel (eixo Y).", cost: 10 },
@@ -67,7 +67,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def bar(c, v): print(f'Bar: {c} -> {v}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Bar: ['Core', 'Edge', 'DMZ'] -> [12, 7, 4]\nExibido.",
-      testCode: "assert 'plt.bar' in code",
+      testCode: "assert 'plt.bar' in code\nassert output.strip() == \"Bar: ['Core', 'Edge', 'DMZ'] -> [12, 7, 4]\\nExibido.\"",
       starterCode: "categorias = ['Core', 'Edge', 'DMZ']\nvalores = [12, 7, 4]\n# plt.bar e plt.show\n",
       hints: [
         { text: "plt.bar(eixo_x, alturas). x pode ser strings ou números — matplotlib lida com ambos.", cost: 20 },
@@ -80,7 +80,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       successNpc: "Estrategista de Dados",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Distribuição clara.",
-      solution: "plt.bar(categorias, valores)\nplt.show()",
+      solution: "categorias = ['Core', 'Edge', 'DMZ']\nvalores = [12, 7, 4]\nplt.bar(categorias, valores)\nplt.show()",
     },
     {
       id: "ds-viz-04",
@@ -91,7 +91,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def scatter(x, y): print(f'Scatter: {x} x {y}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Scatter: [1, 2, 3, 4] x [10, 15, 13, 20]\nExibido.",
-      testCode: "assert 'plt.scatter' in code",
+      testCode: "assert 'plt.scatter' in code\nassert output.strip() == 'Scatter: [1, 2, 3, 4] x [10, 15, 13, 20]\\nExibido.'",
       starterCode: "x = [1, 2, 3, 4]\ny = [10, 15, 13, 20]\n# Plote pontos\n",
       hints: [
         { text: "plt.scatter(x, y) desenha um ponto por par (x[i], y[i]). Diferente de plot, NÃO conecta com linhas.", cost: 20 },
@@ -104,7 +104,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       successNpc: "Estrategista de Dados",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Outliers identificados.",
-      solution: "plt.scatter(x, y)\nplt.show()",
+      solution: "x = [1, 2, 3, 4]\ny = [10, 15, 13, 20]\nplt.scatter(x, y)\nplt.show()",
     },
     {
       id: "ds-viz-05",
@@ -115,7 +115,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def hist(d): print(f'Hist: {d}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Hist: [1, 2, 2, 3, 3, 3, 4, 4, 5]\nExibido.",
-      testCode: "assert 'plt.hist' in code",
+      testCode: "assert 'plt.hist' in code\nassert output.strip() == 'Hist: [1, 2, 2, 3, 3, 3, 4, 4, 5]\\nExibido.'",
       starterCode: "dados = [1, 2, 2, 3, 3, 3, 4, 4, 5]\n# Use plt.hist\n",
       hints: [
         { text: "plt.hist(dados) agrupa valores em 'bins' (faixas) e plota a contagem por faixa.", cost: 20 },
@@ -139,7 +139,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def pie(v): print(f'Pie: {v}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Pie: [30, 20, 50]\nExibido.",
-      testCode: "assert 'plt.pie' in code",
+      testCode: "assert 'plt.pie' in code\nassert output.strip() == 'Pie: [30, 20, 50]\\nExibido.'",
       starterCode: "valores = [30, 20, 50]\n# Use plt.pie\n",
       hints: [
         { text: "plt.pie(valores) desenha fatias proporcionais. As fatias somam o círculo todo.", cost: 20 },
@@ -163,7 +163,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class plt_mock:\n    @staticmethod\n    def boxplot(d): print(f'Box: {d}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Box: [1, 2, 3, 4, 5, 100]\nExibido.",
-      testCode: "assert 'plt.boxplot' in code",
+      testCode: "assert 'plt.boxplot' in code\nassert output.strip() == 'Box: [1, 2, 3, 4, 5, 100]\\nExibido.'",
       starterCode: "dados = [1, 2, 3, 4, 5, 100]\n# Use plt.boxplot\n",
       hints: [
         { text: "plt.boxplot(dados) desenha a 'caixa' representando quartis 25%-75%, mediana como linha central.", cost: 25 },
@@ -187,7 +187,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print(f'Plot: {d}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot: [1, 3, 2, 4]\nPlot: [2, 1, 3, 5]\nExibido.",
-      testCode: "assert code.count('plt.plot') >= 2",
+      testCode: "assert code.count('plt.plot') >= 2\nassert output.strip() == 'Plot: [1, 3, 2, 4]\\nPlot: [2, 1, 3, 5]\\nExibido.'",
       starterCode: "serie1 = [1, 3, 2, 4]\nserie2 = [2, 1, 3, 5]\n# Duas chamadas de plot, depois show\n",
       hints: [
         { text: "Cada chamada de plt.plot() adiciona uma série à mesma figura — não chame show entre elas.", cost: 20 },
@@ -211,7 +211,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d, color=None): print(f'Plot {d} cor={color}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot [1, 2, 3] cor=red\nExibido.",
-      testCode: "assert \"color='red'\" in code or 'color=\"red\"' in code",
+      testCode: "assert \"color='red'\" in code or 'color=\"red\"' in code\nassert output.strip() == 'Plot [1, 2, 3] cor=red\\nExibido.'",
       starterCode: "# plt.plot com color='red'\n",
       hints: [
         { text: "Passe color='nome_cor' ao plt.plot(). Cores aceitas: 'red', 'blue', 'green', 'black', etc.", cost: 10 },
@@ -235,7 +235,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d, linestyle=None): print(f'Plot ls={linestyle}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot ls=--\nExibido.",
-      testCode: "assert 'linestyle' in code",
+      testCode: "assert 'linestyle' in code\nassert output.strip() == 'Plot ls=--\\nExibido.'",
       starterCode: "# plt.plot com linestyle='--'\n",
       hints: [
         { text: "Passe linestyle='--' (tracejado). Outros: '-' (sólido, padrão), ':' (pontilhado), '-.' (traço-ponto).", cost: 15 },
@@ -259,7 +259,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d, marker=None): print(f'Plot m={marker}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot m=o\nExibido.",
-      testCode: "assert 'marker' in code",
+      testCode: "assert 'marker' in code\nassert output.strip() == 'Plot m=o\\nExibido.'",
       starterCode: "# plt.plot com marker='o'\n",
       hints: [
         { text: "marker='o' coloca círculos em cada ponto. Outros: 's' (quadrado), '^' (triângulo), '*' (estrela), 'x' (X), '+' (cruz).", cost: 15 },
@@ -283,7 +283,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d, label=None): print(f'Plot {d} label={label}')\n    @staticmethod\n    def legend(): print('Legenda OK')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot [1, 2, 3] label=A\nPlot [3, 2, 1] label=B\nLegenda OK\nExibido.",
-      testCode: "assert 'plt.legend' in code and 'label' in code",
+      testCode: "assert 'plt.legend' in code and 'label' in code\nassert output.strip() == 'Plot [1, 2, 3] label=A\\nPlot [3, 2, 1] label=B\\nLegenda OK\\nExibido.'",
       starterCode: "# Plote duas séries com labels, chame legend, depois show\n",
       hints: [
         { text: "Passe label='nome' em cada chamada de plot. Depois chame plt.legend() — ele lê os labels e desenha a caixa.", cost: 20 },
@@ -307,7 +307,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print(f'Plot {d}')\n    @staticmethod\n    def grid(b): print(f'Grid {b}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot [1, 2, 3]\nGrid True\nExibido.",
-      testCode: "assert 'plt.grid' in code",
+      testCode: "assert 'plt.grid' in code\nassert output.strip() == 'Plot [1, 2, 3]\\nGrid True\\nExibido.'",
       starterCode: "# Plote e ative grid\n",
       hints: [
         { text: "plt.grid(True) liga a grade. Falso (padrão) desliga.", cost: 10 },
@@ -331,7 +331,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print(f'Plot {d}')\n    @staticmethod\n    def ylim(a, b): print(f'ylim {a}-{b}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot [1, 2, 3]\nylim 0-10\nExibido.",
-      testCode: "assert 'plt.ylim' in code",
+      testCode: "assert 'plt.ylim' in code\nassert output.strip() == 'Plot [1, 2, 3]\\nylim 0-10\\nExibido.'",
       starterCode: "# Plote e fixe ylim em (0, 10)\n",
       hints: [
         { text: "plt.ylim(min, max) define limites do eixo Y; plt.xlim(min, max) faz o mesmo no X.", cost: 20 },
@@ -355,7 +355,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def bar(x, y): print(f'Bar')\n    @staticmethod\n    def xticks(rotation=None): print(f'Rot={rotation}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Bar\nRot=45\nExibido.",
-      testCode: "assert 'xticks' in code and '45' in code",
+      testCode: "assert 'xticks' in code and '45' in code\nassert output.strip() == 'Bar\\nRot=45\\nExibido.'",
       starterCode: "categorias = ['Janeiro', 'Fevereiro', 'Marco']\nvalores = [10, 20, 15]\n# Plote barras e rotacione xticks em 45\n",
       hints: [
         { text: "Após plt.bar(), chame plt.xticks(rotation=45). Pode passar -45 para sentido contrário.", cost: 20 },
@@ -368,7 +368,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       successNpc: "Estrategista de Dados",
       successAvatar: "/avatars/ai7_guide.png",
       successStory: "Rótulos legíveis.",
-      solution: "plt.bar(categorias, valores)\nplt.xticks(rotation=45)\nplt.show()",
+      solution: "categorias = ['Janeiro', 'Fevereiro', 'Marco']\nvalores = [10, 20, 15]\nplt.bar(categorias, valores)\nplt.xticks(rotation=45)\nplt.show()",
     },
     {
       id: "ds-viz-16",
@@ -379,7 +379,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class plt_mock:\n    @staticmethod\n    def subplots(r, c):\n        print(f'Subplots {r}x{c}')\n        return None, None\nplt = plt_mock()",
       expectedOutput: "Subplots 1x2\nSubplots criados.",
-      testCode: "assert 'subplots' in code",
+      testCode: "assert 'subplots' in code\nassert output.strip() == 'Subplots 1x2\\nSubplots criados.'",
       starterCode: "# Use plt.subplots(1, 2) e imprima confirmação\n",
       hints: [
         { text: "fig, axes = plt.subplots(nrows, ncols) cria UMA figura com grid de subplots. Retorna a figura e os eixos.", cost: 25 },
@@ -403,7 +403,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def figure(figsize=None): print(f'Figsize={figsize}')\nplt = plt_mock()",
       expectedOutput: "Figsize=(10, 4)\nFigura customizada.",
-      testCode: "assert 'figsize' in code",
+      testCode: "assert 'figsize' in code\nassert output.strip() == 'Figsize=(10, 4)\\nFigura customizada.'",
       starterCode: "# Use plt.figure(figsize=(10, 4)) e imprima confirmação\n",
       hints: [
         { text: "plt.figure(figsize=(largura, altura)) — em polegadas. Padrão geralmente é (6.4, 4.8).", cost: 20 },
@@ -427,7 +427,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print(f'Plot')\n    @staticmethod\n    def savefig(f): print(f'Salvo: {f}')\nplt = plt_mock()",
       expectedOutput: "Plot\nSalvo: grafico.png",
-      testCode: "assert 'savefig' in code",
+      testCode: "assert 'savefig' in code\nassert output.strip() == 'Plot\\nSalvo: grafico.png'",
       starterCode: "plt.plot([1,2,3])\n# Salve como 'grafico.png'\n",
       hints: [
         { text: "plt.savefig('arquivo.ext') salva no formato pela extensão: .png, .pdf, .svg, .jpg.", cost: 20 },
@@ -451,7 +451,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class plt_mock:\n    @staticmethod\n    def annotate(t, xy): print(f'Anot: {t} em {xy}')\nplt = plt_mock()",
       expectedOutput: "Anot: Pico em (2, 10)",
-      testCode: "assert 'annotate' in code",
+      testCode: "assert 'annotate' in code\nassert output.strip() == 'Anot: Pico em (2, 10)'",
       starterCode: "# plt.annotate('Pico', xy=(2, 10))\n",
       hints: [
         { text: "plt.annotate('texto', xy=(x, y)) coloca texto no ponto. xy é a coordenada de dados.", cost: 25 },
@@ -475,7 +475,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class plt_mock:\n    @staticmethod\n    def plot(d): print('Plot')\n    @staticmethod\n    def yscale(s): print(f'YScale: {s}')\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Plot\nYScale: log\nExibido.",
-      testCode: "assert 'yscale' in code and 'log' in code",
+      testCode: "assert 'yscale' in code and 'log' in code\nassert output.strip() == 'Plot\\nYScale: log\\nExibido.'",
       starterCode: "plt.plot([1, 10, 100, 1000])\n# Ative escala log em Y\n",
       hints: [
         { text: "plt.yscale('log') muda o eixo Y para escala logarítmica. Análogo: plt.xscale('log').", cost: 25 },
@@ -499,7 +499,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class sns_mock:\n    @staticmethod\n    def heatmap(m, annot=False, cmap=None): print(f'Heatmap {len(m)}x{len(m[0])} annot={annot} cmap={cmap}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()\nmatriz = [[1, 0.8], [0.8, 1]]",
       expectedOutput: "Heatmap 2x2 annot=True cmap=coolwarm\nExibido.\n0.8",
-      testCode: "assert 'sns.heatmap' in code and 'annot=True' in code and 'coolwarm' in code and 'matriz[0][1]' in code",
+      testCode: "assert 'sns.heatmap' in code and 'annot=True' in code and 'coolwarm' in code and 'matriz[0][1]' in code\nassert output.strip() == 'Heatmap 2x2 annot=True cmap=coolwarm\\nExibido.\\n0.8'",
       starterCode: "import seaborn as sns\nimport matplotlib.pyplot as plt\n# Heatmap anotado, show e print da correlacao [0][1]\n",
       hints: [
         { text: "annot=True mostra os valores nas celulas; cmap='coolwarm' destaca baixos e altos.", cost: 20 },
@@ -523,7 +523,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def countplot(x): print(f'Count: {x}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()\nvalores = ['A', 'B', 'A', 'C']",
       expectedOutput: "Count: ['A', 'B', 'A', 'C']\nExibido.\n['A', 'B', 'C']",
-      testCode: "assert 'countplot' in code and 'sorted' in code and 'set' in code",
+      testCode: "assert 'countplot' in code and 'sorted' in code and 'set' in code\nassert output.strip() == \"Count: ['A', 'B', 'A', 'C']\\nExibido.\\n['A', 'B', 'C']\"",
       starterCode: "import seaborn as sns\n# Use valores, faca countplot e imprima categorias unicas\n",
       hints: [
         { text: "Use sns.countplot(x=valores) para o grafico.", cost: 20 },
@@ -547,7 +547,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def barplot(x, y): print(f'Bar: {x} -> {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()\nx = ['A', 'B', 'C']\ny = [10, 20, 15]",
       expectedOutput: "Bar: ['A', 'B', 'C'] -> [10, 20, 15]\nExibido.\nB",
-      testCode: "assert 'barplot' in code and 'max' in code and 'index' in code",
+      testCode: "assert 'barplot' in code and 'max' in code and 'index' in code\nassert output.strip() == \"Bar: ['A', 'B', 'C'] -> [10, 20, 15]\\nExibido.\\nB\"",
       starterCode: "import seaborn as sns\n# Plote x/y e imprima a categoria de maior valor\n",
       hints: [
         { text: "max(y) encontra o maior valor numerico.", cost: 20 },
@@ -571,7 +571,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def histplot(d, bins=None): print(f'Hist: {d} bins={bins}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()\ndados = [1, 2, 2, 3, 4, 4, 5]",
       expectedOutput: "Hist: [1, 2, 2, 3, 4, 4, 5] bins=3\nExibido.\n4",
-      testCode: "assert 'histplot' in code and 'bins=3' in code and 'max' in code and 'min' in code",
+      testCode: "assert 'histplot' in code and 'bins=3' in code and 'max' in code and 'min' in code\nassert output.strip() == 'Hist: [1, 2, 2, 3, 4, 4, 5] bins=3\\nExibido.\\n4'",
       starterCode: "import seaborn as sns\n# Histograma com bins=3 e amplitude dos dados\n",
       hints: [
         { text: "Passe bins=3 dentro de sns.histplot(...).", cost: 20 },
@@ -595,7 +595,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def boxplot(y): print(f'Box: {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Box: [1, 2, 3, 4, 5, 100]\nExibido.",
-      testCode: "assert 'sns.boxplot' in code",
+      testCode: "assert 'sns.boxplot' in code\nassert output.strip() == 'Box: [1, 2, 3, 4, 5, 100]\\nExibido.'",
       starterCode: "import seaborn as sns\n# Use sns.boxplot(y=dados)\n",
       hints: [
         { text: "sns.boxplot(y=lista) cria boxplot vertical. Use x= para horizontal.", cost: 20 },
@@ -619,7 +619,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class sns_mock:\n    @staticmethod\n    def violinplot(y): print(f'Violin: {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Violin: [1, 2, 3, 4, 5]\nExibido.",
-      testCode: "assert 'violinplot' in code",
+      testCode: "assert 'violinplot' in code\nassert output.strip() == 'Violin: [1, 2, 3, 4, 5]\\nExibido.'",
       starterCode: "import seaborn as sns\n# Use sns.violinplot(y=dados)\n",
       hints: [
         { text: "sns.violinplot(y=lista) plota o 'violino' — formato é a densidade espelhada, largura = frequência.", cost: 25 },
@@ -643,7 +643,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def lineplot(x, y): print(f'Line: {x} x {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Line: [1, 2, 3] x [1, 4, 9]\nExibido.",
-      testCode: "assert 'lineplot' in code",
+      testCode: "assert 'lineplot' in code\nassert output.strip() == 'Line: [1, 2, 3] x [1, 4, 9]\\nExibido.'",
       starterCode: "import seaborn as sns\n# sns.lineplot e show\n",
       hints: [
         { text: "sns.lineplot(x=..., y=...) — assinatura igual a plt.plot mas com features estatísticos.", cost: 20 },
@@ -667,7 +667,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class sns_mock:\n    @staticmethod\n    def scatterplot(x, y): print(f'Scatter: {x} x {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()",
       expectedOutput: "Scatter: [1, 2, 3] x [4, 5, 6]\nExibido.",
-      testCode: "assert 'scatterplot' in code",
+      testCode: "assert 'scatterplot' in code\nassert output.strip() == 'Scatter: [1, 2, 3] x [4, 5, 6]\\nExibido.'",
       starterCode: "import seaborn as sns\n# sns.scatterplot e show\n",
       hints: [
         { text: "sns.scatterplot(x=..., y=...) — versão seaborn de scatter. Aceita hue, size e style para mapear variáveis em estética.", cost: 20 },
@@ -691,7 +691,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class sns_mock:\n    @staticmethod\n    def pairplot(df, hue=None): print(f'Pairplot hue={hue}')\nsns = sns_mock()\ndf = {'a': [1,2,3], 'b': [4,5,6], 'classe': ['x','y','x']}",
       expectedOutput: "Pairplot hue=classe\n3",
-      testCode: "assert 'pairplot' in code and 'hue' in code and 'len' in code",
+      testCode: "assert 'pairplot' in code and 'hue' in code and 'len' in code\nassert output.strip() == 'Pairplot hue=classe\\n3'",
       starterCode: "import seaborn as sns\n# Pairplot com hue='classe' e total de colunas\n",
       hints: [
         { text: "hue='classe' separa os pontos por classe/cor.", cost: 30 },
@@ -715,7 +715,7 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class sns_mock:\n    @staticmethod\n    def regplot(x, y): print(f'Reg: {x} x {y}')\nsns = sns_mock()\nclass plt_mock:\n    @staticmethod\n    def show(): print('Exibido.')\nplt = plt_mock()\nx = [1, 2, 3, 4]\ny = [2, 4, 6, 8]",
       expectedOutput: "Reg: [1, 2, 3, 4] x [2, 4, 6, 8]\nExibido.\n2.0",
-      testCode: "assert 'regplot' in code and 'inclinacao' in code and 'y[-1]' in code and 'x[-1]' in code",
+      testCode: "assert 'regplot' in code and 'inclinacao' in code and 'y[-1]' in code and 'x[-1]' in code\nassert output.strip() == 'Reg: [1, 2, 3, 4] x [2, 4, 6, 8]\\nExibido.\\n2.0'",
       starterCode: "import seaborn as sns\n# regplot, show e inclinacao entre primeiro/ultimo ponto\n",
       hints: [
         { text: "A inclinacao entre dois pontos e delta_y / delta_x.", cost: 25 },

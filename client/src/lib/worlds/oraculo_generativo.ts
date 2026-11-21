@@ -19,7 +19,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class OpenAI:\n    def __init__(self): pass",
       expectedOutput: "Cliente inicializado.",
-      testCode: "assert 'OpenAI()' in code",
+      testCode: "assert 'OpenAI()' in code\nassert output.strip() == 'Cliente inicializado.'",
       starterCode: "from openai import OpenAI\n# Crie cliente e imprima confirmação\n",
       hints: [
         { text: "OpenAI() sem argumentos lê OPENAI_API_KEY da variável de ambiente.", cost: 20 },
@@ -43,7 +43,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Completions:\n    def create(self, model, messages): print('Resposta recebida.'); return None\nclass Chat:\n    completions = Completions()\nclass Cliente:\n    chat = Chat()\ncliente = Cliente()",
       expectedOutput: "Resposta recebida.",
-      testCode: "assert 'completions.create' in code and 'messages' in code",
+      testCode: "assert 'completions.create' in code and 'messages' in code\nassert output.strip() == 'Resposta recebida.'",
       starterCode: "# cliente.chat.completions.create(model='gpt-4', messages=[{'role':'user','content':'Olá'}])\n",
       hints: [
         { text: "Estrutura: cliente.chat.completions.create(model='nome', messages=[...]).", cost: 25 },
@@ -67,7 +67,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "",
       expectedOutput: "Configurado.",
-      testCode: "assert \"'system'\" in code or '\"system\"' in code",
+      testCode: "assert \"'system'\" in code or '\"system\"' in code\nassert output.strip() == 'Configurado.'",
       starterCode: "# messages = [{'role':'system','content':'Você é um assistente.'}, {'role':'user','content':'Oi'}]\n",
       hints: [
         { text: "System message SEMPRE PRIMEIRO. Ela orienta tom, estilo, restrições.", cost: 25 },
@@ -91,7 +91,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Completions:\n    def create(self, **kw): print('Determinístico.'); return None\nclass Chat:\n    completions = Completions()\nclass Cliente:\n    chat = Chat()\ncliente = Cliente()",
       expectedOutput: "Determinístico.",
-      testCode: "assert 'temperature' in code",
+      testCode: "assert 'temperature' in code\nassert output.strip() == 'Determinístico.'",
       starterCode: "# cliente.chat.completions.create(model='gpt-4', messages=[], temperature=0.0)\n",
       hints: [
         { text: "temperature: 0.0 = determinístico (sempre mesma resposta), 1.0 = padrão, >1.5 = muito criativo/aleatório.", cost: 25 },
@@ -115,7 +115,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Completions:\n    def create(self, **kw): print('Limite definido.'); return None\nclass Chat:\n    completions = Completions()\nclass Cliente:\n    chat = Chat()\ncliente = Cliente()",
       expectedOutput: "Limite definido.",
-      testCode: "assert 'max_tokens' in code",
+      testCode: "assert 'max_tokens' in code\nassert output.strip() == 'Limite definido.'",
       starterCode: "# create com max_tokens=100\n",
       hints: [
         { text: "max_tokens limita o COMPRIMENTO da RESPOSTA gerada, não do input.", cost: 20 },
@@ -139,7 +139,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Anthropic: pass",
       expectedOutput: "Claude inicializado.",
-      testCode: "assert 'Anthropic()' in code",
+      testCode: "assert 'Anthropic()' in code\nassert output.strip() == 'Claude inicializado.'",
       starterCode: "from anthropic import Anthropic\n# Crie cliente Claude\n",
       hints: [
         { text: "import: from anthropic import Anthropic. Constructor: Anthropic().", cost: 20 },
@@ -163,7 +163,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Completions:\n    def create(self, **kw): print('Stream ativo.'); return None\nclass Chat:\n    completions = Completions()\nclass Cliente:\n    chat = Chat()\ncliente = Cliente()",
       expectedOutput: "Stream ativo.",
-      testCode: "assert 'stream' in code",
+      testCode: "assert 'stream' in code\nassert output.strip() == 'Stream ativo.'",
       starterCode: "# create com stream=True\n",
       hints: [
         { text: "stream=True retorna ITERADOR em vez de resposta única — você lê chunk por chunk.", cost: 30 },
@@ -187,7 +187,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "",
       expectedOutput: "Tools registradas.",
-      testCode: "assert 'tools' in code",
+      testCode: "assert 'tools' in code\nassert output.strip() == 'Tools registradas.'",
       starterCode: "# Defina lista 'tools' com uma função e imprima 'Tools registradas.'\n",
       hints: [
         { text: "Lista de dicts: cada com 'type':'function' e 'function' contendo name, description, parameters (JSON Schema).", cost: 30 },
@@ -211,7 +211,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Completions:\n    def create(self, **kw): print('JSON forçado.'); return None\nclass Chat:\n    completions = Completions()\nclass Cliente:\n    chat = Chat()\ncliente = Cliente()",
       expectedOutput: "JSON forçado.",
-      testCode: "assert 'response_format' in code",
+      testCode: "assert 'response_format' in code\nassert output.strip() == 'JSON forçado.'",
       starterCode: "# create com response_format={'type':'json_object'}\n",
       hints: [
         { text: "response_format={'type':'json_object'} garante JSON válido na saída.", cost: 30 },
@@ -283,7 +283,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "",
       expectedOutput: "ler problema -> calcular -> responder",
-      testCode: "assert 'passos' in code and 'join' in code and len(output.strip().split(' -> ')) == 3",
+      testCode: "assert 'join' in code and len(passos) == 3 and output.strip() == ' -> '.join(passos)",
       starterCode: "# Crie passos = [...] e junte com \" -> \"\n",
       hints: [
         { text: "Chain-of-thought organiza o raciocinio em etapas.", cost: 20 },
@@ -379,7 +379,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class PromptTemplate:\n    @staticmethod\n    def from_template(t): return None",
       expectedOutput: "Template criado.",
-      testCode: "assert 'PromptTemplate' in code",
+      testCode: "assert 'PromptTemplate' in code\nassert output.strip() == 'Template criado.'",
       starterCode: "from langchain.prompts import PromptTemplate\n# Crie template e imprima\n",
       hints: [
         { text: "PromptTemplate.from_template recebe string com {variaveis} entre chaves.", cost: 30 },
@@ -403,7 +403,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class LLMChain:\n    def __init__(self, llm, prompt): pass\nllm = None\ntemplate = None",
       expectedOutput: "Chain criada.",
-      testCode: "assert 'LLMChain' in code",
+      testCode: "assert 'LLMChain' in code\nassert output.strip() == 'Chain criada.'",
       starterCode: "from langchain.chains import LLMChain\n# Crie chain e confirme\n",
       hints: [
         { text: "LLMChain conecta um LLM + PromptTemplate. Depois: chain.invoke({'var': 'valor'}).", cost: 30 },
@@ -523,7 +523,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class encoding_mock:\n    def encode(self, t): print('Tokens contados.'); return []\nclass tiktoken_mock:\n    @staticmethod\n    def get_encoding(name): return encoding_mock()\ntiktoken = tiktoken_mock()",
       expectedOutput: "Tokens contados.",
-      testCode: "assert 'tiktoken' in code",
+      testCode: "assert 'tiktoken' in code\nassert output.strip() == 'Tokens contados.'",
       starterCode: "import tiktoken\nenc = tiktoken.get_encoding('cl100k_base')\n# enc.encode(texto)\n",
       hints: [
         { text: "tiktoken.get_encoding('cl100k_base') é o encoding para GPT-3.5/4. Para GPT-4o: 'o200k_base'.", cost: 25 },
@@ -547,7 +547,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Embeddings:\n    def create(self, **kw): print('Embeddings criados.'); return None\nclass Cliente:\n    embeddings = Embeddings()\ncliente = Cliente()",
       expectedOutput: "Embeddings criados.",
-      testCode: "assert 'embeddings.create' in code",
+      testCode: "assert 'embeddings.create' in code\nassert output.strip() == 'Embeddings criados.'",
       starterCode: "# cliente.embeddings.create(input='texto', model='text-embedding-3-small')\n",
       hints: [
         { text: "Modelo padrão OpenAI: 'text-embedding-3-small' (1536 dim) ou 'text-embedding-3-large' (3072 dim).", cost: 30 },
@@ -571,7 +571,7 @@ export const ORACULO_GENERATIVO_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "input_tokens = 1000\noutput_tokens = 500\npreco_input = 0.005\npreco_output = 0.015",
       expectedOutput: "0.0125",
-      testCode: "assert 'preco_input' in code and 'preco_output' in code",
+      testCode: "assert 'preco_input' in code and 'preco_output' in code\n_esperado = [0.0125]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "input_tokens = 1000\noutput_tokens = 500\npreco_input = 0.005  # por 1k\npreco_output = 0.015  # por 1k\n# Calcule custo em dólares\n",
       hints: [
         { text: "Custo = (input_tokens * preco_input + output_tokens * preco_output) / 1000.", cost: 25 },

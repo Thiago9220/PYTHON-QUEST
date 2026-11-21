@@ -147,6 +147,21 @@ def _reset_globals():
             del globals()[k]
     sys.stdout = io.StringIO()
 
+def _strip_comments(src):
+    # Remove comentarios (#) do codigo exposto aos testes: checagens do tipo
+    # 'palavra' in code nao podem ser satisfeitas por texto comentado.
+    try:
+        import tokenize
+        lines = src.splitlines(True)
+        for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+            if tok.type == tokenize.COMMENT:
+                row, col = tok.start
+                line = lines[row - 1]
+                lines[row - 1] = line[:col] + line[tok.end[1]:]
+        return "".join(lines)
+    except Exception:
+        return src
+
 _INITIAL_GLOBALS = set(globals().keys()) | {"_INITIAL_GLOBALS"}
 \`);
       return pyodide;
@@ -274,6 +289,7 @@ self.onmessage = async (event) => {
       try {
         py.globals.set("output", userOutput);
         py.globals.set("code", userCode);
+        await py.runPythonAsync("code = _strip_comments(code)");
         await py.runPythonAsync(challenge.testCode);
         self.postMessage({
           id,
@@ -318,6 +334,7 @@ self.onmessage = async (event) => {
 
         py.globals.set("output", output);
         py.globals.set("code", userCode);
+        await py.runPythonAsync("code = _strip_comments(code)");
 
         const results = [];
         for (let i = 0; i < objectives.length; i++) {

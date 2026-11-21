@@ -19,7 +19,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class pd_mock:\n    @staticmethod\n    def to_datetime(s): return f'Timestamp(\"{s} 00:00:00\")'\npd = pd_mock()",
       expectedOutput: 'Timestamp("2024-03-15 00:00:00")',
-      testCode: "assert 'to_datetime' in code",
+      testCode: "assert 'to_datetime' in code\nassert output.strip() == '2024-03-15 00:00:00'",
       starterCode: "import pandas as pd\n# Converta '2024-03-15' e imprima\n",
       hints: [
         { text: "pd.to_datetime(string) converte qualquer formato comum em Timestamp.", cost: 10 },
@@ -43,7 +43,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class pd_mock:\n    @staticmethod\n    def date_range(start, periods=None, freq='D'):\n        return f'DatetimeIndex of {periods} days from {start}'\npd = pd_mock()",
       expectedOutput: "DatetimeIndex of 5 days from 2024-01-01",
-      testCode: "assert 'date_range' in code",
+      testCode: "assert 'date_range' in code\nassert output.strip() == \"DatetimeIndex(['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04',\\n               '2024-01-05'],\\n              dtype='datetime64[ns]', freq='D')\"",
       starterCode: "import pandas as pd\n# Crie 5 datas diárias a partir de 2024-01-01 e imprima\n",
       hints: [
         { text: "pd.date_range(start, periods, freq) gera sequência de datas. freq='D' = diário, 'H' = horário, 'M' = mensal.", cost: 15 },
@@ -67,7 +67,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "class TS:\n    year = 2024\n    month = 3\nclass pd_mock:\n    @staticmethod\n    def to_datetime(s): return TS()\npd = pd_mock()",
       expectedOutput: "2024\n3",
-      testCode: "assert '.year' in code and '.month' in code",
+      testCode: "assert '.year' in code and '.month' in code\n_esperado = [2024.0, 3.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import pandas as pd\ndt = pd.to_datetime('2024-03-15')\n# Imprima ano e mês\n",
       hints: [
         { text: "Timestamp tem atributos: .year, .month, .day, .hour, .minute, .second, .dayofweek, .quarter.", cost: 15 },
@@ -91,7 +91,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Serie:\n    def resample(self, freq):\n        class R:\n            def sum(self): return 'mensal'\n        return R()\nserie = Serie()",
       expectedOutput: "Resample OK.",
-      testCode: "assert 'resample' in code",
+      testCode: "assert 'resample' in code\nassert output.strip() == 'Resample OK.'",
       starterCode: "# Aplique resample mensal com .sum() e imprima 'Resample OK.'\n",
       hints: [
         { text: "serie.resample(freq) agrupa por intervalo; encadeie com .sum(), .mean(), .max(), etc.", cost: 20 },
@@ -115,7 +115,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Serie:\n    def rolling(self, window):\n        class R:\n            def mean(self): return 'suavizado'\n        return R()\nserie = Serie()",
       expectedOutput: "Rolling OK.",
-      testCode: "assert 'rolling' in code and '.mean' in code",
+      testCode: "assert 'rolling' in code and '.mean' in code\nassert output.strip() == 'Rolling OK.'",
       starterCode: "# Aplique rolling(window=7).mean() e imprima 'Rolling OK.'\n",
       hints: [
         { text: "serie.rolling(window=N) cria janela deslizante de tamanho N; encadeie agregação.", cost: 20 },
@@ -139,7 +139,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Serie:\n    def diff(self): print('Diferenciada.')\nserie = Serie()",
       expectedOutput: "Diferenciada.",
-      testCode: "assert '.diff' in code",
+      testCode: "assert '.diff' in code\nassert output.strip() == 'Diferenciada.'",
       starterCode: "# Diferencie a série e a impressão acontece dentro do mock\n",
       hints: [
         { text: "serie.diff() subtrai cada valor do anterior (lag 1). Para lag N: diff(N).", cost: 20 },
@@ -163,7 +163,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Serie:\n    def shift(self, n): print('Lag criado.')\nserie = Serie()",
       expectedOutput: "Lag criado.",
-      testCode: "assert '.shift' in code",
+      testCode: "assert '.shift' in code\nassert output.strip() == 'Lag criado.'",
       starterCode: "# Crie lag de 1 período\n",
       hints: [
         { text: "serie.shift(N) move os valores N posições para frente — y[t] vira y[t-N].", cost: 20 },
@@ -187,7 +187,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def seasonal_decompose(s, period): print('Decomposta.'); return None\nserie = [1, 2, 3]",
       expectedOutput: "Decomposta.",
-      testCode: "assert 'seasonal_decompose' in code",
+      testCode: "assert 'seasonal_decompose' in code\nassert output.strip() == 'Decomposta.\\nDecomposta.'",
       starterCode: "from statsmodels.tsa.seasonal import seasonal_decompose\n# Decomponha com period=12\n",
       hints: [
         { text: "seasonal_decompose retorna objeto com .trend, .seasonal, .resid (resíduo).", cost: 30 },
@@ -211,7 +211,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def plot_acf(s): print('ACF plotada.')\nserie = [1, 2, 3]",
       expectedOutput: "ACF plotada.",
-      testCode: "assert 'plot_acf' in code",
+      testCode: "assert 'plot_acf' in code\nassert output.strip() == 'ACF plotada.\\nACF plotada.'",
       starterCode: "from statsmodels.graphics.tsaplots import plot_acf\n# Plote ACF e confirme\n",
       hints: [
         { text: "plot_acf desenha a autocorrelação em diferentes lags.", cost: 30 },
@@ -235,7 +235,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def plot_pacf(s): print('PACF plotada.')\nserie = [1, 2, 3]",
       expectedOutput: "PACF plotada.",
-      testCode: "assert 'plot_pacf' in code",
+      testCode: "assert 'plot_pacf' in code\nassert output.strip() == 'PACF plotada.\\nPACF plotada.'",
       starterCode: "from statsmodels.graphics.tsaplots import plot_pacf\n# Plote PACF\n",
       hints: [
         { text: "plot_pacf — autocorrelação parcial, controlando lags intermediários.", cost: 30 },
@@ -259,7 +259,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "def adfuller(s): return (-3.5, 0.008, 0, 0)\nserie = [1, 2, 3]",
       expectedOutput: "0.008",
-      testCode: "assert 'adfuller' in code",
+      testCode: "assert 'adfuller' in code\n_esperado = [0.008]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "from statsmodels.tsa.stattools import adfuller\n# Imprima o p-value (segundo elemento da tupla)\n",
       hints: [
         { text: "adfuller (Augmented Dickey-Fuller) retorna tupla. Segundo elemento é o p-value.", cost: 25 },
@@ -307,7 +307,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class ARIMA:\n    def __init__(self, s, order): pass\n    def fit(self):\n        print('ARIMA treinado.')\n        return self\nserie = [1, 2, 3]",
       expectedOutput: "ARIMA treinado.",
-      testCode: "assert 'ARIMA' in code and 'order' in code and 'fit' in code",
+      testCode: "assert 'ARIMA' in code and 'order' in code and 'fit' in code\nassert output.strip() == 'ARIMA treinado.\\nARIMA treinado.'",
       starterCode: "from statsmodels.tsa.arima.model import ARIMA\n# ARIMA(serie, order=(1,1,1)).fit() e imprima\n",
       hints: [
         { text: "ARIMA(dados, order=(p, d, q)). Encadeie .fit() para treinar.", cost: 30 },
@@ -331,7 +331,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Modelo:\n    def forecast(self, steps): print(f'Previsão de {steps} passos.')\nmodelo = Modelo()",
       expectedOutput: "Previsão de 5 passos.",
-      testCode: "assert 'forecast' in code and 'steps' in code",
+      testCode: "assert 'forecast' in code and 'steps' in code\nassert output.strip() == 'Previsão de 5 passos.'",
       starterCode: "# modelo.forecast(steps=5)\n",
       hints: [
         { text: "modelo.forecast(steps=N) retorna previsões para N períodos futuros.", cost: 25 },
@@ -379,7 +379,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Prophet: pass",
       expectedOutput: "Prophet inicializado.",
-      testCode: "assert 'Prophet' in code",
+      testCode: "assert 'Prophet' in code\nassert output.strip() == 'Prophet inicializado.'",
       starterCode: "from prophet import Prophet\n# modelo = Prophet() e imprima confirmação\n",
       hints: [
         { text: "Prophet (da Meta) é otimizado para séries de negócios com sazonalidade e feriados.", cost: 25 },
@@ -403,7 +403,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class Prophet:\n    def __init__(self, holidays=None): pass\nferiados = []",
       expectedOutput: "Feriados configurados.",
-      testCode: "assert 'holidays' in code",
+      testCode: "assert 'holidays' in code\nassert output.strip() == 'Feriados configurados.'",
       starterCode: "from prophet import Prophet\n# Prophet com holidays=feriados\n",
       hints: [
         { text: "Prophet(holidays=df_feriados) — DataFrame com colunas 'holiday', 'ds', 'lower_window', 'upper_window'.", cost: 30 },
@@ -451,7 +451,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import numpy as np\ny_real = np.array([100, 102, 105])\ny_pred = np.array([101, 100, 107])",
       expectedOutput: "1.7320508075688772",
-      testCode: "assert 'sqrt' in code and 'mean' in code",
+      testCode: "assert 'sqrt' in code and 'mean' in code\n_esperado = [1.7320508075688772]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import numpy as np\ny_real = np.array([100, 102, 105])\ny_pred = np.array([101, 100, 107])\n# Calcule RMSE\n",
       hints: [
         { text: "RMSE = sqrt(mean((real - pred)²)). Use np.sqrt e np.mean.", cost: 20 },
@@ -475,7 +475,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import numpy as np\ny_real = np.array([100, 200])\ny_pred = np.array([110, 180])",
       expectedOutput: "10.0",
-      testCode: "assert 'mean' in code and 'abs' in code",
+      testCode: "assert 'mean' in code and 'abs' in code\n_esperado = [10.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "import numpy as np\ny_real = np.array([100, 200])\ny_pred = np.array([110, 180])\n# Calcule MAPE em porcentagem\n",
       hints: [
         { text: "MAPE = mean(|real - pred| / |real|) * 100. Use np.abs e np.mean.", cost: 25 },
@@ -499,7 +499,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "serie = list(range(100))",
       expectedOutput: "80",
-      testCode: "assert ':split' in code or '[:split]' in code",
+      testCode: "assert ':split' in code or '[:split]' in code\n_esperado = [80.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "serie = list(range(100))\n# Divida 80/20 cronologicamente e imprima tamanho do treino\n",
       hints: [
         { text: "NÃO use train_test_split do sklearn — ele embaralha, criando vazamento temporal.", cost: 20 },
@@ -547,7 +547,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "class DTAccessor:\n    @property\n    def dayofweek(self): return None\nclass Col:\n    dt = DTAccessor()\nclass DF:\n    def __init__(self): self.cols = {}\n    def __getitem__(self, k): return Col()\n    def __setitem__(self, k, v): print('Features criadas.')\ndf = DF()",
       expectedOutput: "Features criadas.",
-      testCode: "assert '.dt.dayofweek' in code",
+      testCode: "assert '.dt.dayofweek' in code\nassert output.strip() == 'Features criadas.'",
       starterCode: "# Crie df['dia_semana'] usando .dt.dayofweek\n",
       hints: [
         { text: "Use o accessor .dt em Series de datetime: df['data'].dt.dayofweek.", cost: 25 },
@@ -595,7 +595,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "x = 85\nmedia = 50\nstd = 10",
       expectedOutput: "Anomalia",
-      testCode: "assert 'if' in code and '3' in code",
+      testCode: "assert 'if' in code and '3' in code\nassert output.strip() == 'Anomalia'",
       starterCode: "x = 85\nmedia = 50\nstd = 10\n# Imprima 'Anomalia' se |x - media| > 3*std\n",
       hints: [
         { text: "Anomalia clássica: |z-score| > 3. Calcule |x - media| e compare com 3*std.", cost: 25 },
@@ -619,7 +619,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "class Serie:\n    def pct_change(self): print('Variações calculadas.')\nserie = Serie()",
       expectedOutput: "Variações calculadas.",
-      testCode: "assert 'pct_change' in code",
+      testCode: "assert 'pct_change' in code\nassert output.strip() == 'Variações calculadas.'",
       starterCode: "# serie.pct_change()\n",
       hints: [
         { text: "serie.pct_change() retorna (serie[t] / serie[t-1]) - 1 = variação percentual.", cost: 25 },
@@ -667,7 +667,7 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
       difficulty: "avancado",
       setupCode: "tamanho = 100\njanela = 5",
       expectedOutput: "95",
-      testCode: "assert 'tamanho' in code and 'janela' in code",
+      testCode: "assert 'tamanho' in code and 'janela' in code\n_esperado = [95.0]\n_obtido = [float(t) for t in output.split()]\nassert len(_obtido) == len(_esperado) and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(_obtido, _esperado))",
       starterCode: "tamanho = 100\njanela = 5\n# Imprima quantas amostras geradas\n",
       hints: [
         { text: "n_amostras = tamanho - janela. Cada janela usa 'janela' pontos como X e o próximo como y.", cost: 25 },
