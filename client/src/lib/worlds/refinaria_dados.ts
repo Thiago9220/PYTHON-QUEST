@@ -19,7 +19,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "dados = {'Nome': ['Neo', 'Trinity', 'Morpheus'], 'Nivel': [5, 7, 9]}",
       expectedOutput: "       Nome  Nivel\n0       Neo      5\n1   Trinity      7\n2  Morpheus      9",
-      testCode: "assert 'pd.DataFrame' in code and 'pandas' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'DataFrame' in _n\nassert output.strip() == str(_pd.DataFrame({'Nome': ['Neo', 'Trinity', 'Morpheus'], 'Nivel': [5, 7, 9]})).strip()",
       starterCode: "import pandas as pd\ndados = {'Nome': ['Neo', 'Trinity', 'Morpheus'], 'Nivel': [5, 7, 9]}\n# Crie o DataFrame 'df' e imprima com print(df)\n",
       hints: [
         { text: "Importe a biblioteca com o alias padrão: 'import pandas as pd'. Esse 'pd' é convenção universal — toda documentação de pandas usa.", cost: 10 },
@@ -43,7 +43,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5'], 'Risco': [2, 9]})",
       expectedOutput: "0       10.0.0.1\n1    192.168.1.5\nName: IP, dtype: object",
-      testCode: "assert \"df['IP']\" in code or 'df.IP' in code",
+      testCode: "import pandas as _pd\nassert output.strip() == str(_pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5'], 'Risco': [2, 9]})['IP']).strip()",
       starterCode: "# Selecione e imprima a coluna 'IP'\n",
       hints: [
         { text: "Para acessar uma coluna, use colchetes com o nome dela entre aspas: df['nome_coluna']. O retorno é uma Series (coluna isolada).", cost: 10 },
@@ -67,7 +67,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5'], 'Porta': [80, 443], 'Risco': [2, 9]})",
       expectedOutput: "            IP  Risco\n0     10.0.0.1      2\n1  192.168.1.5      9",
-      testCode: "assert \"['IP', 'Risco']\" in code or '[\"IP\", \"Risco\"]' in code",
+      testCode: "import pandas as _pd\nassert output.strip() == str(_pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5'], 'Porta': [80, 443], 'Risco': [2, 9]})[['IP', 'Risco']]).strip()",
       starterCode: "# Selecione 'IP' e 'Risco' juntos\n",
       hints: [
         { text: "Para múltiplas colunas, passe uma LISTA de nomes dentro dos colchetes — note o duplo par de colchetes: df[[...]].", cost: 10 },
@@ -91,7 +91,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5', '172.16.0.2'], 'Risco': [2, 9, 5]})",
       expectedOutput: "            IP  Risco\n1  192.168.1.5      9",
-      testCode: "assert \"df['Risco'] > 8\" in code or 'df[df.Risco > 8]' in code",
+      testCode: "import pandas as _pd\n_e = _pd.DataFrame({'IP': ['10.0.0.1', '192.168.1.5', '172.16.0.2'], 'Risco': [2, 9, 5]})\nassert output.strip() == str(_e[_e['Risco'] > 8]).strip()",
       starterCode: "# Filtre linhas onde Risco > 8\n",
       hints: [
         { text: "Filtros usam colchetes com uma CONDIÇÃO: df[df['col'] > valor]. A condição retorna True/False por linha; o pandas mantém só as True.", cost: 20 },
@@ -115,7 +115,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'Operador': ['Neo', 'Trinity'], 'Ataques': [42, 30], 'Defesas': [12, 15]})",
       expectedOutput: "  Operador  Ataques  Defesas  Saldo\n0      Neo       42       12     30\n1  Trinity       30       15     15",
-      testCode: "assert \"df['Saldo']\" in code",
+      testCode: "import pandas as _pd\nassert 'Saldo' in df.columns\nassert output.strip() == str(_pd.DataFrame({'Operador': ['Neo', 'Trinity'], 'Ataques': [42, 30], 'Defesas': [12, 15], 'Saldo': [30, 15]})).strip()",
       starterCode: "# Crie a coluna 'Saldo' como diferença das outras duas\n",
       hints: [
         { text: "Atribua a uma chave nova: df['nova_coluna'] = ...  O pandas cria a coluna automaticamente.", cost: 20 },
@@ -163,7 +163,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'ID': range(100), 'Valor': range(100, 200)})",
       expectedOutput: "   ID  Valor\n0   0    100\n1   1    101\n2   2    102\n3   3    103\n4   4    104",
-      testCode: "assert '.head' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'head' in _n\nassert output.strip() == str(_pd.DataFrame({'ID': range(100), 'Valor': range(100, 200)}).head()).strip()",
       starterCode: "# Imprima as 5 primeiras linhas\n",
       hints: [
         { text: "df.head() retorna as primeiras N linhas. Sem argumento, retorna 5. Equivalente para o final: df.tail().", cost: 10 },
@@ -187,7 +187,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'Latencia': [10, 20, 30, 40, 50]})\nprint(df.describe()) if False else None",
       expectedOutput: "        Latencia\ncount   5.000000\nmean   30.000000\nstd    15.811388\nmin    10.000000\n25%    20.000000\n50%    30.000000\n75%    40.000000\nmax    50.000000",
-      testCode: "assert '.describe' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'describe' in _n\nassert output.strip() == str(_pd.DataFrame({'Latencia': [10, 20, 30, 40, 50]}).describe()).strip()",
       starterCode: "# Imprima describe() do df\n",
       hints: [
         { text: "df.describe() é um método sem argumentos. Retorna média, desvio, mínimo, máximo e quartis das colunas numéricas.", cost: 10 },
@@ -211,7 +211,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "iniciante",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'A': [1,2,3], 'B': [4,5,6], 'C': [7,8,9]})",
       expectedOutput: "(3, 3)",
-      testCode: "assert '.shape' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'shape' in _n\nassert output.strip() == '(3, 3)'",
       starterCode: "# Imprima df.shape\n",
       hints: [
         { text: "df.shape é um ATRIBUTO (sem parênteses) que retorna uma tupla (linhas, colunas).", cost: 10 },
@@ -235,7 +235,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2'], 'Porta': [80, 443]})",
       expectedOutput: "    Endereco  Porta\n0  10.0.0.1     80\n1  10.0.0.2    443",
-      testCode: "assert 'rename' in code and 'Endereco' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'rename' in _n\nassert output.strip() == str(_pd.DataFrame({'Endereco': ['10.0.0.1', '10.0.0.2'], 'Porta': [80, 443]})).strip()",
       starterCode: "# Use df.rename com columns={'antigo': 'novo'}\n",
       hints: [
         { text: "df.rename(columns={...}) recebe um dicionário com mapeamento antigo->novo. Por padrão, retorna um NOVO DataFrame sem modificar o original.", cost: 20 },
@@ -283,7 +283,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\nimport numpy as np\ndf = pd.DataFrame({'A': [1, np.nan, 3], 'B': [np.nan, np.nan, 6]})",
       expectedOutput: "A    1\nB    2\ndtype: int64",
-      testCode: "assert 'isna' in code or 'isnull' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert _n & {'isna', 'isnull'}\nassert output.strip() == str(_pd.DataFrame({'A': [1, None, 3], 'B': [None, None, 6]}).isna().sum()).strip()",
       starterCode: "# Conte nulos por coluna\n",
       hints: [
         { text: "df.isna() retorna um DataFrame de booleanos (True onde há NaN/None). Aliás 'isnull' funciona igual.", cost: 20 },
@@ -307,7 +307,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\nimport numpy as np\ndf = pd.DataFrame({'A': [1.0, np.nan, 3.0], 'B': [np.nan, 5.0, 6.0]})",
       expectedOutput: "     A    B\n0  1.0  0.0\n1  0.0  5.0\n2  3.0  6.0",
-      testCode: "assert 'fillna' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'fillna' in _n\nassert output.strip() == str(_pd.DataFrame({'A': [1.0, None, 3.0], 'B': [None, 5.0, 6.0]}).fillna(0)).strip()",
       starterCode: "# Substitua NaN por 0\n",
       hints: [
         { text: "df.fillna(valor) substitui todos os NaN por 'valor'. Retorna um novo DataFrame; reatribua ou use inplace=True.", cost: 20 },
@@ -331,7 +331,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\nimport numpy as np\ndf = pd.DataFrame({'A': [1.0, np.nan, 3.0], 'B': [4.0, 5.0, 6.0]})",
       expectedOutput: "     A    B\n0  1.0  4.0\n2  3.0  6.0",
-      testCode: "assert 'dropna' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'dropna' in _n\nassert output.strip() == str(_pd.DataFrame({'A': [1.0, None, 3.0], 'B': [4.0, 5.0, 6.0]}).dropna()).strip()",
       starterCode: "# Remova linhas com NaN\n",
       hints: [
         { text: "df.dropna() remove TODAS as linhas que tenham pelo menos um NaN. Retorna novo DataFrame (reatribua ou use inplace=True).", cost: 20 },
@@ -355,7 +355,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2', '10.0.0.1']})",
       expectedOutput: "         IP\n0  10.0.0.1\n1  10.0.0.2",
-      testCode: "assert 'drop_duplicates' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'drop_duplicates' in _n\nassert output.strip() == str(_pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2', '10.0.0.1']}).drop_duplicates()).strip()",
       starterCode: "# Remova duplicatas\n",
       hints: [
         { text: "df.drop_duplicates() mantém a primeira ocorrência de cada linha duplicada. Retorna novo DataFrame.", cost: 20 },
@@ -379,7 +379,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'Valor': ['1', '2', '3']})",
       expectedOutput: "int64",
-      testCode: "assert 'astype' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'astype' in _n\nassert output.strip() in ('int32', 'int64')",
       starterCode: "# Converta df['Valor'] para int e imprima o dtype resultante\n",
       hints: [
         { text: "Series.astype(tipo) converte o tipo: int, float, str, 'category'. Reatribua: df['Valor'] = df['Valor'].astype(int).", cost: 20 },
@@ -451,7 +451,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2'], 'Risco': [2, 9]})",
       expectedOutput: "IP       10.0.0.1\nRisco           2\nName: 0, dtype: object",
-      testCode: "assert '.loc' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'loc' in _n\nassert output.strip() == str(_pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2'], 'Risco': [2, 9]}).loc[0]).strip()",
       starterCode: "# Use df.loc[0]\n",
       hints: [
         { text: ".loc usa RÓTULOS — passe o nome do índice ou da coluna. Para a primeira linha (rótulo 0): df.loc[0].", cost: 20 },
@@ -475,7 +475,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import pandas as pd\ndf = pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2'], 'Risco': [2, 9]})",
       expectedOutput: "IP       10.0.0.2\nRisco           9\nName: 1, dtype: object",
-      testCode: "assert '.iloc' in code",
+      testCode: "import ast as _ast\nimport pandas as _pd\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'iloc' in _n\nassert output.strip() == str(_pd.DataFrame({'IP': ['10.0.0.1', '10.0.0.2'], 'Risco': [2, 9]}).iloc[1]).strip()",
       starterCode: "# Use df.iloc[1]\n",
       hints: [
         { text: ".iloc usa POSIÇÕES inteiras, sempre começando de 0 — independente dos rótulos do índice.", cost: 20 },
@@ -571,7 +571,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "",
       expectedOutput: "[10 20 30 40 50]",
-      testCode: "assert 'np.array' in code",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'array' in _n\nassert output.strip() == str(_np.array([1, 2, 3, 4, 5]) * 10).strip()",
       starterCode: "import numpy as np\nlista = [1, 2, 3, 4, 5]\n# Crie array, multiplique por 10, imprima\n",
       hints: [
         { text: "Importe com alias padrão: 'import numpy as np'. Convenção universal — toda a comunidade científica usa.", cost: 20 },
@@ -594,8 +594,8 @@ export const REFINARIA_DADOS_WORLD: World = {
       narrative: "Sensores térmicos reportaram leituras. Calcule média e desvio para detectar anomalias.",
       difficulty: "avancado",
       setupCode: "import numpy as np\ntemp = np.array([22, 28, 35, 19, 41])",
-      expectedOutput: "29.0\n8.0",
-      testCode: "assert 'np.mean' in code and 'np.std' in code",
+      expectedOutput: "29.0\n8.12403840463596",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert {'mean', 'std'} <= _n\n_t = _np.array([22, 28, 35, 19, 41])\nassert output.strip() == f'{_np.mean(_t)}\\n{_np.std(_t)}'",
       starterCode: "# Imprima np.mean e np.std\n",
       hints: [
         { text: "np.mean(arr) calcula a média; np.std(arr) calcula o desvio padrão. Ambos retornam um único número.", cost: 20 },
@@ -619,7 +619,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import numpy as np",
       expectedOutput: "[0. 0. 0.]",
-      testCode: "assert 'np.zeros' in code",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'zeros' in _n\nassert output.strip() == str(_np.zeros(3)).strip()",
       starterCode: "# Crie array de zeros com 3 elementos\n",
       hints: [
         { text: "np.zeros(shape) cria array preenchido com zeros. shape pode ser int (1D) ou tupla (multi-D).", cost: 20 },
@@ -643,7 +643,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "import numpy as np",
       expectedOutput: "[0 1 2 3 4 5 6 7 8 9]",
-      testCode: "assert 'np.arange' in code",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'arange' in _n\nassert output.strip() == str(_np.arange(10)).strip()",
       starterCode: "# Crie array 0..9\n",
       hints: [
         { text: "np.arange(N) é como range(N) mas retorna um array NumPy: [0, 1, ..., N-1].", cost: 20 },
@@ -667,7 +667,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "avancado",
       setupCode: "import numpy as np\narr = np.arange(6)",
       expectedOutput: "[[0 1 2]\n [3 4 5]]",
-      testCode: "assert 'reshape' in code",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'reshape' in _n\nassert output.strip() == str(_np.arange(6).reshape(2, 3)).strip()",
       starterCode: "# Reshape para (2, 3) e imprima\n",
       hints: [
         { text: "arr.reshape(linhas, colunas) muda o shape sem alterar os dados. O total de elementos precisa bater (2*3=6, igual ao len).", cost: 20 },
@@ -691,7 +691,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "avancado",
       setupCode: "import numpy as np\narr = np.array([1, 5, 3, 8, 2])",
       expectedOutput: "[5 8]",
-      testCode: "assert 'arr >' in code or 'arr[' in code",
+      testCode: "import numpy as _np\n_e = _np.array([1, 5, 3, 8, 2])\nassert output.strip() == str(_e[_e > 3]).strip()",
       starterCode: "# Filtre elementos > 3\n",
       hints: [
         { text: "Comparação direta gera array booleano: arr > 3 retorna [False, True, False, True, False].", cost: 20 },
@@ -715,7 +715,7 @@ export const REFINARIA_DADOS_WORLD: World = {
       difficulty: "avancado",
       setupCode: "import numpy as np",
       expectedOutput: "[0.5488135  0.71518937 0.60276338]",
-      testCode: "assert 'np.random' in code",
+      testCode: "import ast as _ast\nimport numpy as _np\n_n = {getattr(x, 'attr', None) or getattr(x, 'id', None) or getattr(x, 'arg', None) for x in _ast.walk(_ast.parse(code))}\nassert 'rand' in _n\nassert output.strip() == str(_np.random.RandomState(0).rand(3)).strip()",
       starterCode: "import numpy as np\nnp.random.seed(0)\n# Gere 3 números aleatórios uniformes\n",
       hints: [
         { text: "np.random.rand(N) gera N números aleatórios uniformes em [0, 1). Para distribuição normal: np.random.randn(N).", cost: 25 },

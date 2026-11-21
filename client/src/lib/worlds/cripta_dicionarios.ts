@@ -180,7 +180,7 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
       difficulty: "avancado",
       setupCode: "rede_a = {'10.0.0.1', '10.0.0.2', '10.0.0.3'}\nrede_b = {'10.0.0.3', '10.0.0.4', '10.0.0.5'}",
       expectedOutput: "{'10.0.0.3'}",
-      testCode: "assert '&' in code or 'intersection' in code",
+      testCode: "import ast as _ast\nassert any((isinstance(n, (_ast.BinOp, _ast.AugAssign)) and isinstance(n.op, _ast.BitAnd)) or (isinstance(n, _ast.Call) and getattr(n.func, 'attr', None) in ('intersection', 'intersection_update')) for n in _ast.walk(_ast.parse(code)))\nassert output.strip() == \"{'10.0.0.3'}\"",
       starterCode: "rede_a = {'10.0.0.1', '10.0.0.2', '10.0.0.3'}\nrede_b = {'10.0.0.3', '10.0.0.4', '10.0.0.5'}\n# Encontre a interseção e imprima\n",
       hints: [
         { text: "O operador & (ou o método intersection()) devolve apenas o que existe em ambos os conjuntos.", cost: 10 },

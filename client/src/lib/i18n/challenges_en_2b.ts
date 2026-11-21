@@ -262,12 +262,14 @@ export const CHALLENGES_EN_2B: Record<string, LocalizedChallengeFields> = {
   },
   "py-exc-03": {
     "title": "The False Alarm",
-    "description": "Use the instruction 'raise Exception(\"Invasor\")' to intentionally trigger an error.",
-    "narrative": "To throw trackers off your trail, force an abrupt interrupt in the script to simulate a false breach, cloaking your actual signature.",
+    "description": "Inside a try block, use raise Exception('Invasor') to trigger an error on purpose. Catch it with except Exception as e and print the message (e).",
+    "narrative": "To throw trackers off your trail, trigger a false alarm in the system — but catch it before it takes down your own script.",
     "concept": "Raising Exceptions (raise)",
-    "conceptExplanation": "Sometimes your code MUST halt execution immediately. The `raise` keyword lets you fire an exception explicitly when your system detects critical invariant violations.",
+    "conceptExplanation": "Sometimes YOU want the program to stop. The `raise` keyword throws an error on purpose when something is critically wrong. The calling code can catch that error with `try/except` and decide what to do:\n\ntry:\n    raise Exception('Failure')\nexcept Exception as e:\n    print(e)  # prints: Failure",
     "hints": [
-      "Simply write: raise Exception('Invasor')"
+      "raise Exception('Invasor') throws the error immediately. It must be inside the try block.",
+      "except Exception as e: stores the error in e. print(e) shows just the message.",
+      "try:\n    raise Exception('Invasor')\nexcept Exception as e:\n    print(e)"
     ],
     "successStory": "False alarm dispatched successfully. The incident response squad is hunting ghosts."
   },
@@ -415,13 +417,13 @@ export const CHALLENGES_EN_2B: Record<string, LocalizedChallengeFields> = {
   },
   "py-exc-16": {
     "title": "Re-raising After Logging (raise)",
-    "description": "Inside try, call int('xyz'). In except, print 'logado' and THEN execute 'raise' (with no arguments) to re-propagate the error. The script should crash with a traceback.",
+    "description": "Inside an outer try, create another try that calls int('xyz'). In the inner except, print 'logado' and THEN use raise (with no arguments) to pass the error on. In the outer except, catch the re-raised error and print 'escalado'.",
     "narrative": "Sometimes you need to log an incident without swallowing the exception. A bare 'raise' re-dispatches the active exception up the stack while preserving the full traceback.",
     "concept": "Re-raising Exceptions",
     "conceptExplanation": "Inside an except block, a bare `raise` re-emits the original exception, preserving its traceback and exact type. This is standard pattern for auditing or intercepting failures before passing them to higher-level handlers.",
     "hints": [
-      "Inside except, simply use 'raise' with no arguments to re-raise.",
-      "try:\n    int('xyz')\nexcept ValueError:\n    print('logado')\n    raise"
+      "Inside the inner except, print 'logado' and then write raise on its own, with nothing after it.",
+      "try:\n    try:\n        int('xyz')\n    except ValueError:\n        print('logado')\n        raise\nexcept ValueError:\n    print('escalado')"
     ],
     "successStory": "Fault recorded in security logs and escalated up the call stack. Audit trail preserved."
   },

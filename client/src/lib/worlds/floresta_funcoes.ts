@@ -139,7 +139,7 @@ export const FLORESTA_FUNCOES_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "",
       expectedOutput: "OK",
-      testCode: "assert '\"\"\"' in code or \"'''\" in code",
+      testCode: "import ast as _ast\n_t = _ast.parse(code)\n_docs = [n.name for n in _ast.walk(_t) if isinstance(n, _ast.FunctionDef) and _ast.get_docstring(n)]\nassert _docs and any(isinstance(n, _ast.Call) and getattr(n.func, 'id', None) in _docs for n in _ast.walk(_t))\nassert output.strip() == 'OK'",
       starterCode: "def meu_protocolo():\n    \"\"\"Este script faz tal coisa\"\"\"\n    # Complete aqui\n",
       hints: [
         { text: "Docstrings são strings delimitadas por três aspas: \"\"\" comentário \"\"\"", cost: 10 },

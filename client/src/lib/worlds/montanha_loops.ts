@@ -138,7 +138,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       difficulty: "intermediario",
       setupCode: "dados = [10, 0, 50, 0, 30]",
       expectedOutput: "10\n50\n30",
-      testCode: "assert 'continue' in code and '0' not in output",
+      testCode: "import ast as _ast\nassert any(isinstance(n, _ast.Continue) for n in _ast.walk(_ast.parse(code)))\nassert output.strip() == '10\\n50\\n30'",
       starterCode: "dados = [10, 0, 50, 0, 30]\n# Pule os zeros usando continue\n",
       hints: [
         { text: "O comando continue pula para a próxima volta do loop sem executar o que vem abaixo dele.", cost: 10 },
@@ -576,11 +576,11 @@ export const MONTANHA_LOOPS_WORLD: World = {
       difficulty: "epico",
       setupCode: "",
       expectedOutput: "0\n1\n1\n2\n3\n5\n8",
-      testCode: "assert 'while' in code and output.strip() == '0\\n1\\n1\\n2\\n3\\n5\\n8'",
+      testCode: "import ast as _ast\nassert any(isinstance(n, _ast.While) for n in _ast.walk(_ast.parse(code)))\nassert output.strip() == '0\\n1\\n1\\n2\\n3\\n5\\n8'",
       starterCode: "a, b = 0, 1\ncontador = 0\n# while contador < 7: print(a); a, b = b, a + b; contador += 1\n",
       hints: [
         { text: "Use a atribuição múltipla 'a, b = b, a + b' para atualizar ambos sem variável temporária.", cost: 20 },
-        { text: "a, b = 0, 1\nfor _ in range(7):\n    print(a)\n    a, b = b, a + b", cost: 30 },
+        { text: "a, b = 0, 1\ncontador = 0\nwhile contador < 7:\n    print(a)\n    a, b = b, a + b\n    contador += 1", cost: 30 },
       ],
       xpReward: 1100,
       concept: "Algoritmo Iterativo Clássico",
@@ -588,7 +588,7 @@ export const MONTANHA_LOOPS_WORLD: World = {
       successNpc: "Iter-8, Autômato de Ciclos",
       successAvatar: "/avatars/wizard.webp",
       successStory: "Sequência fractal alimentada ao gerador. Os honeytokens seguirão padrões orgânicos.",
-      solution: "a, b = 0, 1\nfor _ in range(7):\n    print(a)\n    a, b = b, a + b",
+      solution: "a, b = 0, 1\ncontador = 0\nwhile contador < 7:\n    print(a)\n    a, b = b, a + b\n    contador += 1",
     },
     {
       id: "py-loop-26",
