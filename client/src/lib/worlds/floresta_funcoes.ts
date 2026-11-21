@@ -14,6 +14,9 @@ export const FLORESTA_FUNCOES_WORLD: World = {
   challenges: [
     {
       id: "py-func-01",
+      introStory: "Seus scripts estão ficando longos demais, Operador. Os engenheiros da CorpHQ guardavam rotinas reutilizáveis neste Repositório. Vamos usar a mesma ideia: empacote o que você faz em funções.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "floresta-funcoes",
       title: "Sub-rotina de Handshake",
       description: "Defina uma função chamada saudar que recebe um nome e imprime 'Ola, [nome]!'. Chame a sub-rotina passando o nome 'Admin'.",

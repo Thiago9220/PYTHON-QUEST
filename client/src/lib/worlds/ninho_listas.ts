@@ -14,6 +14,9 @@ export const NINHO_LISTAS_WORLD: World = {
   challenges: [
     {
       id: "li-01",
+      introStory: "Os dados da cidade não viajam sozinhos. No Ninho das Listas, a CorpHQ empilha milhões de registros em filas. Aprenda a organizá-los e você vai enxergar padrões que eles não querem que ninguém veja.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "ninho-listas",
       title: "Buffer de Reconhecimento",
       description: "Crie uma lista chamada 'servidores' com as strings 'Nginx', 'Apache' e 'IIS', e imprima a lista.",

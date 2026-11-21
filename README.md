@@ -1,16 +1,14 @@
 # 🐍 PYTHON-QUEST: A Ascensão do Scriptweaver
 
-**PYTHON-QUEST** é uma jornada épica de aprendizado inspirada no [SQL-QUEST](https://github.com/Thiago9220/SQL-QUEST). Transformamos o ensino de programação em uma aventura de RPG imersiva, onde você assume o papel de um **Tecedor de Scripts** (Scriptweaver) em uma missão para restaurar a consciência da Grande Serpente de Python e salvar o Arquipélago Aurora.
+**PYTHON-QUEST** é um RPG cyberpunk de programação inspirado no [SQL-QUEST](https://github.com/Thiago9220/SQL-QUEST). Você é um **Operador** (Scriptweaver) e escreve Python de verdade para invadir o Mainframe de uma cidade isolada pela própria inteligência artificial.
 
-## 🌟 O Desafio do Arquipélago
+## 🌆 A história
 
-Navegue pelas ilhas flutuantes, cada uma guardando um fragmento essencial da lógica universal:
+- **Ato 1 — A Invasão** (8 setores de fundamentos de Python): guiado pelo módulo AI-7, você atravessa as defesas da CorpHQ até o Bunker de Exceções e descobre que o Core não é um servidor, e sim **AURORA**, a IA que governa a cidade.
+- **Ato 2 — A Mente da Máquina** (8 setores de Ciência de Dados e IA): cada setor revela como AURORA foi construída, dos dados dos cidadãos até a mente generativa.
+- **Final**: AURORA é o chefe do Oráculo Generativo. Ao vencê-la, o jogador escolhe entre **desligá-la** ou **retreiná-la**, e cada escolha tem epílogo próprio, seguido dos créditos.
 
-1.  **Cais da Identidade**: Onde nomes e valores dão forma à realidade (Variáveis).
-2.  **Encruzilhada do Destino**: Onde o fluxo da história é decidido pela lógica (Condições).
-3.  **Pico da Eternidade**: Onde a repetição rítmica gera poder infinito (Loops).
-4.  **Arvoredo dos Arcanos**: Onde rituais complexos são encapsulados em palavras mágicas (Funções).
-5.  **Cripta das Coleções**: Onde tesouros e dados são organizados e protegidos (Listas).
+O roteiro completo, com personagens, pistas e onde cada texto fica no código, está em [`docs/historia.md`](docs/historia.md).
 
 ## 🛠️ Estrutura do Projeto
 
@@ -21,8 +19,6 @@ O projeto segue a arquitetura robusta do SQL-QUEST:
 -   **Gamificação**: Sistema de XP, conquistas, diálogos com NPCs e trilha sonora imersiva.
 
 ## 🚀 Como começar
-
-Este repositório foi inicializado com a estrutura base e o primeiro mundo: **A Vila das Variáveis**.
 
 ### Instalação
 
@@ -96,6 +92,32 @@ Reinicie o `pnpm dev` para que o Vite recarregue as variáveis.
 - Novos usuários se registram em `/` (tela inicial).
 - O progresso é persistido nas tabelas do Supabase em tempo real.
 - Tutoriais, tours e cutscenes já vistos não se repetem entre dispositivos.
+
+## ✅ Validação dos desafios
+
+Antes de gerar um build para a Steam, rode:
+
+```bash
+npm run test:challenges
+```
+
+O teste carrega o motor real do jogo ([`pythonEngine.ts`](client/src/lib/pythonEngine.ts))
+com o Pyodide offline de `client/public/pyodide` e confere que:
+
+- toda solução oficial passa no próprio `testCode` (nenhum desafio impossível e
+  nenhuma resposta errada no Modo Estudo);
+- as tentativas de [`tests/challenges/attempts.json`](tests/challenges/attempts.json)
+  dão o resultado esperado (respostas erradas falham, alternativas corretas passam);
+- nos mundos de Ciência de Dados, saída a mais é rejeitada.
+
+Ao escrever um `testCode`:
+
+- Confira a **saída** (`output`), não só palavras no código. A variável `code` chega
+  ao teste **sem comentários**, então `'while' in code` exige um `while` de verdade.
+- Para exigir um recurso específico, prefira `ast` (`import ast as _ast`) a buscar texto.
+- Calcule o valor esperado no próprio teste quando ele depender de pandas/numpy:
+  o Pyodide é wasm32 (ex.: `astype(int)` vira `int32`).
+- Adicione ao `attempts.json` pelo menos uma resposta errada que deve falhar.
 
 ## 🤝 Créditos
 

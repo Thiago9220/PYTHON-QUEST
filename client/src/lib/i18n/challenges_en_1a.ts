@@ -361,6 +361,7 @@ export const CHALLENGES_EN_1A: Record<string, LocalizedChallengeFields> = {
     "successStory": "ACCESS GRANTED. Terminal Alpha has been completely overridden. The Core is unlocked. Welcome to the next tier of Python Quest."
 },
   "py-cond-01": {
+    introStory: "Initial bypass complete, Operator. The next lock is the Routing Node: every packet in the city passes through here and is accepted or dropped by CorpHQ's rules. Whoever controls the decisions controls the traffic. Let's start with if.",
     "title": "Access Firewall",
     "description": "Use an if statement to check if idade is greater than or equal to 18. If so, print 'Acesso Permitido'.",
     "narrative": "A primary firewall protects internal server clusters. Only connections carrying a valid 'Access Age' token may pass. Construct the validation script.",

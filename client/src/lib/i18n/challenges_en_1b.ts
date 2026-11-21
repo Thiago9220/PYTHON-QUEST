@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from './worlds_en';
 
 export const CHALLENGES_EN_1B: Record<string, LocalizedChallengeFields> = {
   "li-01": {
+    introStory: "The city's data never travels alone. In the List Nest, CorpHQ stacks millions of records into queues. Learn to organize them and you'll see patterns they don't want anyone to see.",
     "title": "Reconnaissance Buffer",
     "description": "Create a list called 'servidores' with the strings 'Nginx', 'Apache', and 'IIS', and print the list.",
     "narrative": "Your probe intercepted the names of active servers. Store them in a list for downstream processing.",
@@ -367,6 +368,7 @@ export const CHALLENGES_EN_1B: Record<string, LocalizedChallengeFields> = {
     "successStory": "Queue optimized by length. Render pipeline now follows the optimal display sequence."
   },
   "py-loop-01": {
+    introStory: "Something is sweeping the network in cycles, hunting for intruders. To slip past it, you need to think like it: in loops. Repeat, without mistakes, thousands of times.",
     "title": "Sequence Sweep",
     "description": "Use a for loop and the range() function to print numbers from 0 to 4.",
     "narrative": "The network scanner needs to sweep five consecutive ports. Automate the scan using a 'for' loop so you don't have to trigger each probe manually.",

@@ -1,0 +1,566 @@
+[
+  {
+    "id": "py-exc-03",
+    "label": "solução correta (raise dentro de try)",
+    "expect": "pass",
+    "code": "try:\n    raise Exception('Invasor')\nexcept Exception as e:\n    print(e)"
+  },
+  {
+    "id": "py-exc-03",
+    "label": "raise em função chamada no try",
+    "expect": "pass",
+    "code": "def alarme():\n    raise Exception(\"Invasor\")\n\ntry:\n    alarme()\nexcept Exception as e:\n    print(e)"
+  },
+  {
+    "id": "py-exc-03",
+    "label": "só comentário + print",
+    "expect": "fail",
+    "code": "# raise Exception('Invasor')\nprint('Invasor')"
+  },
+  {
+    "id": "py-exc-03",
+    "label": "raise sem try (erro não capturado)",
+    "expect": "fail",
+    "code": "raise Exception('Invasor')"
+  },
+  {
+    "id": "py-exc-05",
+    "label": "solução correta",
+    "expect": "pass",
+    "code": "from random import randint\nprint(randint(1, 10))"
+  },
+  {
+    "id": "py-exc-05",
+    "label": "guardando em variável",
+    "expect": "pass",
+    "code": "from random import randint\nn = randint(1, 10)\nprint(n)"
+  },
+  {
+    "id": "py-exc-05",
+    "label": "palavras em comentário + print fixo",
+    "expect": "fail",
+    "code": "# from random import randint\n# randint(1, 10)\nprint(7)"
+  },
+  {
+    "id": "py-exc-05",
+    "label": "import correto mas não imprime",
+    "expect": "fail",
+    "code": "from random import randint\nrandint(1, 10)"
+  },
+  {
+    "id": "py-exc-05",
+    "label": "faixa errada",
+    "expect": "fail",
+    "code": "from random import randint\nprint(randint(50, 60))"
+  },
+  {
+    "id": "py-exc-18",
+    "label": "solução correta",
+    "expect": "pass",
+    "code": "from random import choice\nprint(choice(['a', 'b', 'c']))"
+  },
+  {
+    "id": "py-exc-18",
+    "label": "lista em variável",
+    "expect": "pass",
+    "code": "from random import choice\nrotas = ['a', 'b', 'c']\nprint(choice(rotas))"
+  },
+  {
+    "id": "py-exc-18",
+    "label": "palavras em comentário + print fixo",
+    "expect": "fail",
+    "code": "# from random import choice\n# choice(['a','b','c'])\nprint('a')"
+  },
+  {
+    "id": "py-dict-08",
+    "label": "solução correta (&)",
+    "expect": "pass",
+    "code": "print(rede_a & rede_b)"
+  },
+  {
+    "id": "py-dict-08",
+    "label": "método intersection()",
+    "expect": "pass",
+    "code": "print(rede_a.intersection(rede_b))"
+  },
+  {
+    "id": "py-dict-08",
+    "label": "&= e imprime",
+    "expect": "pass",
+    "code": "rede_a &= rede_b\nprint(rede_a)"
+  },
+  {
+    "id": "py-dict-08",
+    "label": "resposta digitada à mão (& em comentário)",
+    "expect": "fail",
+    "code": "# rede_a & rede_b\nprint({'10.0.0.3'})"
+  },
+  {
+    "id": "py-dict-08",
+    "label": "união em vez de interseção",
+    "expect": "fail",
+    "code": "print(rede_a | rede_b)"
+  },
+  {
+    "id": "py-func-06",
+    "label": "solução correta",
+    "expect": "pass",
+    "code": "def meu_protocolo():\n    \"\"\"Este script faz tal coisa\"\"\"\n    print('OK')\n\nmeu_protocolo()"
+  },
+  {
+    "id": "py-func-06",
+    "label": "aspas simples triplas",
+    "expect": "pass",
+    "code": "def scan():\n    '''Varre a rede.'''\n    print('OK')\n\nscan()"
+  },
+  {
+    "id": "py-func-06",
+    "label": "\"\"\" solto fora de função + print",
+    "expect": "fail",
+    "code": "\"\"\"docstring de mentira\"\"\"\nprint('OK')"
+  },
+  {
+    "id": "py-func-06",
+    "label": "docstring mas função nunca chamada",
+    "expect": "fail",
+    "code": "def f():\n    \"\"\"Doc.\"\"\"\n    print('OK')\n\nprint('OK')"
+  },
+  {
+    "id": "py-loop-06",
+    "label": "solução correta",
+    "expect": "pass",
+    "code": "for d in dados:\n    if d == 0:\n        continue\n    print(d)"
+  },
+  {
+    "id": "py-loop-06",
+    "label": "sem continue (if != 0)",
+    "expect": "fail",
+    "code": "for d in dados:\n    if d != 0:\n        print(d)"
+  },
+  {
+    "id": "py-loop-06",
+    "label": "continue em comentário + prints fixos",
+    "expect": "fail",
+    "code": "# continue\nprint(10)\nprint(50)\nprint(30)"
+  },
+  {
+    "id": "py-loop-25",
+    "label": "while correto",
+    "expect": "pass",
+    "code": "a, b = 0, 1\ncontador = 0\nwhile contador < 7:\n    print(a)\n    a, b = b, a + b\n    contador += 1"
+  },
+  {
+    "id": "py-loop-25",
+    "label": "for com comentário de while do starter",
+    "expect": "fail",
+    "code": "a, b = 0, 1\ncontador = 0\n# while contador < 7: print(a); a, b = b, a + b; contador += 1\nfor _ in range(7):\n    print(a)\n    a, b = b, a + b"
+  },
+  {
+    "id": "py-exc-16",
+    "label": "re-raise capturado no try externo",
+    "expect": "pass",
+    "code": "try:\n    try:\n        int('xyz')\n    except ValueError:\n        print('logado')\n        raise\nexcept ValueError:\n    print('escalado')"
+  },
+  {
+    "id": "py-exc-16",
+    "label": "sem raise (prints fixos)",
+    "expect": "fail",
+    "code": "# raise\nprint('logado')\nprint('escalado')"
+  },
+  {
+    "id": "py-exc-16",
+    "label": "raise ValueError() novo em vez de raise nu",
+    "expect": "fail",
+    "code": "try:\n    try:\n        int('xyz')\n    except ValueError:\n        print('logado')\n        raise ValueError('outro')\nexcept ValueError:\n    print('escalado')"
+  },
+  {
+    "id": "py-exc-16",
+    "label": "raise nu sem try externo (quebra)",
+    "expect": "fail",
+    "code": "try:\n    int('xyz')\nexcept ValueError:\n    print('logado')\n    raise"
+  },
+  {
+    "id": "ds-pandas-01",
+    "label": "pd.DataFrame em comentário, imprime o dict",
+    "expect": "fail",
+    "code": "import pandas as pd\n# pd.DataFrame(dados)\nprint(dados)"
+  },
+  {
+    "id": "ds-pandas-01",
+    "label": "from pandas import DataFrame",
+    "expect": "pass",
+    "code": "from pandas import DataFrame\nprint(DataFrame(dados))"
+  },
+  {
+    "id": "ds-pandas-02",
+    "label": "df.IP",
+    "expect": "pass",
+    "code": "print(df.IP)"
+  },
+  {
+    "id": "ds-pandas-02",
+    "label": "comentário + df inteiro",
+    "expect": "fail",
+    "code": "# df['IP']\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-03",
+    "label": "df.loc[:, [...]]",
+    "expect": "pass",
+    "code": "print(df.loc[:, ['IP', 'Risco']])"
+  },
+  {
+    "id": "ds-pandas-03",
+    "label": "comentário + df inteiro",
+    "expect": "fail",
+    "code": "# ['IP', 'Risco']\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-04",
+    "label": "df.query",
+    "expect": "pass",
+    "code": "print(df.query('Risco > 8'))"
+  },
+  {
+    "id": "ds-pandas-04",
+    "label": "comentário + df inteiro",
+    "expect": "fail",
+    "code": "# df['Risco'] > 8\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-04",
+    "label": "limite errado (> 1)",
+    "expect": "fail",
+    "code": "print(df[df['Risco'] > 1])"
+  },
+  {
+    "id": "ds-pandas-05",
+    "label": "atributos df.Ataques",
+    "expect": "pass",
+    "code": "df['Saldo'] = df.Ataques - df.Defesas\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-05",
+    "label": "comentário + df sem coluna",
+    "expect": "fail",
+    "code": "# df['Saldo']\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-05",
+    "label": "soma em vez de diferença",
+    "expect": "fail",
+    "code": "df['Saldo'] = df['Ataques'] + df['Defesas']\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-07",
+    "label": "comentário + df inteiro",
+    "expect": "fail",
+    "code": "# .head\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-07",
+    "label": "iloc[:5] sem head",
+    "expect": "fail",
+    "code": "print(df.iloc[:5])"
+  },
+  {
+    "id": "ds-pandas-07",
+    "label": "head(5) explícito",
+    "expect": "pass",
+    "code": "print(df.head(5))"
+  },
+  {
+    "id": "ds-pandas-08",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# .describe\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-09",
+    "label": "comentário + tupla fixa",
+    "expect": "fail",
+    "code": "# .shape\nprint((3, 3))"
+  },
+  {
+    "id": "ds-pandas-09",
+    "label": "desempacotando shape",
+    "expect": "pass",
+    "code": "linhas, colunas = df.shape\nprint((linhas, colunas))"
+  },
+  {
+    "id": "ds-pandas-10",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# rename Endereco\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-10",
+    "label": "inplace=True",
+    "expect": "pass",
+    "code": "df.rename(columns={'IP': 'Endereco'}, inplace=True)\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-12",
+    "label": "isnull()",
+    "expect": "pass",
+    "code": "print(df.isnull().sum())"
+  },
+  {
+    "id": "ds-pandas-12",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# isna\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-13",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# fillna\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-13",
+    "label": "fillna(1) em vez de 0",
+    "expect": "fail",
+    "code": "print(df.fillna(1))"
+  },
+  {
+    "id": "ds-pandas-14",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# dropna\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-15",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# drop_duplicates\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-16",
+    "label": "comentário + dtype original",
+    "expect": "fail",
+    "code": "# astype\nprint(df['Valor'].dtype)"
+  },
+  {
+    "id": "ds-pandas-16",
+    "label": "astype('int64') sem reatribuir",
+    "expect": "pass",
+    "code": "print(df['Valor'].astype('int64').dtype)"
+  },
+  {
+    "id": "ds-pandas-19",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# .loc\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-19",
+    "label": "linha errada loc[1]",
+    "expect": "fail",
+    "code": "print(df.loc[1])"
+  },
+  {
+    "id": "ds-pandas-20",
+    "label": "comentário + df",
+    "expect": "fail",
+    "code": "# .iloc\nprint(df)"
+  },
+  {
+    "id": "ds-pandas-20",
+    "label": "posição errada iloc[0]",
+    "expect": "fail",
+    "code": "print(df.iloc[0])"
+  },
+  {
+    "id": "ds-numpy-01",
+    "label": "comentário + lista Python",
+    "expect": "fail",
+    "code": "import numpy as np\n# np.array\nprint([10, 20, 30, 40, 50])"
+  },
+  {
+    "id": "ds-numpy-01",
+    "label": "np.array(lista) * 10",
+    "expect": "pass",
+    "code": "import numpy as np\nlista = [1, 2, 3, 4, 5]\nprint(np.array(lista) * 10)"
+  },
+  {
+    "id": "ds-numpy-02",
+    "label": "comentário + valores antigos errados",
+    "expect": "fail",
+    "code": "# np.mean np.std\nprint(29.0)\nprint(8.0)"
+  },
+  {
+    "id": "ds-numpy-02",
+    "label": "métodos temp.mean()/temp.std()",
+    "expect": "pass",
+    "code": "print(temp.mean())\nprint(temp.std())"
+  },
+  {
+    "id": "ds-numpy-03",
+    "label": "comentário + texto fixo",
+    "expect": "fail",
+    "code": "# np.zeros\nprint('[0. 0. 0.]')"
+  },
+  {
+    "id": "ds-numpy-04",
+    "label": "comentário + texto fixo",
+    "expect": "fail",
+    "code": "# np.arange\nprint('[0 1 2 3 4 5 6 7 8 9]')"
+  },
+  {
+    "id": "ds-numpy-04",
+    "label": "np.arange(0, 10)",
+    "expect": "pass",
+    "code": "print(np.arange(0, 10))"
+  },
+  {
+    "id": "ds-numpy-05",
+    "label": "comentário + arr",
+    "expect": "fail",
+    "code": "# reshape\nprint(arr)"
+  },
+  {
+    "id": "ds-numpy-05",
+    "label": "np.reshape(arr, (2, 3))",
+    "expect": "pass",
+    "code": "print(np.reshape(arr, (2, 3)))"
+  },
+  {
+    "id": "ds-numpy-06",
+    "label": "comentário + arr inteiro",
+    "expect": "fail",
+    "code": "# arr > 3\nprint(arr)"
+  },
+  {
+    "id": "ds-numpy-06",
+    "label": "máscara em variável",
+    "expect": "pass",
+    "code": "mask = arr > 3\nprint(arr[mask])"
+  },
+  {
+    "id": "ds-numpy-07",
+    "label": "comentário + texto fixo",
+    "expect": "fail",
+    "code": "import numpy as np\n# np.random\nprint('[0.5488135  0.71518937 0.60276338]')"
+  },
+  {
+    "id": "ds-numpy-07",
+    "label": "sem seed",
+    "expect": "fail",
+    "code": "import numpy as np\nprint(np.random.rand(3))"
+  },
+  {
+    "id": "ds-ts-01",
+    "label": "to_datetime só em comentário",
+    "expect": "fail",
+    "code": "import pandas as pd\n# pd.to_datetime\nprint('2024-03-15')"
+  },
+  {
+    "id": "ds-ts-01",
+    "label": "chamada real",
+    "expect": "pass",
+    "code": "import pandas as pd\nprint(pd.to_datetime('2024-03-15'))"
+  },
+  {
+    "id": "py-loop-04",
+    "label": "solução com comentário junto",
+    "expect": "pass",
+    "code": "contador = 3\nwhile contador > 0:  # laço principal\n    print(contador)\n    contador -= 1"
+  },
+  {
+    "id": "py-dict-01",
+    "label": "chaves em outra ordem",
+    "expect": "pass",
+    "code": "usuario = {'nivel': 5, 'nome': 'Neo'}\nprint(usuario)"
+  },
+  {
+    "id": "py-dict-01",
+    "label": "cria mas não imprime",
+    "expect": "fail",
+    "code": "usuario = {'nome': 'Neo', 'nivel': 5}"
+  },
+  {
+    "id": "py-dict-20",
+    "label": "loop com get",
+    "expect": "pass",
+    "code": "contagem = {}\nfor e in eventos:\n    contagem[e] = contagem.get(e, 0) + 1\nprint(contagem)"
+  },
+  {
+    "id": "ds-llm-12",
+    "label": "outros 3 passos",
+    "expect": "pass",
+    "code": "passos = ['entender', 'planejar', 'executar']\nprint(' -> '.join(passos))"
+  },
+  {
+    "id": "ds-llm-12",
+    "label": "4 passos",
+    "expect": "fail",
+    "code": "passos = ['a', 'b', 'c', 'd']\nprint(' -> '.join(passos))"
+  },
+  {
+    "id": "ds-llm-24",
+    "label": "variáveis certas, conta errada",
+    "expect": "fail",
+    "code": "preco_input = 0.005\npreco_output = 0.015\nprint((1000 * preco_input + 500 * preco_output))"
+  },
+  {
+    "id": "ds-ml-23",
+    "label": "MSE arredondado (tolerância)",
+    "expect": "pass",
+    "code": "from sklearn.metrics import mean_squared_error\nprint(round(mean_squared_error(y_real, y_pred), 4))"
+  },
+  {
+    "id": "ds-ml-23",
+    "label": "MAE em vez de MSE",
+    "expect": "fail",
+    "code": "print(sum(abs(a - b) for a, b in zip(y_real, y_pred)) / 3)"
+  },
+  {
+    "id": "ds-stat-01",
+    "label": "5.0 em vez de 5",
+    "expect": "pass",
+    "code": "import statistics\nprint(float(statistics.mean(dados)))\nprint(statistics.median(dados))"
+  },
+  {
+    "id": "ds-stat-01",
+    "label": "média e mediana trocadas",
+    "expect": "fail",
+    "code": "import statistics\nprint(statistics.median(dados))\nprint(statistics.mean(dados))"
+  },
+  {
+    "id": "ds-stat-01",
+    "label": "funções só em comentário + valores fixos",
+    "expect": "fail",
+    "code": "# statistics.mean statistics.median\nprint(5)\nprint(4.5)"
+  },
+  {
+    "id": "ds-ml-29",
+    "label": "imprime sem chamar fit",
+    "expect": "fail",
+    "code": "from sklearn.cluster import DBSCAN\ndbs = DBSCAN()\nprint('DBSCAN ok.')"
+  },
+  {
+    "id": "ds-ts-13",
+    "label": "ARIMA/order/fit só em comentário",
+    "expect": "fail",
+    "code": "# ARIMA(serie, order=(1,1,1)).fit()\nprint('ARIMA treinado.')\nprint('ARIMA treinado.')"
+  },
+  {
+    "id": "ds-viz-03",
+    "label": "solução do jogador com starter completo",
+    "expect": "pass",
+    "code": "categorias = ['Core', 'Edge', 'DMZ']\nvalores = [12, 7, 4]\n# plt.bar e plt.show\nplt.bar(categorias, valores)\nplt.show()"
+  },
+  {
+    "id": "ds-viz-03",
+    "label": "valores errados no gráfico",
+    "expect": "fail",
+    "code": "categorias = ['Core', 'Edge', 'DMZ']\nvalores = [1, 2, 3]\nplt.bar(categorias, valores)\nplt.show()"
+  },
+  {
+    "id": "ds-nlp-01",
+    "label": "split sem argumento x tokens errados",
+    "expect": "fail",
+    "code": "print(['O', 'sistema'])"
+  }
+]

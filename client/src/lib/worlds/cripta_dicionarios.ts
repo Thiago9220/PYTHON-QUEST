@@ -14,6 +14,9 @@ export const CRIPTA_DICIONARIOS_WORLD: World = {
   challenges: [
     {
       id: "py-dict-01",
+      introStory: "A Cripta Hash guarda o registro de cada cidadão em pares de chave e valor. Encontrei algo estranho aqui: perfis marcados como 'risco' sem nenhum motivo registrado. Guarde isso. Primeiro, aprenda a abrir a cripta.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "cripta-dicionarios",
       title: "Inicialização do Cofre",
       description: "Crie um dicionário chamado 'usuario' com as chaves 'nome' (valor 'Neo') e 'nivel' (valor 5). Imprima o dicionário.",

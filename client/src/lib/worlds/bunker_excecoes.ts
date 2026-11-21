@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { KERNEL_PANIC_BOSS } from "../bosses/kernel_panic";
 
 export const BUNKER_EXCECOES_WORLD: World = {
   id: "bunker-excecoes",
@@ -9,9 +10,13 @@ export const BUNKER_EXCECOES_WORLD: World = {
   bgImage: "/assets/images/worlds/exceptions.png",
   lore: "Em sistemas críticos da CorpHQ, um único erro pode travar todo o núcleo e disparar alarmes. No Bunker de Exceções, você aprenderá a capturar erros (Try/Except) graciosamente e usar Módulos externos para estender suas capacidades.",
   unlockRequirement: 0,
+  boss: KERNEL_PANIC_BOSS,
   challenges: [
     {
       id: "py-exc-01",
+      introStory: "Última camada antes do Core. O Bunker é onde a CorpHQ esconde as próprias falhas: cada erro é capturado e apagado dos registros. Aprenda a capturar exceções e talvez a gente descubra o que eles estão apagando.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "bunker-excecoes",
       title: "Contenção de Falhas (Try/Except)",
       description: "Tente dividir 10 por 0 usando o bloco try/except. No except, imprima 'Erro Detectado'.",

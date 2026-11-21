@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from "./worlds_en";
 
 export const CHALLENGES_EN_DS2A: Record<string, LocalizedChallengeFields> = {
   "ds-stat-01": {
+    introStory: "AURORA is never certain, she calculates probabilities. The trouble starts when 'likely' becomes 'guilty'. Learn statistics and you'll be able to prove when she's wrong.",
     "title": "Mean, Median & Mode",
     "description": "Given dados=[2,4,4,4,5,5,7,9], compute and print the mean and median using statistics.",
     "narrative": "The three measures of central tendency are your first line of telemetry inspection.",
@@ -392,6 +393,7 @@ export const CHALLENGES_EN_DS2A: Record<string, LocalizedChallengeFields> = {
     "successStory": "Error trade-off understood."
   },
   "ds-ts-01": {
+    introStory: "AURORA forecasts the city's future: traffic, energy, crowds. Her forecasts become orders. To challenge them, you need to understand how time series work.",
     "title": "Pandas Datetime",
     "description": "Convert the string '2024-03-15' to a Timestamp using pd.to_datetime and print it.",
     "narrative": "Everything in time series starts with converting raw string telemetry into proper datetime objects.",

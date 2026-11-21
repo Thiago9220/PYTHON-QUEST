@@ -14,6 +14,9 @@ export const FORTALEZA_OOP_WORLD: World = {
   challenges: [
     {
       id: "py-oop-01",
+      introStory: "A Fortaleza fabrica os autômatos que patrulham a cidade. Cada um é um objeto: dados e comportamento no mesmo pacote. Para invadir a fábrica, você vai construir os seus próprios.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "fortaleza-oop",
       title: "O Molde da Classe",
       description: "Crie uma classe vazia chamada 'Bot'. Em seguida, crie uma instância dessa classe chamada 'meu_bot' e imprima o tipo (type) de 'meu_bot'.",

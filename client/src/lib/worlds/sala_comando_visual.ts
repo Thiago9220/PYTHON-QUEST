@@ -7,11 +7,14 @@ export const SALA_COMANDO_VISUAL_WORLD: World = {
   icon: "line-chart",
   color: "#22D3EE",
   bgImage: "/assets/images/worlds/visual_command.png",
-  lore: "Transforme números em insights visuais. Construa gráficos, dashboards e mapas de calor que revelam padrões ocultos nos dados da rede.",
+  lore: "Desta sala, AURORA observa a cidade inteira em painéis e mapas de calor. Aprenda a transformar números em gráficos e você vai enxergar a cidade com os olhos dela — inclusive o que ela prefere não mostrar.",
   unlockRequirement: 16000,
   challenges: [
     {
       id: "ds-viz-01",
+      introStory: "Esta é a sala de onde AURORA observa a cidade. Painéis, gráficos, mapas de calor. Se aprendermos a ler o que ela lê, veremos a cidade com os olhos dela.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "sala-comando-visual",
       title: "Primeiro Gráfico",
       description: "Importe matplotlib.pyplot como plt. Plote [1,2,3] e exiba com plt.show().",

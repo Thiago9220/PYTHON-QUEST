@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from './worlds_en';
 
 export const CHALLENGES_EN_2B: Record<string, LocalizedChallengeFields> = {
   "py-oop-01": {
+    introStory: "The Fortress builds the automatons that patrol the city. Each one is an object: data and behavior in the same package. To breach the factory, you'll build your own.",
     "title": "The Class Blueprint",
     "description": "Create an empty class named 'Bot'. Then, create an instance of this class named 'meu_bot' and print the type (type) of 'meu_bot'.",
     "narrative": "Before assembling an army of automatons, we need the blueprint. Define the foundational structure of Bot so we can instantiate it in memory.",
@@ -239,6 +240,7 @@ export const CHALLENGES_EN_2B: Record<string, LocalizedChallengeFields> = {
     "successStory": "Equivalence criterion activated. The system now validates content equivalence rather than raw memory addresses."
   },
   "py-exc-01": {
+    introStory: "Last layer before the Core. The Bunker is where CorpHQ hides its own failures: every error is caught and erased from the logs. Learn to catch exceptions and maybe we'll find out what they're erasing.",
     "title": "Fault Containment (Try/Except)",
     "description": "Attempt to divide 10 by 0 inside a try/except block. In the except block, print 'Erro Detectado'.",
     "narrative": "Division by zero triggers a fatal Kernel panic. Deploy the Try/Except shield to intercept the arithmetic blast and keep system services running.",

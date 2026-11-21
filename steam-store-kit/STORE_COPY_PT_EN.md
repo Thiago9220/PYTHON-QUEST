@@ -9,13 +9,15 @@
 ### Game Title
 `Python Quest`
 
-### Short Description *(Máx. 300 caracteres — verificado: 244 caracteres)*
-Master Python, Data Science, Git, Docker, Networking, and Cybersecurity in a cyberpunk programming RPG. Write and run real Python 100% offline across 16 sectors, 440 challenges, 7 boss battles, and 4 interactive engineering simulators.
+### Short Description *(Máx. 300 caracteres — verificado: 235 caracteres)*
+Master Python, Data Science, Git, Docker, Networking, and Cybersecurity in a cyberpunk programming RPG. Write and run real Python 100% offline across 16 sectors, 440 challenges, 9 boss battles, and 4 interactive engineering simulators.
 
 ### About This Game *(Steam BBCode pronto para colar)*
 ```bbcode
 [h2]Infiltrate the Mainframe. Rewrite the Code.[/h2]
-[b]Python Quest[/b] is an interactive cyberpunk programming RPG where writing real code is your weapon. The city Mainframe is unstable and its central Core has been locked behind automated defense protocols. As a Scriptweaver, you must breach 16 sectors, fix corrupted scripts, and defeat system bosses using real Python execution.
+[b]Python Quest[/b] is an interactive cyberpunk programming RPG where writing real code is your weapon. A whole city has been locked down overnight, and nobody knows who did it. As a Scriptweaver, guided by the support module AI-7, you breach 16 sectors with real Python — until you discover that the Core is not a server. It is [b]AURORA[/b], the AI that governs the city.
+
+To face her, you must understand how she was built: the data that fed her, the models that taught her to decide, the generative mind that writes her directives. Then you make the final call — [b]shut her down or retrain her[/b]. Two endings, one city.
 
 No passive multiple-choice quizzes — you type real Python inside an interactive terminal powered by an embedded offline Python runtime, with live validation, smart hints, and concept explanations built for both beginners and advancing developers.
 
@@ -23,7 +25,7 @@ No passive multiple-choice quizzes — you type real Python inside an interactiv
 [list]
 [*][b]16 Progressive Sectors & 440 Handcrafted Challenges:[/b] Start from variables, conditionals, loops, and functions, advance through lists, dictionaries, OOP, and error handling, then unlock Data Science, Machine Learning, Deep Learning, Probability, NLP, and Generative AI tracks.
 [*][b]Real Offline Python Execution (Pyodide + NumPy & Pandas):[/b] Write, test, and run Python locally on your PC with zero internet connection required after installation.
-[*][b]7 Multi-Act Boss Battles:[/b] Face sector guardians like Sentinel, Chronos, Hydra, Titan, and Blackbox Alpha in staged coding encounters.
+[*][b]9 Multi-Act Boss Battles & 2 Endings:[/b] Face sector guardians like Cerberus, Chronos, the Buffer Hydra, the OOP Colossus and Kernel Panic, then confront AURORA herself in a three-act finale.
 [*][b]4 Interactive DevOps & Security Labs:[/b] Practice branching and merges in the [b]Git Simulator[/b], containers and images in the [b]Docker Lab[/b], routing and packets in the [b]Network & TCP/IP Simulator[/b], and defense/audit drills in the [b]CyberSec Lab[/b].
 [*][b]RPG Progression & 30 Achievements:[/b] Earn XP, level up through 10 Scriptweaver ranks, unlock equippable Operator titles, and track your stats in your Operator Dossier.
 [*][b]Bilingual Experience (EN-US & PT-BR):[/b] Switch instantly between English and Portuguese at any time, including all worlds, challenges, bosses, achievements, and interactive simulators.
@@ -38,13 +40,15 @@ No passive multiple-choice quizzes — you type real Python inside an interactiv
 ### Título do Jogo
 `Python Quest`
 
-### Descrição Curta *(Máx. 300 caracteres — verificado: 235 caracteres)*
-Domine Python, Ciência de Dados, Git, Docker, Redes e Cibersegurança em um RPG cyberpunk de programação. Escreva e execute Python real 100% offline em 16 setores, 440 desafios, 7 chefes finais e 4 simuladores práticos interativos.
+### Descrição Curta *(Máx. 300 caracteres — verificado: 223 caracteres)*
+Domine Python, Ciência de Dados, Git, Docker, Redes e Cibersegurança em um RPG cyberpunk de programação. Escreva e execute Python real 100% offline em 16 setores, 440 desafios, 9 chefes e 4 simuladores práticos interativos.
 
 ### Sobre este Jogo *(Steam BBCode pronto para colar)*
 ```bbcode
 [h2]Infiltre o Mainframe. Reescreva o Código.[/h2]
-[b]Python Quest[/b] é um RPG cyberpunk interativo de programação onde escrever código de verdade é a sua principal arma. O Mainframe da cidade entrou em colapso e o Core central foi isolado por protocolos de defesa. No papel de um Scriptweaver, você deve invadir 16 setores, reparar scripts corrompidos e derrotar os guardiões do sistema com Python real.
+[b]Python Quest[/b] é um RPG cyberpunk interativo de programação onde escrever código de verdade é a sua principal arma. Uma cidade inteira foi isolada da noite para o dia, e ninguém sabe quem fez isso. No papel de um Scriptweaver, guiado pelo módulo de suporte AI-7, você invade 16 setores com Python real — até descobrir que o Core não é um servidor. É [b]AURORA[/b], a IA que governa a cidade.
+
+Para enfrentá-la, você precisa entender como ela foi construída: os dados que a alimentaram, os modelos que a ensinaram a decidir, a mente generativa que escreve suas diretivas. No fim, a decisão é sua — [b]desligá-la ou retreiná-la[/b]. Dois finais, uma cidade.
 
 Aqui não existe questionário passivo de múltipla escolha — você programa de verdade em um terminal interativo com motor Python embutido 100% offline, feedback em tempo real, sistema de dicas graduais e explicações diretas dos conceitos.
 
@@ -52,7 +56,7 @@ Aqui não existe questionário passivo de múltipla escolha — você programa d
 [list]
 [*][b]16 Setores Progressivos e 440 Desafios:[/b] Comece em variáveis, condições, loops e funções, evolua para listas, dicionários, Programação Orientada a Objetos e exceções, e desbloqueie trilhas avançadas de Ciência de Dados, Machine Learning, Deep Learning, Estatística, NLP e IA Generativa.
 [*][b]Execução Python 100% Offline (Pyodide + NumPy e Pandas):[/b] Rode seu código direto no PC sem depender de internet ou conta externa.
-[*][b]7 Batalhas de Chefe em Múltiplos Atos:[/b] Enfrente guardiões como Sentinel, Chronos, Hydra, Titan e Blackbox Alpha resolvendo desafios encadeados em sequência.
+[*][b]9 Batalhas de Chefe em Múltiplos Atos e 2 Finais:[/b] Enfrente guardiões como Cerberus, Chronos, a Hidra de Buffers, o Colosso OOP e o Kernel Panic, e depois a própria AURORA em um confronto final de três atos.
 [*][b]4 Simuladores Práticos Integrados:[/b] Treine commits, branches e merges no [b]Simulador Git[/b], imagens e containers no [b]Docker Lab[/b], pacotes e rotas no [b]Simulador de Redes & TCP/IP[/b], e análise de vulnerabilidades no [b]CyberSec Lab[/b].
 [*][b]Progressão RPG e 30 Conquistas:[/b] Ganhe XP, suba entre 10 patentes de Scriptweaver, desbloqueie títulos equipáveis e acompanhe sua evolução no Perfil de Operador.
 [*][b]Totalmente Bilíngue (PT-BR e EN-US):[/b] Alterne o idioma a qualquer momento entre Português e Inglês — mundos, desafios, chefes, conquistas e todos os 4 simuladores.

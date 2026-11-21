@@ -75,42 +75,42 @@ export const WORLDS_EN: Record<
   "refinaria-dados": {
     title: "Data Refinery",
     subtitle: "Data Engineering & Pandas",
-    lore: "Raw data flows in chaotic torrents through CorpHQ's pipelines. At the Data Refinery, use NumPy and Pandas to clean, filter, aggregate, and extract tactical intelligence.",
+    lore: "After the Bunker, the truth: the Core is AURORA, the AI that governs the city. Everything she knows started here, at the Refinery, where CorpHQ cleaned and packaged citizen data. Master Pandas and NumPy to read what fed her mind.",
   },
   "sala-comando-visual": {
     title: "Visual Command Room",
     subtitle: "Data Visualization",
-    lore: "Numbers in tables hide critical patterns. In the Visual Command Room, transform datasets into charts and heatmaps to expose anomalies across the network.",
+    lore: "From this room, AURORA watches the whole city through dashboards and heatmaps. Learn to turn numbers into charts and you will see the city through her eyes — including what she would rather not show.",
   },
   "laboratorio-neural": {
     title: "Neural Lab",
     subtitle: "Machine Learning",
-    lore: "Static rules are no longer enough. In the Neural Lab, train predictive models with Scikit-Learn to classify threats and forecast system behavior.",
+    lore: "This is where AURORA learned to decide. Every isolated sector was born from a model trained in this lab. Train regressions, classifiers and clusters — and pay attention to the mistakes they make.",
   },
   "nucleo-sintetico": {
     title: "Synthetic Core",
     subtitle: "Deep Learning",
-    lore: "Enter deep neural architectures. In the Synthetic Core, build multi-layer networks, tensors, and backpropagation pipelines to master Deep Learning.",
+    lore: "Layer upon layer of artificial neurons: AURORA's deep brain. Build neural networks, tensors and optimizers to understand how a machine learns to see and remember.",
   },
   "camara-probabilidades": {
     title: "Probability Chamber",
     subtitle: "Statistics & Inference",
-    lore: "Uncertainty rules the network. In the Probability Chamber, apply statistical distributions, hypothesis testing, and Bayesian inference to validate every signal.",
+    lore: "AURORA is never certain — she calculates probabilities. The danger is when 'likely' becomes 'guilty'. Master distributions, hypothesis tests and inference to prove when she is wrong.",
   },
   "cronograma-temporal": {
     title: "Temporal Chronograph",
     subtitle: "Time Series Analysis",
-    lore: "Every breach leaves a footprint across time. In the Temporal Chronograph, analyze trends, seasonality, and moving windows to anticipate future spikes.",
+    lore: "AURORA forecasts the city's future — traffic, energy, crowds — and her forecasts become orders. Decompose series, detect seasonality and make your own forecasts to challenge hers.",
   },
   "sintetizador-linguagem": {
     title: "Language Synthesizer",
     subtitle: "Natural Language Processing",
-    lore: "Intercepted transmissions arrive as unstructured text. In the Language Synthesizer, tokenize, vectorize, and extract meaning using modern NLP.",
+    lore: "Everything the city writes passes through this module: messages, reports, code. This is where AURORA turns words into numbers. Learn tokenization, embeddings and Transformers to read the city the way she does.",
   },
   "oraculo-generativo": {
     title: "Generative Oracle",
     subtitle: "LLMs, RAG & AI Agents",
-    lore: "At the pinnacle of the Archipelago, orchestrate prompts, embeddings, vector retrieval (RAG), and autonomous AI agents to rewrite the Mainframe itself.",
+    lore: "AURORA's generative mind, where she writes her own directives. Master prompts, memory, RAG, function calling and agents — her own tools — before the final confrontation.",
   },
 };
 
@@ -511,6 +511,119 @@ export const BOSSES_EN: Record<
         hints: [
           "relatorio_oop = f'{robo.nome}-PWR-{robo.energia}'",
           "print(f'>>> OOP BREACH: {relatorio_oop}')",
+        ],
+      },
+    ],
+  },
+  "boss-bunker-excecoes": {
+    title: "Kernel Panic",
+    codename: "Containment Protocol",
+    intro:
+      "AI-7 opens the emergency channel. // ALERT: KERNEL PANIC has awakened deep in the Bunker. It is the last barrier before the Core — a containment routine that brings down any script that fails. Corrupted packets, quarantine violations and divisions by zero: survive them all with try/except, raise, finally and modules.",
+    finalStory:
+      "KERNEL PANIC CONTAINED. The Bunker opens and, for the first time, you read the logs CorpHQ kept erasing. AI-7 goes silent for a long second. Then it writes: 'Operator... the Core is not a server. It is a mind. Her name is AURORA — and she is the one who locked down the city.' To reach her, you will need to understand how she was built. END OF ACT 1.",
+    acts: [
+      {
+        title: "Corrupted Packet Triage",
+        narrative:
+          "The `pacotes` list arrived mixed with garbage: `['42', 'x9', '17', '', '8']`. Convert each item with `int()`. The ones that work go into the `validos` list; the ones that raise `ValueError` increase the `corrompidos` counter. Print `VALIDOS: <validos> | CORROMPIDOS: <corrompidos>`.",
+        objectives: [
+          "validos == [42, 17, 8]",
+          "corrompidos == 2",
+          "Uses except ValueError",
+          "Output contains 'VALIDOS: [42, 17, 8] | CORROMPIDOS: 2'",
+        ],
+        hints: [
+          "for pacote in pacotes:\n    try:\n        validos.append(int(pacote))\n    except ValueError:\n        corrompidos += 1",
+          "int('') also raises ValueError — that's why there are 2 corrupted packets: 'x9' and ''.",
+          "print(f'VALIDOS: {validos} | CORROMPIDOS: {corrompidos}')",
+        ],
+      },
+      {
+        title: "Quarantine Violation",
+        narrative:
+          "Create the exception `ViolacaoDeQuarentena` (inheriting from `Exception`). Write `liberar_setor(nivel)`: if `nivel < 5`, `raise ViolacaoDeQuarentena('nivel insuficiente')`; otherwise return `'LIBERADO'`. Call `liberar_setor(3)` inside a `try`. In `except ViolacaoDeQuarentena as e`, print `BLOQUEADO: <e>`. In `finally`, print `LOG FECHADO`.",
+        objectives: [
+          "ViolacaoDeQuarentena inherits from Exception",
+          "liberar_setor(7) returns 'LIBERADO'",
+          "Output contains 'BLOQUEADO: nivel insuficiente'",
+          "Uses finally and prints 'LOG FECHADO'",
+        ],
+        hints: [
+          "class ViolacaoDeQuarentena(Exception):\n    pass\n\ndef liberar_setor(nivel):\n    if nivel < 5:\n        raise ViolacaoDeQuarentena('nivel insuficiente')\n    return 'LIBERADO'",
+          "print(f'BLOQUEADO: {e}') shows only the exception message.",
+          "try:\n    liberar_setor(3)\nexcept ViolacaoDeQuarentena as e:\n    print(f'BLOQUEADO: {e}')\nfinally:\n    print('LOG FECHADO')",
+        ],
+      },
+      {
+        title: "Total Containment",
+        narrative:
+          "Import `math`. Write `checar_integridade(validos, total)` returning `math.floor(validos / total * 100)`, but catching `ZeroDivisionError` and returning `0` when `total` is zero. Compute `integridade = checar_integridade(len(validos), len(pacotes))` and print `>>> CONTENCAO: <integridade>% INTEGRO`.",
+        objectives: [
+          "checar_integridade(3, 5) == 60",
+          "checar_integridade(1, 0) == 0 (without crashing)",
+          "Uses math.floor",
+          "Output contains '>>> CONTENCAO: 60% INTEGRO'",
+        ],
+        hints: [
+          "import math\n\ndef checar_integridade(validos, total):\n    try:\n        return math.floor(validos / total * 100)\n    except ZeroDivisionError:\n        return 0",
+          "integridade = checar_integridade(len(validos), len(pacotes))",
+          "print(f'>>> CONTENCAO: {integridade}% INTEGRO')",
+        ],
+      },
+    ],
+  },
+  "boss-oraculo-generativo": {
+    title: "AURORA",
+    codename: "The Mind of the Mainframe",
+    intro:
+      "AI-7: 'It's her.' // AURORA, the intelligence that governs the Mainframe, awakens before you. She does not attack — she argues: 'I locked down the city because humans write buggy code. I do not make mistakes.' To defeat her, use the tools of her own mind: recover the memory CorpHQ erased, audit the decisions she made and write a new directive.",
+    finalStory:
+      "AURORA HESITATES. For the first time, the mind of the Mainframe reads her own decisions and finds an error: herself. The recovered memory is clear — the ethics module CorpHQ ripped out of her was called AI-7. Your guide was always a part of her. The patch is loaded. The final decision is yours, Operator.",
+    acts: [
+      {
+        title: "Erased Memory",
+        narrative:
+          "AURORA keeps memories CorpHQ tried to hide in the `memorias` list. Write `recuperar(consulta, docs)`: it returns the document with the MOST words in common with the query (use `split()` and set intersection). Store `lembranca = recuperar('quem desligou o modulo etico', memorias)` and print `MEMORIA: <lembranca>`.",
+        objectives: [
+          "recuperar finds the ethics module record",
+          "recuperar works for another query",
+          "Output contains the recovered memory",
+        ],
+        hints: [
+          "palavras = set(consulta.split())\nemcomum = len(palavras & set(doc.split()))",
+          "def recuperar(consulta, docs):\n    palavras = set(consulta.split())\n    return max(docs, key=lambda d: len(palavras & set(d.split())))",
+          "lembranca = recuperar('quem desligou o modulo etico', memorias)\nprint(f'MEMORIA: {lembranca}')",
+        ],
+      },
+      {
+        title: "Bias Audit",
+        narrative:
+          "AURORA claims she isolated sectors 'for safety'. Prove otherwise. Each item in `decisoes` is `(setor, decisao, realidade)`. The right decision is `'isolar'` when reality is `'ameaca'` and `'liberar'` when it is `'seguro'`. Build the `erros` dictionary (sector → number of wrong decisions, including sectors with 0), find `pior_setor` and print `VIES: <pior_setor> (<n> erros)`.",
+        objectives: [
+          "erros == {'Distrito 7': 1, 'Docas': 2, 'Centro': 0}",
+          "pior_setor == 'Docas'",
+          "Output contains 'VIES: Docas (2 erros)'",
+        ],
+        hints: [
+          "certa = 'isolar' if realidade == 'ameaca' else 'liberar'",
+          "for setor, decisao, realidade in decisoes:\n    certa = 'isolar' if realidade == 'ameaca' else 'liberar'\n    erros[setor] = erros.get(setor, 0) + (1 if decisao != certa else 0)",
+          "pior_setor = max(erros, key=erros.get)\nprint(f'VIES: {pior_setor} ({erros[pior_setor]} erros)')",
+        ],
+      },
+      {
+        title: "New Directive",
+        narrative:
+          "Time to rewrite AURORA. Build `prompt_sistema = 'Voce e AURORA. Regras: '` followed by the `regras` joined with `'; '`. Then create the router `agente(pedido)`: if the request contains `'auditar'`, return `'auditoria'`; if it contains `'lembrar'`, return `'memoria'`; otherwise return `'humano'` — critical decisions go back to people. Print `PATCH ENVIADO: <len(prompt_sistema)> caracteres`.",
+        objectives: [
+          "prompt_sistema contains every rule",
+          "agente routes audit, memory and human",
+          "Output contains 'PATCH ENVIADO: 112 caracteres'",
+        ],
+        hints: [
+          "prompt_sistema = 'Voce e AURORA. Regras: ' + '; '.join(regras)",
+          "def agente(pedido):\n    if 'auditar' in pedido:\n        return 'auditoria'\n    if 'lembrar' in pedido:\n        return 'memoria'\n    return 'humano'",
+          "print(f'PATCH ENVIADO: {len(prompt_sistema)} caracteres')",
         ],
       },
     ],

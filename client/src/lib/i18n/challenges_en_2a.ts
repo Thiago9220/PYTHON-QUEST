@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from './worlds_en';
 
 export const CHALLENGES_EN_2A: Record<string, LocalizedChallengeFields> = {
   "py-func-01": {
+    introStory: "Your scripts are getting too long, Operator. CorpHQ's engineers kept reusable routines in this Repository. Let's borrow the idea: package what you do into functions.",
     title: "Handshake Subroutine",
     description: "Define a function named `saudar` that receives `nome` and prints 'Ola, [nome]!'. Call the subroutine passing the name 'Admin'.",
     narrative: "The primary mainframe must respond to incoming packets dynamically. Encapsulate the greeting command into a reusable subroutine.",
@@ -247,6 +248,7 @@ export const CHALLENGES_EN_2A: Record<string, LocalizedChallengeFields> = {
     successStory: "Signature formally typed. Static verification checks passed, approving subroutine integration into the primary repository.",
   },
   "py-dict-01": {
+    introStory: "The Hash Vault stores every citizen's record as key-value pairs. I found something strange here: profiles flagged as 'risk' with no recorded reason. Remember that. First, learn to open the vault.",
     title: "Vault Initialization",
     description: "Create a dictionary named `usuario` with the keys 'nome' (value 'Neo') and 'nivel' (value 5). Print the dictionary.",
     narrative: "To organize operative telemetry in a structured hash store, instantiate a dictionary mapping each identity attribute to its value.",

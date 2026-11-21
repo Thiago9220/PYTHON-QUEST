@@ -7,11 +7,14 @@ export const SINTETIZADOR_LINGUAGEM_WORLD: World = {
   icon: "languages",
   color: "#818CF8",
   bgImage: "/assets/images/worlds/language_synth.png",
-  lore: "Texto é o protocolo mais antigo da humanidade. Aqui você aprende a extrair sentido de strings: tokenização, embeddings, classificação e os Transformers que potencializam toda IA moderna.",
+  lore: "Tudo o que a cidade escreve passa por este módulo: mensagens, denúncias, código. É aqui que AURORA transforma palavras em números. Aprenda tokenização, embeddings e Transformers para ler a cidade como ela lê.",
   unlockRequirement: 26000,
   challenges: [
     {
       id: "ds-nlp-01",
+      introStory: "Ela lê tudo o que a cidade escreve: mensagens, denúncias, código. Este é o módulo que transforma palavras em números para AURORA. Aprenda a fazer o mesmo.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "sintetizador-linguagem",
       title: "Tokenização Básica",
       description: "Divida a frase 'O sistema foi invadido' em tokens com .split() e imprima o resultado.",

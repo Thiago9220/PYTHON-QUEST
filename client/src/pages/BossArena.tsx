@@ -21,6 +21,7 @@ import { useBossEngine } from "@/hooks/useBossEngine";
 import { getWorldById } from "@/lib/challenges";
 import { BossIntroModal } from "@/components/BossIntroModal";
 import { BossVictoryModal } from "@/components/BossVictoryModal";
+import { EndingSequence } from "@/components/EndingSequence";
 import PythonEditor from "@/components/PythonEditor";
 
 interface Props {
@@ -54,6 +55,7 @@ export default function BossArena({ worldId, onBack }: Props) {
   const wasDefeated = boss ? isBossDefeated(boss.id) : false;
   const [showIntro, setShowIntro] = useState(!wasDefeated);
   const [showVictory, setShowVictory] = useState(false);
+  const [showEnding, setShowEnding] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [runStartedAt, setRunStartedAt] = useState<number | null>(
     wasDefeated ? Date.now() : null
@@ -71,11 +73,11 @@ export default function BossArena({ worldId, onBack }: Props) {
 
   // Trigger victory modal
   useEffect(() => {
-    if (engine.defeated && !showVictory) {
+    if (engine.defeated && !showVictory && !showEnding) {
       const id = setTimeout(() => setShowVictory(true), 1500);
       return () => clearTimeout(id);
     }
-  }, [engine.defeated, showVictory]);
+  }, [engine.defeated, showVictory, showEnding]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -502,10 +504,19 @@ export default function BossArena({ worldId, onBack }: Props) {
               hintsUsed={engine.hintsUsed}
               onClose={() => {
                 setShowVictory(false);
-                onBack();
+                if (boss.isFinal) {
+                  setShowEnding(true);
+                } else {
+                  onBack();
+                }
               }}
             />
           )}
+        </AnimatePresence>
+
+        {/* Final da campanha: escolha, epílogo e créditos */}
+        <AnimatePresence>
+          {showEnding && <EndingSequence themeColor={themeColor} onFinish={onBack} />}
         </AnimatePresence>
     </motion.div >
   );

@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from "./worlds_en";
 
 export const CHALLENGES_EN_DS1B: Record<string, LocalizedChallengeFields> = {
   "ds-ml-01": {
+    introStory: "This is where AURORA learned to decide. Every isolated sector came from a model trained in this lab. Train your own and pay attention to the mistakes they make. We'll need that.",
     title: "Supervised Training",
     description: "Import LinearRegression. Create 'modelo' and train with modelo.fit(X, y).",
     narrative: "Initialize a linear regression model to predict incoming attack intensity.",
@@ -392,6 +393,7 @@ export const CHALLENGES_EN_DS1B: Record<string, LocalizedChallengeFields> = {
     successStory: "Dimensionality compressed while preserving variance.",
   },
   "ds-dl-01": {
+    introStory: "Layer upon layer of artificial neurons: AURORA's deep brain. Don't be scared of the scale. Deep down, each layer is just math you already know how to do.",
     title: "Network Awakening",
     description: "Assemble a dictionary config with camadas_ocultas=3 and tensores=128. Print config['tensores'].",
     narrative: "Initialize the deep neural matrix architecture.",

@@ -14,6 +14,9 @@ export const MONTANHA_LOOPS_WORLD: World = {
   challenges: [
     {
       id: "py-loop-01",
+      introStory: "Tem algo varrendo a rede em ciclos, procurando intrusos. Para passar despercebido, você precisa pensar como ele: em loops. Repetir, sem errar, milhares de vezes.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "montanha-loops",
       title: "Varredura de Sequência",
       description: "Use o comando for e a função range() para imprimir os números de 0 a 4.",

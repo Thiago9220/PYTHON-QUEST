@@ -1,4 +1,5 @@
 import { World } from "../types";
+import { AURORA_FINAL_BOSS } from "../bosses/aurora_final";
 
 export const ORACULO_GENERATIVO_WORLD: World = {
   id: "oraculo-generativo",
@@ -7,11 +8,15 @@ export const ORACULO_GENERATIVO_WORLD: World = {
   icon: "wand-sparkles",
   color: "#C084FC",
   bgImage: "/assets/images/worlds/generative_oracle.png",
-  lore: "A vanguarda absoluta. LLMs como Claude e GPT redefinem o que software pode fazer. Aqui você aprende prompt engineering, RAG, function calling, agents e o ecossistema de IA generativa que dominou 2024-2026.",
+  lore: "A mente generativa de AURORA, onde ela escreve as próprias diretivas. Domine prompts, memória, RAG, function calling e agentes — as mesmas ferramentas dela — antes do confronto final.",
   unlockRequirement: 28000,
+  boss: AURORA_FINAL_BOSS,
   challenges: [
     {
       id: "ds-llm-01",
+      introStory: "Chegamos, Operador. O Oráculo é a mente generativa de AURORA, onde ela escreve as próprias diretivas. Antes de enfrentá-la, domine as ferramentas dela: prompts, memória, RAG, agentes. Estranho... tenho a sensação de que já estive aqui antes.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "oraculo-generativo",
       title: "Cliente OpenAI",
       description: "Crie cliente = OpenAI() e imprima 'Cliente inicializado.'.",

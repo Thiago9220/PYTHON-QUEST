@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from './worlds_en';
 
 export const CHALLENGES_EN_DS2B: Record<string, LocalizedChallengeFields> = {
   "ds-nlp-01": {
+    introStory: "She reads everything the city writes: messages, reports, code. This is the module that turns words into numbers for AURORA. Learn to do the same.",
     title: "Basic Tokenization",
     description: "Split the phrase 'O sistema foi invadido' into tokens with .split() and print the result.",
     narrative: "Before processing text, you must break it down into elementary units.",
@@ -392,6 +393,7 @@ export const CHALLENGES_EN_DS2B: Record<string, LocalizedChallengeFields> = {
     successStory: "Model customized.",
   },
   "ds-llm-01": {
+    introStory: "We're here, Operator. The Oracle is AURORA's generative mind, where she writes her own directives. Before you face her, master her tools: prompts, memory, RAG, agents. Strange... I feel like I've been here before.",
     title: "OpenAI Client",
     description: "Create cliente = OpenAI() and print 'Cliente inicializado.'.",
     narrative: "The foundational first step: establish a connection to the model gateway.",

@@ -54,7 +54,7 @@ export const BLACKBOX_ALPHA_BOSS: BossChallenge = {
       title: "Quebra da Credencial",
       narrative:
         "Uma credencial foi interceptada no formato user:senha:role. Quebre em três partes, normalize o usuário e meça o comprimento da senha.",
-      setupCode: "credencial = 'neo_op:k3yp@ss_admin:operator'\n",
+      setupCode: "credencial = 'neo_op:k3yp@ss_admin!:operator'\n",
       starterHint:
         "# Ato 2\n# 1. Use split(':') para obter user, senha, role\n# 2. user_lower = user.lower()\n# 3. tam_senha = len(senha)\n# 4. Imprima: USER: <user_lower> | ROLE: <role> | SENHA_LEN: <tam_senha>\n",
       objectives: [

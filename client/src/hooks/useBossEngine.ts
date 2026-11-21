@@ -161,7 +161,7 @@ export function useBossEngine(
           if (allPassed) {
             return advancing
               ? (isEn ? "Act complete. Advancing..." : "Ato concluído. Avançando...")
-              : (isEn ? "OPERATION BLACKBOX — TOTAL SUCCESS." : "OPERAÇÃO BLACKBOX — SUCESSO TOTAL.");
+              : (isEn ? "PROTOCOL NEUTRALIZED — TOTAL SUCCESS." : "PROTOCOLO NEUTRALIZADO — SUCESSO TOTAL.");
           }
           return isEn ? "Check pending objectives." : "Verifique os objetivos pendentes.";
         })(),

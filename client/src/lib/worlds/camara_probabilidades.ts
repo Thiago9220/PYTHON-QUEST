@@ -7,11 +7,14 @@ export const CAMARA_PROBABILIDADES_WORLD: World = {
   icon: "sigma",
   color: "#34D399",
   bgImage: "/assets/images/worlds/probability_chamber.png",
-  lore: "Sem pensamento estatístico, você apenas roda modelos. Aqui você aprende a interpretar dados com rigor: testes de hipótese, distribuições, p-values e inferência bayesiana.",
+  lore: "AURORA nunca tem certeza — ela calcula probabilidades. O perigo é quando 'provável' vira 'culpado'. Domine distribuições, testes de hipótese e inferência para provar quando ela está errada.",
   unlockRequirement: 22000,
   challenges: [
     {
       id: "ds-stat-01",
+      introStory: "AURORA nunca tem certeza, ela calcula probabilidades. O problema começa quando 'provável' vira 'culpado'. Aprenda estatística e você vai conseguir provar quando ela erra.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "camara-probabilidades",
       title: "Média, Mediana e Moda",
       description: "Dado dados=[2,4,4,4,5,5,7,9], calcule e imprima a média (mean) e a mediana (median) usando statistics.",

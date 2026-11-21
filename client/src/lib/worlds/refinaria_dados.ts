@@ -7,11 +7,14 @@ export const REFINARIA_DADOS_WORLD: World = {
   icon: "bar-chart-3",
   color: "#A78BFA",
   bgImage: "/assets/images/worlds/data_refinery.png",
-  lore: "Aprenda a domar fluxos massivos de dados brutos. Pandas e NumPy são as ferramentas de elite para limpar, transformar e analisar tabelas de bilhões de linhas.",
+  lore: "Depois do Bunker, a verdade: o Core é AURORA, a IA que governa a cidade. Tudo o que ela sabe começou aqui, na Refinaria, onde a CorpHQ limpava e empacotava os dados dos cidadãos. Domine Pandas e NumPy para ler o que alimentou a mente dela.",
   unlockRequirement: 14000,
   challenges: [
     {
       id: "ds-pandas-01",
+      introStory: "Operador... os registros do Bunker não mentem. O Core é AURORA, a inteligência que governa a cidade, e foi ela que isolou os setores. Para chegar até ela, precisamos entender como foi construída. Tudo começou aqui, na Refinaria, com os dados dos cidadãos.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "refinaria-dados",
       title: "O Primeiro DataFrame",
       description: "Importe pandas como pd. Crie um DataFrame a partir do dicionário 'dados' e imprima-o.",

@@ -7,11 +7,14 @@ export const NUCLEO_SINTETICO_WORLD: World = {
   icon: "sparkles",
   color: "#FBBF24",
   bgImage: "/assets/images/worlds/synthetic_core.png",
-  lore: "O auge da IA. Redes neurais profundas, visão computacional e processamento de linguagem natural — a fronteira do conhecimento cibernético.",
+  lore: "Camadas e mais camadas de neurônios artificiais: o cérebro profundo de AURORA. Construa redes neurais, tensores e otimizadores para entender como uma máquina aprende a ver e a lembrar.",
   unlockRequirement: 20000,
   challenges: [
     {
       id: "ds-dl-01",
+      introStory: "Camadas sobre camadas de neurônios artificiais: o cérebro profundo de AURORA. Não se assuste com a escala. No fundo, cada camada é só uma conta que você já sabe fazer.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "nucleo-sintetico",
       title: "Despertar da Rede",
       description: "Monte um dicionario config com camadas_ocultas=3 e tensores=128. Imprima config['tensores'].",

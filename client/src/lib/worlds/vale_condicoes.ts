@@ -14,6 +14,9 @@ export const VALE_CONDICOES_WORLD: World = {
   challenges: [
     {
       id: "py-cond-01",
+      introStory: "Bypass inicial concluído, Operador. O próximo bloqueio é o Nó de Roteamento: cada pacote da cidade passa por aqui e é aceito ou descartado por regras da CorpHQ. Quem controla as decisões controla o tráfego. Vamos começar pelo if.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "vale-condicoes",
       title: "Firewall de Acesso",
       description: "Use o operador if para verificar se a idade é maior ou igual a 18. Se for, imprima 'Acesso Permitido'.",

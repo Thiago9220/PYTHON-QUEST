@@ -7,11 +7,14 @@ export const LABORATORIO_NEURAL_WORLD: World = {
   icon: "brain",
   color: "#F472B6",
   bgImage: "/assets/images/worlds/neural_lab.png",
-  lore: "Treine modelos preditivos. Regressão, classificação e clustering — ensine máquinas a tomar decisões a partir de dados históricos.",
+  lore: "Foi aqui que AURORA aprendeu a decidir. Cada setor isolado nasceu de um modelo treinado neste laboratório. Treine regressões, classificadores e clusters — e preste atenção nos erros que eles cometem.",
   unlockRequirement: 18000,
   challenges: [
     {
       id: "ds-ml-01",
+      introStory: "Foi aqui que AURORA aprendeu a decidir. Cada setor isolado veio de um modelo treinado neste laboratório. Treine os seus e repare nos erros que eles cometem. Vamos precisar disso.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "laboratorio-neural",
       title: "Treinamento Supervisionado",
       description: "Importe LinearRegression. Crie 'modelo' e treine com modelo.fit(X, y).",

@@ -54,6 +54,8 @@ export type BossChallenge = {
   unlockThreshold: number;
   xpReward: number;
   acts: BossAct[];
+  /** Chefe final da campanha: a vitória abre a escolha de final e os créditos. */
+  isFinal?: boolean;
 };
 
 export type World = {

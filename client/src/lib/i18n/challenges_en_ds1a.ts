@@ -2,6 +2,7 @@ import type { LocalizedChallengeFields } from './worlds_en';
 
 export const CHALLENGES_EN_DS1A: Record<string, LocalizedChallengeFields> = {
   "ds-pandas-01": {
+    introStory: "Operator... the Bunker logs don't lie. The Core is AURORA, the intelligence that governs the city, and she's the one who isolated the sectors. To reach her, we need to understand how she was built. It all started here, at the Refinery, with the citizens' data.",
     "title": "The First DataFrame",
     "description": "Import pandas as pd. Create a DataFrame from the dictionary 'dados' and print it.",
     "narrative": "Welcome to the Refinery. Raw data here is useless—you need to structure it into a DataFrame, the fundamental building block of data science.",
@@ -392,6 +393,7 @@ export const CHALLENGES_EN_DS1A: Record<string, LocalizedChallengeFields> = {
     "successStory": "Controlled entropy generated."
   },
   "ds-viz-01": {
+    introStory: "This is the room AURORA watches the city from. Dashboards, charts, heatmaps. If we learn to read what she reads, we'll see the city through her eyes.",
     "title": "First Plot",
     "description": "Import matplotlib.pyplot as plt. Plot [1,2,3] and display it with plt.show().",
     "narrative": "Activate the graphical telemetry renderer for the defense grid.",

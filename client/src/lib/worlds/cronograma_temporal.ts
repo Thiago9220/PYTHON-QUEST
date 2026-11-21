@@ -7,11 +7,14 @@ export const CRONOGRAMA_TEMPORAL_WORLD: World = {
   icon: "clock",
   color: "#FB923C",
   bgImage: "/assets/images/worlds/temporal_chronograph.png",
-  lore: "Dados que dependem do tempo precisam de técnicas próprias. Aqui você aprende a decompor séries, detectar sazonalidade e prever o futuro com ARIMA, Prophet e LSTM.",
+  lore: "AURORA prevê o futuro da cidade — tráfego, energia, multidões — e as previsões viram ordens. Decomponha séries, detecte sazonalidade e faça suas próprias previsões para contestar as dela.",
   unlockRequirement: 24000,
   challenges: [
     {
       id: "ds-ts-01",
+      introStory: "AURORA prevê o futuro da cidade: tráfego, energia, multidões. As previsões viram ordens. Para contestá-las, você precisa entender como funcionam as séries temporais.",
+      introNpc: "AI-7",
+      introAvatar: "/avatars/ai7_guide.png",
       worldId: "cronograma-temporal",
       title: "Datetime no Pandas",
       description: "Converta a string '2024-03-15' para Timestamp com pd.to_datetime e imprima.",

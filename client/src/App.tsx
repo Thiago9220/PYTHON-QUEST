@@ -16,6 +16,8 @@ import { SteamControls } from "./components/SteamControls";
 import { BootSplash } from "./components/BootSplash";
 import { PauseMenuModal } from "./components/PauseMenuModal";
 import { isSteamMode, toggleDesktopFullscreen } from "./lib/platform";
+import { soundManager, type MusicContext } from "./lib/sounds";
+import { WORLDS } from "./lib/challenges";
 
 // Code splitting for heavy screens & interactive simulators
 const ChallengeList = lazy(() => import("./pages/ChallengeList"));
@@ -47,6 +49,23 @@ type View =
   | { name: "docker-simulator" }
   | { name: "network-simulator" }
   | { name: "cybersec-simulator" };
+
+// Os mundos a partir da Refinaria de Dados formam o Ato 2 da campanha.
+const ACT_TWO_START = WORLDS.findIndex((w) => w.id === "refinaria-dados");
+
+/** Clima da trilha para cada tela. */
+function musicFor(view: View): MusicContext {
+  if (view.name === "boss") {
+    const world = WORLDS.find((w) => w.id === view.worldId);
+    return world?.boss?.isFinal ? "final" : "chefe";
+  }
+  if (view.name === "list" || view.name === "arena") {
+    const index = WORLDS.findIndex((w) => w.id === view.worldId);
+    return ACT_TWO_START >= 0 && index >= ACT_TWO_START ? "ato2" : "ato1";
+  }
+  if (view.name.endsWith("-simulator")) return "ato1";
+  return "menu";
+}
 
 function ViewFallback() {
   const { t } = useLanguage();
@@ -132,6 +151,11 @@ function AppContent({
     localStorage.setItem("python_quest_current_view", JSON.stringify(view));
     setPauseOpen(false);
     window.scrollTo(0, 0);
+  }, [view]);
+
+  // Trilha sonora acompanha a tela (mesmo clima não reinicia a música).
+  useEffect(() => {
+    soundManager.startAmbientMusic(musicFor(view));
   }, [view]);
 
   // Handle initial redirection se o usuario ja viu a introducao
