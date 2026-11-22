@@ -368,7 +368,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
         <AnimatePresence>
           {engine.showCutscene && challenge.successStory && (
             <DialogueCutscene
-              npc={challenge.successNpc ?? "Mentor Aurora"}
+              npc={challenge.successNpc ?? "AI-7"}
               avatar={challenge.successAvatar ?? "PY"}
               text={challenge.successStory}
               themeColor={themeColor}
@@ -380,7 +380,7 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
         <AnimatePresence>
           {engine.showIntroCutscene && challenge.introStory && (
             <DialogueCutscene
-              npc={challenge.introNpc ?? "Mentor Aurora"}
+              npc={challenge.introNpc ?? "AI-7"}
               avatar={challenge.introAvatar ?? "PY"}
               text={challenge.introStory}
               themeColor={themeColor}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getLocalizedLevelTitle, getLocalizedWorld, getLocalizedWorldTag } from "@/lib/i18n/localize";
-import { isSteamMode } from "@/lib/platform";
+import { isDemoLocked, isSteamMode } from "@/lib/platform";
 import { Codex } from "@/components/Codex";
 import { AchievementsModal } from "@/components/AchievementsModal";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -52,9 +52,11 @@ type Props = {
   onOpenDockerSimulator: () => void;
   onOpenNetworkSimulator: () => void;
   onOpenCyberSecSimulator: () => void;
+  /** Demo: o jogador clicou num setor do jogo completo. */
+  onDemoLocked?: () => void;
 };
 
-export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator, onOpenNetworkSimulator, onOpenCyberSecSimulator }: Props) {
+export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimulator, onOpenDockerSimulator, onOpenNetworkSimulator, onOpenCyberSecSimulator, onDemoLocked }: Props) {
   const {
     state,
     dispatch,
@@ -70,6 +72,9 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
   const { level, title, progress } = getPlayerLevel();
   const localizedTitle = getLocalizedLevelTitle(title, lang);
   const unlockedAchievements = state.achievements.filter((a) => a.unlocked);
+  const fullGameLabel = lang === "en" ? "Full game" : "Jogo completo";
+  const lockedLabel = (worldId: string, xpRequired: number) =>
+    isDemoLocked(worldId) ? fullGameLabel : `${xpRequired.toLocaleString()} ${t("xpRequired")}`;
   const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -375,6 +380,8 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                 onClick={() => {
                   if (unlocked) {
                     onSelectWorld(world.id);
+                  } else if (isDemoLocked(world.id) && onDemoLocked) {
+                    onDemoLocked();
                   } else {
                     showLockedToast(world.unlockRequirement);
                   }
@@ -420,7 +427,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                       <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
                         <Lock className="w-6 h-6 text-slate-400" />
                       </div>
-                      <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} {t("xpRequired")}</span>
+                      <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{lockedLabel(world.id, world.unlockRequirement)}</span>
                     </div>
                   )}
 
@@ -521,6 +528,8 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                   onClick={() => {
                     if (unlocked) {
                       onSelectWorld(world.id);
+                    } else if (isDemoLocked(world.id) && onDemoLocked) {
+                      onDemoLocked();
                     } else {
                       showLockedToast(world.unlockRequirement);
                     }
@@ -563,7 +572,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
                         <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl backdrop-blur-md">
                           <Lock className="w-6 h-6 text-slate-400" />
                         </div>
-                        <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{world.unlockRequirement.toLocaleString()} {t("xpRequired")}</span>
+                        <span className="mt-3 text-slate-300 font-black text-[10px] uppercase tracking-[0.2em] bg-slate-900/80 border border-white/10 px-4 py-1.5 rounded-full">{lockedLabel(world.id, world.unlockRequirement)}</span>
                       </div>
                     )}
 

@@ -190,7 +190,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: bridgeProfile?.id || STEAM_DEFAULT_USER_ID,
             email: "steam@local",
             displayName: parsed.displayName || bridgeProfile?.displayName || "Operador Steam",
-            avatarEmoji: parsed.avatarEmoji || bridgeProfile?.avatarEmoji || "/avatars/hacker.webp",
+            // hacker.webp nunca existiu: saves antigos com ele voltam ao avatar padrão.
+            avatarEmoji:
+              (parsed.avatarEmoji !== "/avatars/hacker.webp" && parsed.avatarEmoji) ||
+              (bridgeProfile?.avatarEmoji !== "/avatars/hacker.webp" && bridgeProfile?.avatarEmoji) ||
+              "/avatars/avatar_1.png",
             avatarUrl: parsed.avatarUrl || null,
           },
           isLoading: false,

@@ -27,7 +27,7 @@ No passive multiple-choice quizzes — you type real Python inside an interactiv
 [*][b]Real Offline Python Execution (Pyodide + NumPy & Pandas):[/b] Write, test, and run Python locally on your PC with zero internet connection required after installation.
 [*][b]9 Multi-Act Boss Battles & 2 Endings:[/b] Face sector guardians like Cerberus, Chronos, the Buffer Hydra, the OOP Colossus and Kernel Panic, then confront AURORA herself in a three-act finale.
 [*][b]4 Interactive DevOps & Security Labs:[/b] Practice branching and merges in the [b]Git Simulator[/b], containers and images in the [b]Docker Lab[/b], routing and packets in the [b]Network & TCP/IP Simulator[/b], and defense/audit drills in the [b]CyberSec Lab[/b].
-[*][b]RPG Progression & 30 Achievements:[/b] Earn XP, level up through 10 Scriptweaver ranks, unlock equippable Operator titles, and track your stats in your Operator Dossier.
+[*][b]RPG Progression & 32 Achievements:[/b] Earn XP, level up through 10 Scriptweaver ranks, unlock equippable Operator titles, and track your stats in your Operator Dossier.
 [*][b]Bilingual Experience (EN-US & PT-BR):[/b] Switch instantly between English and Portuguese at any time, including all worlds, challenges, bosses, achievements, and interactive simulators.
 [*][b]Built for Desktop Play:[/b] Fullscreen support (F11), keyboard menu navigation, Steam Auto-Cloud compatible local saves, and Study Mode helpers when you want to review a solution.
 [/list]
@@ -58,7 +58,7 @@ Aqui não existe questionário passivo de múltipla escolha — você programa d
 [*][b]Execução Python 100% Offline (Pyodide + NumPy e Pandas):[/b] Rode seu código direto no PC sem depender de internet ou conta externa.
 [*][b]9 Batalhas de Chefe em Múltiplos Atos e 2 Finais:[/b] Enfrente guardiões como Cerberus, Chronos, a Hidra de Buffers, o Colosso OOP e o Kernel Panic, e depois a própria AURORA em um confronto final de três atos.
 [*][b]4 Simuladores Práticos Integrados:[/b] Treine commits, branches e merges no [b]Simulador Git[/b], imagens e containers no [b]Docker Lab[/b], pacotes e rotas no [b]Simulador de Redes & TCP/IP[/b], e análise de vulnerabilidades no [b]CyberSec Lab[/b].
-[*][b]Progressão RPG e 30 Conquistas:[/b] Ganhe XP, suba entre 10 patentes de Scriptweaver, desbloqueie títulos equipáveis e acompanhe sua evolução no Perfil de Operador.
+[*][b]Progressão RPG e 32 Conquistas:[/b] Ganhe XP, suba entre 10 patentes de Scriptweaver, desbloqueie títulos equipáveis e acompanhe sua evolução no Perfil de Operador.
 [*][b]Totalmente Bilíngue (PT-BR e EN-US):[/b] Alterne o idioma a qualquer momento entre Português e Inglês — mundos, desafios, chefes, conquistas e todos os 4 simuladores.
 [*][b]Feito para PC/Steam:[/b] Tela cheia (F11), menu principal e pause via teclado (ESC), save local compatível com Steam Auto-Cloud e modo de estudo para consulta.
 [/list]
@@ -88,8 +88,17 @@ Aqui não existe questionário passivo de múltipla escolha — você programa d
 - `library/library_capsule_600x900.png` — Capa Vertical da Biblioteca (`600×900`)
 - `library/library_hero_3840x1240.png` — Banner Hero da Biblioteca sem texto (`3840×1240`)
 - `library/library_logo_1280x420.png` — Logo transparente da Biblioteca (`1280×420`)
-- `achievements/color_256/*.png` — 30 ícones coloridos `256×256` para conquistas desbloqueadas
-- `achievements/locked_bw_256/*.png` — 30 ícones em escala de cinza `256×256` para conquistas bloqueadas
+- `achievements/color_256/*.png` — 32 ícones coloridos `256×256` para conquistas desbloqueadas
+- `achievements/locked_bw_256/*.png` — 32 ícones em escala de cinza `256×256` para conquistas bloqueadas
+
+**Conquistas novas para cadastrar no Steamworks** (o *API Name* precisa ser idêntico ao `id` do jogo):
+
+| API Name | Nome (PT / EN) | Ícone |
+|---|---|---|
+| `boss_kernel_panic` | Fim do Ato 1 / End of Act 1 | `kernel_panic.png` |
+| `boss_aurora` | Diretiva Reescrita / Directive Rewritten | `aurora.png` |
+
+Títulos renomeados no jogo (atualize também no Steamworks se já tiverem sido cadastrados): `Vila Organizada` → `Alpha Liberado`, `Vale Mapeado` → `Nó Mapeado`, `Montanha Sincronizada` → `Ciclos Sincronizados`, `Floresta Entregue` → `Repositório Completo`.
 
 ---
 

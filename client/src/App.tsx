@@ -15,7 +15,8 @@ import { DevPanel } from "./components/DevPanel";
 import { SteamControls } from "./components/SteamControls";
 import { BootSplash } from "./components/BootSplash";
 import { PauseMenuModal } from "./components/PauseMenuModal";
-import { isSteamMode, toggleDesktopFullscreen } from "./lib/platform";
+import { isDemoBuild, isSteamMode, toggleDesktopFullscreen } from "./lib/platform";
+import { DemoUpsellModal } from "./components/DemoUpsellModal";
 import { soundManager, type MusicContext } from "./lib/sounds";
 import { WORLDS } from "./lib/challenges";
 
@@ -88,6 +89,9 @@ function AppContent({
 }) {
   const { state, hasHydrated } = useGame();
   const [pauseOpen, setPauseOpen] = useState(false);
+  // Demo: "locked" ao tentar abrir conteúdo do jogo completo, "completed" ao terminar a demo.
+  const [demoUpsell, setDemoUpsell] = useState<null | "locked" | "completed">(null);
+  const guardDemo = (open: () => void) => (isDemoBuild() ? setDemoUpsell("locked") : open());
   const [view, setViewState] = useState<View>(() => {
     // Steam desktop always opens into Main Menu like a native PC game
     if (isSteamMode()) {
@@ -199,10 +203,11 @@ function AppContent({
           <WorldMap
             onSelectWorld={goList}
             onOpenProfile={goProfile}
-            onOpenGitSimulator={() => navigate({ name: "git-simulator" })}
-            onOpenDockerSimulator={() => navigate({ name: "docker-simulator" })}
-            onOpenNetworkSimulator={() => navigate({ name: "network-simulator" })}
-            onOpenCyberSecSimulator={() => navigate({ name: "cybersec-simulator" })}
+            onOpenGitSimulator={() => guardDemo(() => navigate({ name: "git-simulator" }))}
+            onOpenDockerSimulator={() => guardDemo(() => navigate({ name: "docker-simulator" }))}
+            onOpenNetworkSimulator={() => guardDemo(() => navigate({ name: "network-simulator" }))}
+            onOpenCyberSecSimulator={() => guardDemo(() => navigate({ name: "cybersec-simulator" }))}
+            onDemoLocked={() => setDemoUpsell("locked")}
           />
         )}
 
@@ -228,6 +233,10 @@ function AppContent({
           <BossArena
             worldId={view.worldId}
             onBack={() => goList(view.worldId)}
+            onDemoComplete={() => {
+              goList(view.worldId);
+              setDemoUpsell("completed");
+            }}
           />
         )}
 
@@ -256,6 +265,13 @@ function AppContent({
           canReturnToMap={view.name !== "map"}
           onGoToMap={goMap}
           onGoToMainMenu={goMainMenu}
+        />
+      )}
+
+      {demoUpsell && (
+        <DemoUpsellModal
+          completed={demoUpsell === "completed"}
+          onClose={() => setDemoUpsell(null)}
         />
       )}
 

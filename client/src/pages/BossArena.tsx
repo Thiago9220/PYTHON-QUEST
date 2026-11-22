@@ -22,14 +22,17 @@ import { getWorldById } from "@/lib/challenges";
 import { BossIntroModal } from "@/components/BossIntroModal";
 import { BossVictoryModal } from "@/components/BossVictoryModal";
 import { EndingSequence } from "@/components/EndingSequence";
+import { DEMO_WORLD_IDS, isDemoBuild } from "@/lib/platform";
 import PythonEditor from "@/components/PythonEditor";
 
 interface Props {
   worldId: string;
   onBack: () => void;
+  /** Demo: chamado ao vencer o chefe do último setor liberado. */
+  onDemoComplete?: () => void;
 }
 
-export default function BossArena({ worldId, onBack }: Props) {
+export default function BossArena({ worldId, onBack, onDemoComplete }: Props) {
   const { dispatch, isBossDefeated, isBossUnlocked } = useGame();
   const { t, lang } = useLanguage();
   const rawWorld = getWorldById(worldId);
@@ -506,6 +509,12 @@ export default function BossArena({ worldId, onBack }: Props) {
                 setShowVictory(false);
                 if (boss.isFinal) {
                   setShowEnding(true);
+                } else if (
+                  isDemoBuild() &&
+                  onDemoComplete &&
+                  boss.worldId === DEMO_WORLD_IDS[DEMO_WORLD_IDS.length - 1]
+                ) {
+                  onDemoComplete();
                 } else {
                   onBack();
                 }

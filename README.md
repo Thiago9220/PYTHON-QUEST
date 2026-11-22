@@ -108,7 +108,12 @@ com o Pyodide offline de `client/public/pyodide` e confere que:
   nenhuma resposta errada no Modo Estudo);
 - as tentativas de [`tests/challenges/attempts.json`](tests/challenges/attempts.json)
   dão o resultado esperado (respostas erradas falham, alternativas corretas passam);
-- nos mundos de Ciência de Dados, saída a mais é rejeitada.
+- nos mundos de Ciência de Dados, saída a mais é rejeitada;
+- todo ato de todo chefe pode ser vencido com a solução de referência de
+  [`tests/challenges/boss-solutions.ts`](tests/challenges/boss-solutions.ts). Ao criar
+  ou mudar um chefe, atualize esse arquivo.
+
+`npm test` roda essa suíte e os testes rápidos (como o do modo demo).
 
 Ao escrever um `testCode`:
 
@@ -118,6 +123,38 @@ Ao escrever um `testCode`:
 - Calcule o valor esperado no próprio teste quando ele depender de pandas/numpy:
   o Pyodide é wasm32 (ex.: `astype(int)` vira `int32`).
 - Adicione ao `attempts.json` pelo menos uma resposta errada que deve falhar.
+
+## 🎵 Trilha sonora
+
+Cada tela escolhe um clima de música (`menu`, `ato1`, `ato2`, `chefe`, `final`) em
+[`App.tsx`](client/src/App.tsx). O jogo procura os arquivos abaixo e, se algum não
+existir, toca um ambiente sintetizado do mesmo clima:
+
+| Arquivo | Onde toca |
+|---|---|
+| `client/public/music/menu.mp3` | Menu principal, boas-vindas, mapa e perfil |
+| `client/public/music/ato1.mp3` | Setores de Python (Ato 1) e simuladores |
+| `client/public/music/ato2.mp3` | Setores de Ciência de Dados e IA (Ato 2) |
+| `client/public/music/chefe.mp3` | Batalhas de chefe |
+| `client/public/music/final.mp3` | Chefe final (AURORA) e créditos |
+
+Use faixas instrumentais que fechem em loop e confira a licença de uso comercial.
+
+## 🎮 Demo (Steam Next Fest)
+
+```bash
+npm run steam:demo
+```
+
+Gera a demo em `client/release/steam-demo/win-unpacked`, com os dois primeiros setores
+(Terminal Alpha e Nó de Roteamento) e seus chefes. O restante aparece trancado como
+"Jogo completo", e vencer o Sentinela Cerberus abre a tela de fim da demo. O save é o
+mesmo do jogo completo, então o progresso continua após a compra.
+
+Antes de enviar, preencha `VITE_STEAM_STORE_APPID` em
+[`client/.env.demo`](client/.env.demo) com o App ID do jogo completo. É ele que faz o
+botão "Adicionar à lista de desejos" abrir a página da loja. A demo é um app separado
+no Steamworks, com App ID próprio.
 
 ## 🤝 Créditos
 

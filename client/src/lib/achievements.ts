@@ -11,22 +11,22 @@ export type Achievement = {
 };
 
 export const ACHIEVEMENTS_ROOT: Achievement[] = [
-  { id: "first_query", title: "Primeiro Script", description: "Complete seu primeiro desafio Python", icon: "/achievements/first_query.png", unlocked: false, titleReward: "Aprendiz Aurora" },
+  { id: "first_query", title: "Primeiro Script", description: "Complete seu primeiro desafio Python", icon: "/achievements/first_query.png", unlocked: false, titleReward: "Aprendiz do Core" },
   { id: "xp_250_explorer", title: "Primeiros Pontos", description: "Acumule 250 XP", icon: "/achievements/xp_bronze.png", unlocked: false, titleReward: "Visitante do Porto" },
   { id: "xp_500", title: "Codigo em Movimento", description: "Acumule 500 XP", icon: "/achievements/xp_500.png", unlocked: false, titleReward: "Explorador Python" },
   { id: "xp_1000", title: "Rotina de Estudos", description: "Acumule 1.000 XP", icon: "/achievements/xp_1000.png", unlocked: false, titleReward: "Praticante Python" },
   { id: "xp_1500_dedicated", title: "Oficina Ativa", description: "Acumule 1.500 XP", icon: "/achievements/xp_scroll.png", unlocked: false, titleReward: "Construtor de Scripts" },
-  { id: "world_vila-variaveis_complete", title: "Vila Organizada", description: "Complete todos os desafios da Vila das Variáveis", icon: "/achievements/village.png", unlocked: false, titleReward: "Técnico da Vila" },
-  { id: "world_vale-condicoes_complete", title: "Vale Mapeado", description: "Complete todos os desafios do Vale das Condições", icon: "/achievements/valley.png", unlocked: false, titleReward: "Guia de Decisões" },
+  { id: "world_vila-variaveis_complete", title: "Alpha Liberado", description: "Complete todos os desafios do Terminal Alpha", icon: "/achievements/village.png", unlocked: false, titleReward: "Técnico Alpha" },
+  { id: "world_vale-condicoes_complete", title: "Nó Mapeado", description: "Complete todos os desafios do Nó de Roteamento", icon: "/achievements/valley.png", unlocked: false, titleReward: "Guia de Decisões" },
   { id: "world_ninho-listas_complete", title: "Ninho Organizado", description: "Complete todos os desafios do Ninho das Listas", icon: "/achievements/nest.png", unlocked: false, titleReward: "Colecionador de Listas" },
-  { id: "world_montanha-loops_complete", title: "Montanha Sincronizada", description: "Complete todos os desafios da Montanha dos Loops", icon: "/achievements/mountain.png", unlocked: false, titleReward: "Operador de Ciclos" },
-  { id: "world_floresta-funcoes_complete", title: "Floresta Entregue", description: "Complete todos os desafios da Floresta das Funções", icon: "/achievements/forest.png", unlocked: false, titleReward: "Artesão de Funções" },
+  { id: "world_montanha-loops_complete", title: "Ciclos Sincronizados", description: "Complete todos os desafios do Setor de Iteração", icon: "/achievements/mountain.png", unlocked: false, titleReward: "Operador de Ciclos" },
+  { id: "world_floresta-funcoes_complete", title: "Repositório Completo", description: "Complete todos os desafios do Repositório de Funções", icon: "/achievements/forest.png", unlocked: false, titleReward: "Artesão de Funções" },
 
   { id: "no_hints", title: "Sem Rodinhas", description: "Complete 3 desafios sem usar dicas", icon: "/achievements/no_hints.png", unlocked: false, titleReward: "Autônomo" },
   { id: "hints_used_5", title: "Estudo Ativo", description: "Use dicas em 5 desafios diferentes", icon: "/achievements/hints.png", unlocked: false, titleReward: "Investigador" },
   { id: "first_try_1", title: "Primeira Execução", description: "Complete 3 desafios na primeira tentativa", icon: "/achievements/precision.png", unlocked: false, titleReward: "Precisão Inicial" },
   { id: "perfect_world", title: "Domínio Total", description: "Complete um mundo inteiro sem usar dicas", icon: "/achievements/perfect.png", unlocked: false, titleReward: "Código Puro" },
-  { id: "two_worlds_complete", title: "Explorador Duplo", description: "Complete 2 mundos inteiros", icon: "/achievements/double_explorer.png", unlocked: false, titleReward: "Navegador Aurora" },
+  { id: "two_worlds_complete", title: "Explorador Duplo", description: "Complete 2 mundos inteiros", icon: "/achievements/double_explorer.png", unlocked: false, titleReward: "Navegador da Rede" },
   { id: "all_worlds_started", title: "Passaporte Carimbado", description: "Complete pelo menos 1 desafio em cada mundo", icon: "/achievements/passport.png", unlocked: false, titleReward: "Viajante Python" },
   { id: "all_complete", title: "Mestre do Protocolo", description: "Complete todos os desafios do jogo", icon: "/achievements/master.png", unlocked: false, titleReward: "Mestre do Protocolo" },
   { id: "streak_3", title: "Hacker Persistente", description: "Mantenha uma sequência de 3 dias ativos", icon: "/achievements/streak.png", unlocked: false, titleReward: "Infiltrador" },
@@ -42,7 +42,16 @@ export const ACHIEVEMENTS_ROOT: Achievement[] = [
   { id: "four_worlds_complete", title: "Vetor Principal", description: "Complete 4 mundos inteiros", icon: "/achievements/four_worlds.png", unlocked: false, titleReward: "Comandante de Setor" },
   { id: "perfect_3_worlds", title: "Trindade do Código", description: "Complete 3 mundos sem usar dicas", icon: "/achievements/trinity.png", unlocked: false, titleReward: "Arquiteto Neo" },
   { id: "all_perfect_worlds", title: "Nirvana Digital", description: "Complete todos os mundos disponíveis sem usar dicas", icon: "/achievements/nirvana.png", unlocked: false, titleReward: "O Iluminado" },
+  { id: "boss_kernel_panic", title: "Fim do Ato 1", description: "Derrote o Kernel Panic no Bunker de Exceções", icon: "/achievements/kernel_panic.png", unlocked: false, titleReward: "Rompe-Bunker" },
+  { id: "boss_aurora", title: "Diretiva Reescrita", description: "Derrote AURORA no Oráculo Generativo", icon: "/achievements/aurora.png", unlocked: false, titleReward: "Operador Lendário" },
 ];
+
+/** Títulos renomeados: saves antigos com o nome velho passam a usar o novo. */
+export const LEGACY_TITLE_REWARDS: Record<string, string> = {
+  "Aprendiz Aurora": "Aprendiz do Core",
+  "Navegador Aurora": "Navegador da Rede",
+  "Técnico da Vila": "Técnico Alpha",
+};
 
 export function getAchievementConditions(state: any) {
   const completed = Object.entries(state.challengeProgress).filter(([, v]: any) => v.completed);
@@ -78,6 +87,8 @@ export function getAchievementConditions(state: any) {
     first_try_20: firstTryCompleted.length >= 20,
     no_hints_10: noHintsCompleted.length >= 10,
     hints_used_1: hintsUsedCompleted.length >= 1,
+    boss_kernel_panic: Boolean(state.bossProgress?.["boss-bunker-excecoes"]?.defeated),
+    boss_aurora: Boolean(state.bossProgress?.["boss-oraculo-generativo"]?.defeated),
     all_worlds_started: WORLDS.every((world) =>
       world.challenges.some((c) => completedIds.includes(c.id))
     ),

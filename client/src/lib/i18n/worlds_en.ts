@@ -367,7 +367,7 @@ export const BOSSES_EN: Record<
     intro:
       "AI-7 establishes a tunnel to the Central Repository. // ALERT: The Modular Architect only accepts code encapsulated in pure functions with explicit `return` values. Build a library of 3 interdependent functions to decode the sector signature.",
     finalStory:
-      "SUBROUTINES VALIDATED. The Modular Architect merged your functions into Aurora's Kernel. You master procedural abstraction.",
+      "SUBROUTINES VALIDATED. The Modular Architect merged your functions into the Mainframe's Kernel. You master procedural abstraction.",
     acts: [
       {
         title: "Signal Amplifier",
@@ -634,7 +634,7 @@ export const ACHIEVEMENTS_EN: Record<
   string,
   { title: string; description: string; titleReward?: string }
 > = {
-  first_query: { title: "First Script", description: "Complete your first Python challenge", titleReward: "Aurora Apprentice" },
+  first_query: { title: "First Script", description: "Complete your first Python challenge", titleReward: "Core Apprentice" },
   xp_250_explorer: { title: "First Points", description: "Accumulate 250 XP", titleReward: "Harbor Visitor" },
   xp_500: { title: "Code in Motion", description: "Accumulate 500 XP", titleReward: "Python Explorer" },
   xp_1000: { title: "Study Routine", description: "Accumulate 1,000 XP", titleReward: "Python Practitioner" },
@@ -648,7 +648,7 @@ export const ACHIEVEMENTS_EN: Record<
   hints_used_5: { title: "Active Study", description: "Use hints in 5 different challenges", titleReward: "Investigator" },
   first_try_1: { title: "First Execution", description: "Complete 3 challenges on the first attempt", titleReward: "Initial Precision" },
   perfect_world: { title: "Total Mastery", description: "Complete an entire sector without using hints", titleReward: "Pure Code" },
-  two_worlds_complete: { title: "Double Explorer", description: "Complete 2 entire sectors", titleReward: "Aurora Navigator" },
+  two_worlds_complete: { title: "Double Explorer", description: "Complete 2 entire sectors", titleReward: "Network Navigator" },
   all_worlds_started: { title: "Stamped Passport", description: "Complete at least 1 challenge in every sector", titleReward: "Python Traveler" },
   all_complete: { title: "Protocol Master", description: "Complete every challenge in the game", titleReward: "Protocol Master" },
   streak_3: { title: "Persistent Hacker", description: "Maintain a 3-day active streak", titleReward: "Infiltrator" },
@@ -664,6 +664,8 @@ export const ACHIEVEMENTS_EN: Record<
   four_worlds_complete: { title: "Main Vector", description: "Complete 4 entire sectors", titleReward: "Sector Commander" },
   perfect_3_worlds: { title: "Code Trinity", description: "Complete 3 sectors without using hints", titleReward: "Neo Architect" },
   all_perfect_worlds: { title: "Digital Nirvana", description: "Complete all available sectors without using hints", titleReward: "The Enlightened" },
+  boss_kernel_panic: { title: "End of Act 1", description: "Defeat Kernel Panic in the Exception Bunker", titleReward: "Bunker Breaker" },
+  boss_aurora: { title: "Directive Rewritten", description: "Defeat AURORA at the Generative Oracle", titleReward: "Legendary Operator" },
 };
 
 export const LEVEL_TITLES_EN: Record<string, string> = {
@@ -674,7 +676,7 @@ export const LEVEL_TITLES_EN: Record<string, string> = {
   Construtor: "Builder",
   Automatizador: "Automator",
   "Especialista Python": "Python Specialist",
-  "Navegador Aurora": "Aurora Navigator",
+  "Navegador da Rede": "Network Navigator",
   "Arquiteto de Scripts": "Script Architect",
   "Mestre Python": "Python Master",
 };

@@ -10,8 +10,10 @@
     "steam:build": "npm --prefix client run steam:build",
     "steam:exe": "npm --prefix client run steam:exe",
     "steam:installer": "npm --prefix client run steam:installer",
+    "steam:demo": "npm --prefix client run steam:demo",
     "preview": "npm --prefix client run preview -- --host",
     "check": "tsc --project client/tsconfig.json --noEmit",
+    "test": "vitest run",
     "test:challenges": "vitest run tests/challenges",
     "format": "prettier --write ."
   },

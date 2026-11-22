@@ -256,7 +256,7 @@ function getAppIconPath() {
         return {
           id: steamClient.localplayer.getSteamId().steamId64.toString(),
           displayName: steamClient.localplayer.getName() || os.userInfo().username || "Operador Steam",
-          avatarEmoji: "/avatars/hacker.webp",
+          avatarEmoji: "/avatars/avatar_1.png",
         };
       } catch (err) {
         console.warn("[Steamworks] Failed to read profile:", err?.message || err);
@@ -266,7 +266,7 @@ function getAppIconPath() {
     return {
       id: "steam-local-player",
       displayName: username,
-      avatarEmoji: "/avatars/hacker.webp",
+      avatarEmoji: "/avatars/avatar_1.png",
     };
   });
 

@@ -1,5 +1,5 @@
 import { GameState, GameAction } from "@/lib/gameTypes";
-import { ACHIEVEMENTS_ROOT } from "@/lib/achievements";
+import { ACHIEVEMENTS_ROOT, LEGACY_TITLE_REWARDS } from "@/lib/achievements";
 import { isSameDay, isYesterday } from "@/lib/gameLogic";
 import { WORLDS } from "@/lib/challenges";
 
@@ -83,6 +83,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         hasSeenCyberSecIntro: action.state.hasSeenCyberSecIntro ?? false,
         streak: newStreak,
         achievements: syncedAchievements,
+        equippedTitle: action.state.equippedTitle
+          ? LEGACY_TITLE_REWARDS[action.state.equippedTitle] ?? action.state.equippedTitle
+          : action.state.equippedTitle,
       };
     }
 

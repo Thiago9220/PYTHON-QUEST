@@ -1,7 +1,9 @@
 param(
   [string]$OutDir = "client/public/achievements",
   [string]$WorldDir = "client/public/assets/images/worlds",
-  [string]$PreviewPath = ""
+  [string]$PreviewPath = "",
+  # Gera só estes arquivos (ex.: -Only kernel_panic.png,aurora.png); vazio = todos.
+  [string[]]$Only = @()
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -352,8 +354,14 @@ $items = @(
   @{ File = "no_hints_10.png"; Kind = "nohint"; Accent = "#00ffc2"; Hot = "#f5fbff"; Main = "10"; MainSize = 62; Sub = "PURO" },
   @{ File = "four_worlds.png"; Kind = "worlds"; Accent = "#18d8ff"; Hot = "#00ffc2"; Main = "4"; MainSize = 70; Sub = "MUNDOS" },
   @{ File = "trinity.png"; Kind = "core"; Accent = "#a855ff"; Hot = "#ffd166"; Main = "3"; MainSize = 70; Sub = "PURO" },
-  @{ File = "nirvana.png"; Kind = "crown"; Accent = "#f5fbff"; Hot = "#ff47d6"; Main = "ALL"; MainSize = 48; Sub = "PURO" }
+  @{ File = "nirvana.png"; Kind = "crown"; Accent = "#f5fbff"; Hot = "#ff47d6"; Main = "ALL"; MainSize = 48; Sub = "PURO" },
+  @{ File = "kernel_panic.png"; Kind = "core"; Bg = "exception_bunker.png"; Accent = "#ff477e"; Hot = "#ffd166"; Main = "1"; MainSize = 70; Sub = "ATO" },
+  @{ File = "aurora.png"; Kind = "crown"; Bg = "generative_oracle.png"; Accent = "#c084fc"; Hot = "#18d8ff"; Main = ""; Sub = "AURORA" }
 )
+
+if ($Only.Count -gt 0) {
+  $items = @($items | Where-Object { $Only -contains $_.File })
+}
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 foreach ($item in $items) {

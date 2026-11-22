@@ -13,6 +13,8 @@
     "steam:build": "tsc && vite build --mode steam && electron .",
     "steam:exe": "tsc && vite build --mode steam && electron-builder --win dir",
     "steam:installer": "tsc && vite build --mode steam && electron-builder --win nsis",
+    "steam:demo": "tsc && vite build --mode demo && electron-builder --win dir -c.directories.output=release/steam-demo",
+    "demo:window": "vite build --mode demo && electron .",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

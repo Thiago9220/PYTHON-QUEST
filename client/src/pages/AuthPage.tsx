@@ -128,9 +128,9 @@ export default function AuthPage() {
         {mode !== "landing" && (
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center mb-4">
-              <img 
-                src="/assets/images/python-quest-logo.png" 
-                alt="Python Quest Logo" 
+              <img
+                src="/assets/images/python-protocol-mark.png"
+                alt="Python Quest Logo"
                 className="w-24 h-24 object-cover rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.3)] ring-2 ring-cyan-500/50"
               />
             </div>
@@ -148,9 +148,9 @@ export default function AuthPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10" />
             <div className="relative z-10">
               <div className="inline-flex items-center justify-center mb-6">
-                <img 
-                  src="/assets/images/python-quest-logo.png" 
-                  alt="Python Quest Logo" 
+                <img
+                  src="/assets/images/python-protocol-mark.png"
+                  alt="Python Quest Logo"
                   className="w-32 h-32 object-cover rounded-3xl shadow-[0_0_40px_rgba(34,211,238,0.4)] ring-2 ring-cyan-500/50"
                 />
               </div>

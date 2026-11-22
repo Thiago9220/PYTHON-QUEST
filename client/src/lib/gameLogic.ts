@@ -1,4 +1,5 @@
 import { WORLDS } from "@/lib/challenges";
+import { isDemoLocked } from "@/lib/platform";
 
 export const LEVELS = [
   { level: 1, title: "Curioso", minXP: 0 },
@@ -8,7 +9,7 @@ export const LEVELS = [
   { level: 5, title: "Construtor", minXP: 5000 },
   { level: 6, title: "Automatizador", minXP: 6500 },
   { level: 7, title: "Especialista Python", minXP: 8000 },
-  { level: 8, title: "Navegador Aurora", minXP: 9500 },
+  { level: 8, title: "Navegador da Rede", minXP: 9500 },
   { level: 9, title: "Arquiteto de Scripts", minXP: 11000 },
   { level: 10, title: "Mestre Python", minXP: 13000 },
 ];
@@ -57,6 +58,8 @@ export function getWorldUnlockStatus(
   isDevMode: boolean,
   _purchasedWorlds: string[] = []
 ) {
+  // A demo nunca abre setores do jogo completo, nem em modo dev.
+  if (isDemoLocked(worldId)) return false;
   if (isDevMode) return true;
   const world = WORLDS.find((w) => w.id === worldId);
   if (!world) return false;

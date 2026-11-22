@@ -40,6 +40,25 @@ export function isSteamMode(): boolean {
 
 export const STEAM_DEFAULT_USER_ID = "steam-local-player";
 
+// --- Demo (Steam Next Fest): build com VITE_DEMO=true (npm run steam:demo) ---
+
+/** Setores jogáveis na demo; o resto aparece trancado como "Jogo completo". */
+export const DEMO_WORLD_IDS = ["vila-variaveis", "vale-condicoes"];
+
+export function isDemoBuild(): boolean {
+  return import.meta.env.VITE_DEMO === "true";
+}
+
+export function isDemoLocked(worldId: string): boolean {
+  return isDemoBuild() && !DEMO_WORLD_IDS.includes(worldId);
+}
+
+/** Página da loja do jogo completo (VITE_STEAM_STORE_APPID), ou null se ainda não houver. */
+export function getStoreUrl(): string | null {
+  const appId = import.meta.env.VITE_STEAM_STORE_APPID;
+  return appId ? `https://store.steampowered.com/app/${appId}/` : null;
+}
+
 export async function loadSteamSaveSnapshot(): Promise<any | null> {
   if (typeof window !== "undefined" && window.steamBridge?.loadSaveData) {
     try {

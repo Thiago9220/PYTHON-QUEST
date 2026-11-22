@@ -8,7 +8,7 @@ export const ORACULO_FUNCOES_BOSS: BossChallenge = {
   intro:
     "AI-7 estabelece túnel com o Repositório Central. // ALERTA: O Arquiteto Modular só aceita código encapsulado em funções puras com retorno explícito (`return`). Construa uma biblioteca de 3 funções interdependentes para decifrar a assinatura do setor.",
   finalStory:
-    "SUB-ROTINAS VALIDADAS. O Arquiteto Modular incorporou suas funções ao Kernel da Aurora. Você domina a abstração procedural.",
+    "SUB-ROTINAS VALIDADAS. O Arquiteto Modular incorporou suas funções ao Kernel do Mainframe. Você domina a abstração procedural.",
   unlockThreshold: 0.7,
   xpReward: 12000,
   acts: [

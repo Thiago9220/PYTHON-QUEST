@@ -247,14 +247,14 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                 </div>
                 <pre className="p-5 font-mono text-sm leading-relaxed text-sky-50">
 {isEn
-  ? `name = "Aurora"
+  ? `name = "Operator"
 print(f"Hello, {name}!")
 
-> Hello, Aurora!`
-  : `nome = "Aurora"
+> Hello, Operator!`
+  : `nome = "Operador"
 print(f"Ola, {nome}!")
 
-> Ola, Aurora!`}
+> Ola, Operador!`}
                 </pre>
               </div>
 
