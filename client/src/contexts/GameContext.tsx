@@ -15,7 +15,7 @@ import { toast } from "sonner";
 // Refactored Modules
 import { GameState, GameAction, ChallengeProgress } from "@/lib/gameTypes";
 import { INITIAL_STATE, gameReducer } from "./gameReducer";
-import { calculatePlayerLevel, getWorldUnlockStatus } from "@/lib/gameLogic";
+import { calculatePlayerLevel, getWorldUnlockStatus, mergeBossProgress } from "@/lib/gameLogic";
 import {
   ACHIEVEMENTS_ROOT,
   getAchievementConditions,
@@ -301,6 +301,12 @@ export function GameProvider({
             : null,
           challengeProgress: progressMap,
           achievements: mergedAchievements,
+          // Banco (coluna boss_progress) + cache local: sem isso, chefes vencidos
+          // voltavam a aparecer intactos a cada carga e davam XP de novo.
+          bossProgress: mergeBossProgress(
+            profile?.boss_progress,
+            readPersistedSnapshot(userId)?.state?.bossProgress
+          ),
           isDevMode: localStorage.getItem("python_quest_dev_mode") === "true",
         };
 
@@ -388,46 +394,52 @@ export function GameProvider({
       has_seen_cybersec_intro: state.hasSeenCyberSecIntro,
       equipped_title: state.equippedTitle,
       is_muted: state.isMuted,
+      boss_progress: state.bossProgress ?? {},
       last_played_at: state.lastPlayedAt
         ? new Date(state.lastPlayedAt).toISOString()
         : new Date().toISOString(),
     };
 
-    supabase
-      .from("profiles")
-      .upsert(profilePayload)
-      .then(async ({ error }: { error: any }) => {
-        if (!error) return;
+    // Colunas adicionadas por migrações depois do schema original: se o banco
+    // ainda não tiver alguma, salva o resto e avisa qual SQL rodar.
+    const optionalColumns: Record<string, string> = {
+      has_seen_arena_tour: "supabase/add_has_seen_arena_tour.sql",
+      has_seen_cybersec_intro: "supabase/add_has_seen_arena_tour.sql",
+      boss_progress: "supabase/add_boss_progress.sql",
+    };
+
+    void (async () => {
+      let payload: Record<string, unknown> = profilePayload;
+      const dropped: string[] = [];
+      for (let attempt = 0; attempt <= Object.keys(optionalColumns).length; attempt += 1) {
+        const { error } = await supabase.from("profiles").upsert(payload);
+        if (!error) break;
 
         const errorText = `${error.message ?? ""} ${error.details ?? ""}`;
-        const missingIntroColumn =
-          errorText.includes("has_seen_arena_tour") ||
-          errorText.includes("has_seen_cybersec_intro");
-
-        if (!missingIntroColumn) {
+        const missing = Object.keys(optionalColumns).filter(
+          (column) => column in payload && errorText.includes(column)
+        );
+        if (missing.length === 0) {
           console.error("Erro ao sincronizar perfil:", error);
           return;
         }
-
-        const {
-          has_seen_arena_tour: _hasSeenArenaTour,
-          has_seen_cybersec_intro: _hasSeenCyberSecIntro,
-          ...fallbackPayload
-        } = profilePayload;
-
-        const retry = await supabase.from("profiles").upsert(fallbackPayload);
-        if (retry.error) {
-          console.error("Erro ao sincronizar perfil:", retry.error);
-          return;
-        }
-
-        console.warn(
-          "Flags de introducao guiada nao foram salvos. Rode supabase/add_has_seen_arena_tour.sql no banco."
+        payload = Object.fromEntries(
+          Object.entries(payload).filter(([key]) => !missing.includes(key))
         );
-      });
+        dropped.push(...missing);
+      }
+
+      if (dropped.length > 0) {
+        const scripts = [...new Set(dropped.map((column) => optionalColumns[column]))];
+        console.warn(
+          `Colunas ausentes em profiles (${dropped.join(", ")}) nao foram salvas. Rode no banco: ${scripts.join(", ")}.`
+        );
+      }
+    })();
   }, [
     state.totalXP,
     state.streak,
+    state.bossProgress,
     state.equippedTitle,
     state.hasSeenTutorial,
     state.hasSeenWorldTour,
@@ -596,6 +608,9 @@ export function GameProvider({
 
       if (profileRes.error) throw profileRes.error;
 
+      // Coluna opcional (supabase/add_boss_progress.sql): sem ela, o update só falha e é ignorado.
+      await supabase.from("profiles").update({ boss_progress: {} }).eq("id", userId);
+
       // Clear local storage notifications
       const storageKeyUnlock = `python_quest_notified_worlds_${userId}`;
       const storageKeyNotif = `python_quest_completed_worlds_notif_${userId}`;
@@ -637,10 +652,18 @@ export function GameProvider({
       const newProgress = { ...state.challengeProgress };
       challengeIds.forEach(id => delete newProgress[id]);
 
-      const newTotalXP = Object.values(newProgress).reduce(
-        (sum, p) => sum + (p.bestScore || 0),
+      // O chefe deste mundo volta a ficar intacto; o XP dos outros chefes vencidos continua.
+      const remainingBosses = Object.fromEntries(
+        Object.entries(state.bossProgress ?? {}).filter(([bossId]) => bossId !== world.boss?.id)
+      );
+      const remainingBossXP = WORLDS.reduce(
+        (sum, w) => sum + (w.boss && remainingBosses[w.boss.id]?.defeated ? w.boss.xpReward : 0),
         0
       );
+
+      const newTotalXP =
+        Object.values(newProgress).reduce((sum, p) => sum + (p.bestScore || 0), 0) +
+        remainingBossXP;
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -648,6 +671,19 @@ export function GameProvider({
         .eq("id", userId);
 
       if (profileError) throw profileError;
+
+      // Coluna opcional (supabase/add_boss_progress.sql): sem ela, o update só falha e é ignorado.
+      await supabase.from("profiles").update({ boss_progress: remainingBosses }).eq("id", userId);
+      // O cache local também entra na junção do progresso de chefes ao recarregar.
+      persistSnapshot(userId, {
+        state: {
+          ...state,
+          challengeProgress: newProgress,
+          totalXP: newTotalXP,
+          bossProgress: remainingBosses,
+        },
+        purchasedWorlds,
+      });
 
       // Clear local storage notifications for this specific world
       const storageKeyUnlock = `python_quest_notified_worlds_${userId}`;

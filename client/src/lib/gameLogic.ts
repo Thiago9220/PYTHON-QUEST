@@ -1,4 +1,5 @@
 import { WORLDS } from "@/lib/challenges";
+import type { BossProgress } from "@/lib/gameTypes";
 import { isDemoLocked } from "@/lib/platform";
 
 export const LEVELS = [
@@ -64,4 +65,33 @@ export function getWorldUnlockStatus(
   const world = WORLDS.find((w) => w.id === worldId);
   if (!world) return false;
   return totalXP >= world.unlockRequirement;
+}
+
+const minDefined = (a?: number, b?: number) =>
+  a === undefined ? b : b === undefined ? a : Math.min(a, b);
+
+/**
+ * Junta o progresso de chefes de várias fontes (banco, cache local). Um chefe
+ * vencido em qualquer fonte continua vencido; fica o melhor tempo e menos dicas.
+ * Ignora entradas malformadas (o valor do banco é jsonb livre).
+ */
+export function mergeBossProgress(
+  ...sources: (Record<string, unknown> | null | undefined)[]
+): Record<string, BossProgress> {
+  const merged: Record<string, BossProgress> = {};
+  for (const source of sources) {
+    if (!source || typeof source !== "object") continue;
+    for (const [bossId, raw] of Object.entries(source)) {
+      const entry = raw as Partial<BossProgress> | null;
+      if (!entry || typeof entry !== "object" || entry.defeated !== true) continue;
+      const prev = merged[bossId];
+      merged[bossId] = {
+        defeated: true,
+        defeatedAt: minDefined(prev?.defeatedAt, entry.defeatedAt),
+        totalHintsUsed: minDefined(prev?.totalHintsUsed, entry.totalHintsUsed) ?? 0,
+        durationSec: minDefined(prev?.durationSec, entry.durationSec),
+      };
+    }
+  }
+  return merged;
 }

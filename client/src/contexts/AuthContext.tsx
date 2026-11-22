@@ -71,20 +71,8 @@ export const AVATAR_EMOJI_GROUPS = [
     id: "exclusivos",
     label: "Exclusivos",
     icon: "💎",
-    emojis: [
-      "/avatars/wizard.webp", 
-      "/avatars/knight.webp", 
-      "/avatars/alchemist.webp", 
-      "/avatars/rogue.webp", 
-      "/avatars/dragon.webp",
-      "/avatars/hacker.webp",
-      "/avatars/golem.webp",
-      "/avatars/phoenix.webp",
-      "/avatars/kraken.webp",
-      "/avatars/samurai.webp",
-      "/avatars/elf_ranger.webp",
-      "/avatars/necromancer.webp"
-    ],
+    // Só arquivos que existem em client/public/avatars (os demais nunca foram criados).
+    emojis: ["/avatars/wizard.webp", "/avatars/golem.webp"],
   },
 ];
 

@@ -62,6 +62,14 @@ Se o banco ja existia antes das correcoes de seguranca, rode tambem
 patch remove escrita direta de compras pelo cliente e adiciona restricoes de
 sanidade para progresso.
 
+Bancos criados antes dessas colunas também precisam das migrações abaixo (o jogo
+avisa no console quando falta alguma):
+
+- [`supabase/add_has_seen_arena_tour.sql`](supabase/add_has_seen_arena_tour.sql):
+  flags dos tutoriais guiados.
+- [`supabase/add_boss_progress.sql`](supabase/add_boss_progress.sql): chefes
+  vencidos. Sem ela, o progresso dos chefes fica só no cache do navegador.
+
 ### 3. (Opcional) Habilite provedores de autenticação
 
 - Em **Authentication → Providers**, mantenha **Email** ligado.
@@ -113,7 +121,9 @@ com o Pyodide offline de `client/public/pyodide` e confere que:
   [`tests/challenges/boss-solutions.ts`](tests/challenges/boss-solutions.ts). Ao criar
   ou mudar um chefe, atualize esse arquivo.
 
-`npm test` roda essa suíte e os testes rápidos (como o do modo demo).
+`npm test` roda essa suíte e os testes rápidos: modo demo, conquistas, progresso
+de chefes, trilha sonora, telas de final/demo e existência de todo asset citado
+no código.
 
 Ao escrever um `testCode`:
 

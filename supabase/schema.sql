@@ -30,6 +30,7 @@ create table if not exists public.profiles (
   has_seen_profile_tour boolean not null default false,
   has_seen_arena_tour boolean not null default false,
   has_seen_cybersec_intro boolean not null default false,
+  boss_progress jsonb not null default '{}'::jsonb check (jsonb_typeof(boss_progress) = 'object'),
   last_played_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
