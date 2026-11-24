@@ -211,7 +211,7 @@ export default function TutorialTour({ steps, isOpen, onClose }: Props) {
                   <h2
                     className="text-2xl md:text-3xl font-black text-white mb-1 drop-shadow-md uppercase tracking-tight"
                   >
-                    Python Protocol
+                    Python Quest
                   </h2>
                   <p className="text-[11px] uppercase tracking-[0.25em] text-sky-500/70 font-mono font-bold drop-shadow-sm">
                     {t("tourSubtitle")}

@@ -105,6 +105,19 @@ export async function notifySteamAchievement(achievementId: string): Promise<voi
   }
 }
 
+/**
+ * Reenvia à Steam todas as conquistas já desbloqueadas no save. Cobre as que
+ * foram ganhas sem a Steam conectada (jogo aberto fora dela, progresso da demo);
+ * o main.mjs pula as que a Steam já registrou.
+ */
+export async function resyncSteamAchievements(
+  achievements: ReadonlyArray<{ id: string; unlocked: boolean }>
+): Promise<void> {
+  await Promise.all(
+    achievements.filter(a => a.unlocked).map(a => notifySteamAchievement(a.id))
+  );
+}
+
 export async function toggleDesktopFullscreen(): Promise<void> {
   if (typeof window !== "undefined" && window.steamBridge?.toggleFullscreen) {
     await window.steamBridge.toggleFullscreen();

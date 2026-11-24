@@ -112,7 +112,7 @@ export default function ChallengeList({ worldId, onSelectChallenge, onSelectBoss
               className="hidden sm:block text-sm font-black uppercase tracking-[0.2em] text-sky-400 hover:text-sky-300 transition-colors"
               onClick={onBackToHome}
             >
-              Python Protocol
+              Python Quest
             </button>
           </div>
 

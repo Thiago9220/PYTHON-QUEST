@@ -13,7 +13,7 @@ export type Achievement = {
 export const ACHIEVEMENTS_ROOT: Achievement[] = [
   { id: "first_query", title: "Primeiro Script", description: "Complete seu primeiro desafio Python", icon: "/achievements/first_query.png", unlocked: false, titleReward: "Aprendiz do Core" },
   { id: "xp_250_explorer", title: "Primeiros Pontos", description: "Acumule 250 XP", icon: "/achievements/xp_bronze.png", unlocked: false, titleReward: "Visitante do Porto" },
-  { id: "xp_500", title: "Codigo em Movimento", description: "Acumule 500 XP", icon: "/achievements/xp_500.png", unlocked: false, titleReward: "Explorador Python" },
+  { id: "xp_500", title: "Código em Movimento", description: "Acumule 500 XP", icon: "/achievements/xp_500.png", unlocked: false, titleReward: "Explorador Python" },
   { id: "xp_1000", title: "Rotina de Estudos", description: "Acumule 1.000 XP", icon: "/achievements/xp_1000.png", unlocked: false, titleReward: "Praticante Python" },
   { id: "xp_1500_dedicated", title: "Oficina Ativa", description: "Acumule 1.500 XP", icon: "/achievements/xp_scroll.png", unlocked: false, titleReward: "Construtor de Scripts" },
   { id: "world_vila-variaveis_complete", title: "Alpha Liberado", description: "Complete todos os desafios do Terminal Alpha", icon: "/achievements/village.png", unlocked: false, titleReward: "Técnico Alpha" },

@@ -44,7 +44,7 @@ export const GIT_GUIDE_EN = {
   nextStepsPrefix: "To get started, create a free account at ",
   nextStepsMid: ", download ",
   nextStepsSuffix:
-    " in your terminal, and start saving your Python Protocol scripts in the cloud!",
+    " in your terminal, and start saving your Python Quest scripts in the cloud!",
   openSimulatorBtn: "Open Simulator",
 } as const;
 

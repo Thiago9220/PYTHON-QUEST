@@ -37,7 +37,7 @@ export function Certificate({ fullName, completionDate, totalXP, challengesCompl
             <div className="w-20 h-20 mx-auto rounded-3xl bg-sky-600 text-white flex items-center justify-center mb-8 shadow-lg shadow-sky-900/20">
               <Award className="w-10 h-10" />
             </div>
-            <p className="text-sm font-mono uppercase tracking-[0.35em] text-sky-700 mb-4">Python Protocol Academy</p>
+            <p className="text-sm font-mono uppercase tracking-[0.35em] text-sky-700 mb-4">Python Quest Academy</p>
             <h1 className="text-4xl md:text-5xl font-black text-slate-950 mb-5">{t("certMainTitle")}</h1>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8">
               {t("certBodyPre")} <span className="font-bold text-slate-950">{fullName}</span> {t("certBodyPost")}

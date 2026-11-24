@@ -191,10 +191,10 @@ export default function GameArena({ challengeId, onBack, onBackToHome, onNext }:
               <button className="group flex items-center gap-3" onClick={onBackToHome}>
                 <img
                   src="/assets/images/python-protocol-mark.png"
-                  alt="Python Protocol"
+                  alt="Python Quest"
                   className="h-8 w-8 shrink-0 rounded-xl object-cover shadow-[0_0_15px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-transform group-hover:scale-110"
                 />
-                <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Protocol</span>
+                <span className="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition-colors">Python Quest</span>
               </button>
 
               <div className="h-6 w-px bg-white/10 hidden md:block" />

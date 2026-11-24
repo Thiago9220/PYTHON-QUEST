@@ -188,7 +188,7 @@ export function GitGuideModal({ isOpen, onClose }: Props) {
                   </>
                 ) : (
                   <>
-                    Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts da Python Protocol na nuvem!
+                    Para começar, crie uma conta gratuita em <strong>github.com</strong>, baixe o <strong>Git</strong> no seu terminal e comece a salvar seus scripts do Python Quest na nuvem!
                   </>
                 )}
               </p>

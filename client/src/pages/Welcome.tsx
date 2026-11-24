@@ -222,7 +222,7 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
                   <div className="rounded-2xl bg-white/80 p-3">
                     <img
                       src="/assets/images/python-protocol-mark.png"
-                      alt="Python Protocol"
+                      alt="Python Quest"
                       className="mb-3 h-9 w-9 rounded-xl object-cover shadow-[0_0_14px_rgba(14,165,233,0.35)]"
                     />
                     <div className="text-sm font-black text-slate-950">{island.name}</div>

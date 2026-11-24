@@ -90,7 +90,7 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
     ? [
         {
           targetId: "tutorial-intro",
-          title: "Python Protocol",
+          title: "Python Quest",
           content: "Welcome to the system. Here you don't just learn Python — you master the tools powering the modern internet.",
         },
         {
@@ -217,12 +217,12 @@ export default function WorldMap({ onSelectWorld, onOpenProfile, onOpenGitSimula
           >
             <img
               src="/assets/images/python-protocol-mark.png"
-              alt="Python Protocol"
+              alt="Python Quest"
               className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-[0_0_20px_rgba(14,165,233,0.45)] ring-1 ring-cyan-300/25 transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(14,165,233,0.8)]"
             />
             <div className="flex flex-col items-start leading-none">
               <span className="text-[8px] font-black uppercase tracking-[0.35em] text-sky-400/80">// initd</span>
-              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-sky-100 to-cyan-300 bg-clip-text text-transparent group-hover:from-sky-300 group-hover:to-emerald-300 transition-all mt-0.5">Python Protocol</span>
+              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-sky-100 to-cyan-300 bg-clip-text text-transparent group-hover:from-sky-300 group-hover:to-emerald-300 transition-all mt-0.5">Python Quest</span>
             </div>
           </button>
 

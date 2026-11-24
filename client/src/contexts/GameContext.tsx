@@ -26,6 +26,7 @@ import {
   loadSteamSaveSnapshot,
   persistSteamSaveSnapshot,
   notifySteamAchievement,
+  resyncSteamAchievements,
 } from "@/lib/platform";
 import { getSavedLanguage } from "./LanguageContext";
 import { getLocalizedAchievement } from "@/lib/i18n/localize";
@@ -451,6 +452,14 @@ export function GameProvider({
     hasHydrated,
     userId,
   ]);
+
+  // 2b. STEAM ACHIEVEMENT RESYNC — uma vez por sessão, depois de carregar o save
+  const steamResyncDoneRef = useRef(false);
+  useEffect(() => {
+    if (steamResyncDoneRef.current || !hasHydrated || !isSteamMode()) return;
+    steamResyncDoneRef.current = true;
+    void resyncSteamAchievements(state.achievements);
+  }, [hasHydrated, state.achievements]);
 
   // 3. ACHIEVEMENT MONITORING (Queued â€” max 1 toast at a time)
   const achievementQueueRef = useRef<string[]>([]);

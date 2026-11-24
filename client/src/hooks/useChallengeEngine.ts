@@ -142,7 +142,7 @@ export function useChallengeEngine(
       setState((prev) => ({
         ...prev,
         isRunning: false,
-        feedback: getSavedLanguage() === "en" ? "Error executing code." : "Erro ao executar o codigo.",
+        feedback: getSavedLanguage() === "en" ? "Error executing code." : "Erro ao executar o código.",
       }));
     }
   }, [challenge, state.code, state.isRunning, state.wasAlreadyCompleted, state.hintsUsed, state.attempts, dispatch]);

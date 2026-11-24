@@ -122,7 +122,7 @@ export function AchievementsModal({ isOpen, onClose }: Props) {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <h4 className={`truncate text-lg font-bold tracking-tight ${isUnlocked ? "text-white" : "text-slate-600"}`}>
+                          <h4 className={`line-clamp-2 break-words text-lg font-bold leading-snug tracking-tight ${isUnlocked ? "text-white" : "text-slate-600"}`}>
                             {ach.title}
                           </h4>
                           <p className={`mt-1 line-clamp-2 text-xs leading-relaxed ${isUnlocked ? "text-slate-400" : "text-slate-700"}`}>
